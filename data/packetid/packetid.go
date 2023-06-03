@@ -13,13 +13,13 @@ const (
 // Status server -> client
 const (
 	CPacketStatusResponse = iota
-	CPacketStatusPing
+	CPacketPingResponse
 )
 
 // Status client -> server
 const (
 	SPacketStatusRequest = iota
-	SPacketStatusPing
+	SPacketPingRequest
 )
 
 // Login server -> client

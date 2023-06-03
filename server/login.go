@@ -49,6 +49,14 @@ type MojangLoginHandler struct {
 	LoginChecker
 }
 
+func NewMojangLoginHandler() *MojangLoginHandler {
+	return &MojangLoginHandler{
+		OnlineMode:           true,
+		EnforceSecureProfile: true,
+		Threshold:            0,
+	}
+}
+
 // AcceptLogin implement LoginHandler for MojangLoginHandler
 func (d *MojangLoginHandler) AcceptLogin(conn *net.Conn, protocol int32) (name string, id uuid.UUID, profilePubKey *auth.PublicKey, properties []auth.Property, err error) {
 	//login start

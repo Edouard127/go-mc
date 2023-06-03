@@ -28,6 +28,7 @@ package server
 
 import (
 	"errors"
+	"github.com/Tnze/go-mc/chat"
 	"github.com/Tnze/go-mc/data/packetid"
 	"github.com/Tnze/go-mc/net"
 	pk "github.com/Tnze/go-mc/net/packet"
@@ -42,8 +43,24 @@ type Server struct {
 	ListPingHandler
 	LoginHandler
 	GamePlay
+	Queue      *PacketQueue
+	PlayerList *PlayerList
+	Keepalive  *KeepAlive
+	settings   ServerSettings
 }
 
+func NewServer(settings ServerSettings) *Server {
+	return &Server{
+		Logger:       log.Default(),
+		LoginHandler: NewMojangLoginHandler(),
+		Queue:        NewPacketQueue(),
+		PlayerList:   NewPlayerList(settings.MaxPlayers),
+		Keepalive:    NewKeepAlive(),
+		settings:     settings,
+	}
+}
+
+// Listen starts listening on the specified address.
 func (s *Server) Listen(addr string) error {
 	listener, err := net.ListenMC(addr)
 	if err != nil {
@@ -93,4 +110,32 @@ func (s *Server) acceptConn(conn *net.Conn) {
 		}
 		s.AcceptPlayer(name, id, profilePubKey, properties, protocol, conn)
 	}
+}
+
+func (s *Server) Name() string {
+	return s.settings.Name
+}
+
+func (s *Server) Protocol() int {
+	return ProtocolVersion
+}
+
+func (s *Server) MaxPlayer() int {
+	return s.settings.MaxPlayers
+}
+
+func (s *Server) OnlinePlayer() int {
+	return s.PlayerList.OnlinePlayer()
+}
+
+func (s *Server) PlayerSamples() []PlayerSample {
+	return s.PlayerList.PlayerSamples()
+}
+
+func (s *Server) Description() *chat.Message {
+	return s.settings.MOTD
+}
+
+func (s *Server) FavIcon() string {
+	return s.settings.Icon
 }

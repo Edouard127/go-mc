@@ -49,11 +49,17 @@ func (p *PlayerList) ClientLeft(client PlayerListClient) {
 }
 
 // CheckPlayer implements LoginChecker for PlayerList
-func (p *PlayerList) CheckPlayer(string, uuid.UUID, int32) (ok bool, reason chat.Message) {
+func (p *PlayerList) CheckPlayer(name string, uuid uuid.UUID, protocol int32) (ok bool, reason chat.Message) {
 	p.playersLock.Lock()
 	defer p.playersLock.Unlock()
 	if len(p.players) >= p.maxPlayer {
 		return false, chat.TranslateMsg("multiplayer.disconnect.server_full")
+	}
+
+	for _, player := range p.players {
+		if player.Name == name || player.ID == uuid {
+			return false, chat.TranslateMsg("multiplayer.disconnect.duplicate_login")
+		}
 	}
 	return true, chat.Message{}
 }

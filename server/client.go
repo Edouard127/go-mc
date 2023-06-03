@@ -33,11 +33,10 @@ type PacketQueue struct {
 }
 
 func NewPacketQueue() (p *PacketQueue) {
-	p = &PacketQueue{
+	return &PacketQueue{
 		queue: list.New(),
 		cond:  sync.Cond{L: new(sync.Mutex)},
 	}
-	return p
 }
 
 func (p *PacketQueue) Push(packet pk.Packet) {
