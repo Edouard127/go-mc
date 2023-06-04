@@ -3,9 +3,9 @@ package world
 import (
 	"fmt"
 	"github.com/Edouard127/go-mc/bot/core"
-	"github.com/Edouard127/go-mc/bot/maths"
 	. "github.com/Edouard127/go-mc/level"
 	"github.com/Edouard127/go-mc/level/block"
+	"github.com/Edouard127/go-mc/maths"
 	"math"
 )
 

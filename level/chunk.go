@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/Edouard127/go-mc/bot/maths"
+	"github.com/Edouard127/go-mc/maths"
 	"io"
 	"log"
 	"math/bits"

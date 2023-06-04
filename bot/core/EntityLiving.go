@@ -1,10 +1,10 @@
 package core
 
 import (
-	"github.com/Edouard127/go-mc/bot/maths"
 	"github.com/Edouard127/go-mc/data/effects"
 	"github.com/Edouard127/go-mc/data/enums"
 	"github.com/Edouard127/go-mc/data/item"
+	"github.com/Edouard127/go-mc/maths"
 	"github.com/google/uuid"
 )
 
