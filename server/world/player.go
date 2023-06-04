@@ -1,8 +1,8 @@
 package world
 
 import (
-	"github.com/Tnze/go-mc/maths"
-	"github.com/Tnze/go-mc/server/auth"
+	"github.com/Edouard127/go-mc/maths"
+	"github.com/Edouard127/go-mc/server/auth"
 	"github.com/google/uuid"
 	"time"
 )

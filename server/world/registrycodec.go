@@ -20,9 +20,9 @@ import (
 	"bytes"
 	_ "embed"
 
-	"github.com/Tnze/go-mc/registry"
+	"github.com/Edouard127/go-mc/registry"
 
-	"github.com/Tnze/go-mc/nbt"
+	"github.com/Edouard127/go-mc/nbt"
 )
 
 //go:embed RegistryCodec.nbt

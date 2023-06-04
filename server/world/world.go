@@ -2,10 +2,10 @@ package world
 
 import (
 	"errors"
-	"github.com/Tnze/go-mc/level"
-	"github.com/Tnze/go-mc/level/block"
-	"github.com/Tnze/go-mc/maths"
-	"github.com/Tnze/go-mc/server/internal/bvh"
+	"github.com/Edouard127/go-mc/level"
+	"github.com/Edouard127/go-mc/level/block"
+	"github.com/Edouard127/go-mc/maths"
+	"github.com/Edouard127/go-mc/server/internal/bvh"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 	"sync"

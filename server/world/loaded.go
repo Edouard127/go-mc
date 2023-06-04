@@ -1,7 +1,7 @@
 package world
 
 import (
-	"github.com/Tnze/go-mc/level"
+	"github.com/Edouard127/go-mc/level"
 	"sync"
 )
 

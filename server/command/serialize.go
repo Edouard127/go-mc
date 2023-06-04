@@ -2,6 +2,7 @@ package command
 
 import (
 	"io"
+	"strings"
 	"unsafe"
 
 	pk "github.com/Edouard127/go-mc/net/packet"
@@ -46,4 +47,71 @@ func (n Node) WriteTo(w io.Writer) (int64, error) {
 			Value: nil, // TODO: send Suggestions type
 		},
 	}.WriteTo(w)
+}
+
+type ChatCommand struct {
+	Command   pk.String
+	Timestamp pk.Long
+	Salt      pk.Long
+	Args      []CommandArgument
+	Signed    pk.Boolean
+}
+
+type CommandArgument struct {
+	Name      pk.String
+	Signature pk.ByteArray
+}
+
+func (c ChatCommand) WriteTo(w io.Writer) (int64, error) {
+	var args []pk.Tuple
+	for _, v := range c.Args {
+		args = append(args, pk.Tuple{
+			v.Name,
+			pk.VarInt(len(v.Signature)),
+			v.Signature,
+		})
+	}
+	return pk.Tuple{
+		c.Command,
+		c.Timestamp,
+		c.Salt,
+		pk.VarInt(len(args)),
+		args,
+		c.Signed,
+	}.WriteTo(w)
+}
+
+func (c *ChatCommand) ReadFrom(r io.Reader) (int64, error) {
+	return pk.Tuple{
+		&c.Command,
+		&c.Timestamp,
+		&c.Salt,
+		&c.Args,
+		&c.Signed,
+	}.ReadFrom(r)
+}
+
+func (c *ChatCommand) String() string {
+	var s strings.Builder
+	s.WriteString(string(c.Command))
+	for _, v := range c.Args {
+		s.WriteByte(' ')
+		s.WriteString(string(v.Name))
+	}
+	return s.String()
+}
+
+func (a CommandArgument) WriteTo(w io.Writer) (int64, error) {
+	return pk.Tuple{
+		a.Name,
+		pk.VarInt(len(a.Signature)),
+		a.Signature,
+	}.WriteTo(w)
+}
+
+func (a *CommandArgument) ReadFrom(r io.Reader) (int64, error) {
+	return pk.Tuple{
+		&a.Name,
+		&a.Signature,
+	}.ReadFrom(r)
 }

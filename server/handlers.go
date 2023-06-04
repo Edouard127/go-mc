@@ -2,8 +2,8 @@ package server
 
 import (
 	"context"
-	pk "github.com/Tnze/go-mc/net/packet"
-	"github.com/Tnze/go-mc/server/command"
+	pk "github.com/Edouard127/go-mc/net/packet"
+	"github.com/Edouard127/go-mc/server/command"
 )
 
 func ChatCommand(s *Server, p pk.Packet) error {

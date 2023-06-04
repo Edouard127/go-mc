@@ -1,9 +1,9 @@
 package world
 
 import (
-	"github.com/Tnze/go-mc/chat"
-	"github.com/Tnze/go-mc/level"
-	"github.com/Tnze/go-mc/maths"
+	"github.com/Edouard127/go-mc/chat"
+	"github.com/Edouard127/go-mc/level"
+	"github.com/Edouard127/go-mc/maths"
 )
 
 type Client interface {

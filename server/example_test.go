@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/Tnze/go-mc/bot/provider"
+	"github.com/Edouard127/go-mc/bot/provider"
 	"testing"
 )
 

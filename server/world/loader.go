@@ -1,7 +1,7 @@
 package world
 
 import (
-	"github.com/Tnze/go-mc/maths"
+	"github.com/Edouard127/go-mc/maths"
 	"golang.org/x/time/rate"
 	"math"
 	"sort"

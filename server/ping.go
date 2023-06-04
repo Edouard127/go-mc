@@ -91,7 +91,7 @@ func (s *Server) listResp() ([]byte, error) {
 	list.Players.Max = s.MaxPlayer()
 	list.Players.Online = s.OnlinePlayer()
 	list.Players.Sample = s.PlayerSamples()
-	list.Description = s.Description()
+	list.Description = chat.TextPtr(s.Description())
 	list.FavIcon = s.FavIcon()
 
 	return json.Marshal(list)

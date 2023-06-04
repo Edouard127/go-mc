@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"github.com/Tnze/go-mc/server/command"
+	"github.com/Edouard127/go-mc/server/command"
 )
 
 var builder = command.NewGraph()

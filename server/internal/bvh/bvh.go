@@ -120,7 +120,7 @@ func (t *Tree[I, B, V]) Insert(leaf B, value V) (n *Node[I, B, V]) {
 	return
 }
 
-func (t *Tree[I, B, V]) Delete(n *Node[I, B, V]) interface{} {
+func (t *Tree[I, B, V]) Delete(n *Node[I, B, V]) V {
 	if n.parent == nil {
 		// n is the root
 		t.root = nil
