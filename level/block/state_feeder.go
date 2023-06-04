@@ -2,7 +2,7 @@ package block
 
 import (
 	"fmt"
-	"github.com/Tnze/go-mc/level/block/states"
+	"github.com/Edouard127/go-mc/level/block/states"
 )
 
 type StateFeeder[T any] struct {

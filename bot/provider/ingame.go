@@ -2,7 +2,7 @@ package provider
 
 import (
 	"fmt"
-	pk "github.com/Tnze/go-mc/net/packet"
+	pk "github.com/Edouard127/go-mc/net/packet"
 )
 
 // HandleGame receive server packet and response them correctly.

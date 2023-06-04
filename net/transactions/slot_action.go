@@ -1,8 +1,8 @@
 package transactions
 
 import (
-	"github.com/Tnze/go-mc/data/slots"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Edouard127/go-mc/data/slots"
+	pk "github.com/Edouard127/go-mc/net/packet"
 	"io"
 )
 

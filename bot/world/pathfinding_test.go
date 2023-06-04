@@ -2,7 +2,7 @@ package world
 
 import (
 	"fmt"
-	"github.com/Tnze/go-mc/bot/maths"
+	"github.com/Edouard127/go-mc/bot/maths"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
 	"golang.org/x/image/math/fixed"

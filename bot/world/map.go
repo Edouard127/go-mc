@@ -1,8 +1,8 @@
 package world
 
 import (
-	"github.com/Tnze/go-mc/chat"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Edouard127/go-mc/chat"
+	pk "github.com/Edouard127/go-mc/net/packet"
 	"io"
 )
 

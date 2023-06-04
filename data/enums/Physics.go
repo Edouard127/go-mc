@@ -1,8 +1,8 @@
 package enums
 
 import (
-	"github.com/Tnze/go-mc/level"
-	"github.com/Tnze/go-mc/level/block"
+	"github.com/Edouard127/go-mc/level"
+	"github.com/Edouard127/go-mc/level/block"
 )
 
 const (

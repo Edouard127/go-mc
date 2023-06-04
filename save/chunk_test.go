@@ -1,7 +1,7 @@
 package save
 
 import (
-	"github.com/Tnze/go-mc/save/region"
+	"github.com/Edouard127/go-mc/save/region"
 	"testing"
 )
 

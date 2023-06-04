@@ -2,7 +2,7 @@ package grids
 
 import (
 	"fmt"
-	"github.com/Tnze/go-mc/data/slots"
+	"github.com/Edouard127/go-mc/data/slots"
 )
 
 type Generic struct {

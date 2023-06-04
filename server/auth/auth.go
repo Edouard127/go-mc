@@ -17,10 +17,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Tnze/go-mc/data/packetid"
-	"github.com/Tnze/go-mc/net"
-	"github.com/Tnze/go-mc/net/CFB8"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Edouard127/go-mc/data/packetid"
+	"github.com/Edouard127/go-mc/net"
+	"github.com/Edouard127/go-mc/net/CFB8"
+	pk "github.com/Edouard127/go-mc/net/packet"
 	"github.com/google/uuid"
 )
 

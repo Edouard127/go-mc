@@ -28,10 +28,10 @@ package server
 
 import (
 	"errors"
-	"github.com/Tnze/go-mc/chat"
-	"github.com/Tnze/go-mc/data/packetid"
-	"github.com/Tnze/go-mc/net"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Tnze/Edouard127/chat"
+	"github.com/Tnze/Edouard127/data/packetid"
+	"github.com/Tnze/Edouard127/net"
+	pk "github.com/Tnze/Edouard127/net/packet"
 	"log"
 )
 

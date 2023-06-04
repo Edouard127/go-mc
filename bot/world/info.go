@@ -1,8 +1,8 @@
 package world
 
 import (
-	"github.com/Tnze/go-mc/bot/maths"
-	"github.com/Tnze/go-mc/nbt"
+	"github.com/Edouard127/go-mc/bot/maths"
+	"github.com/Edouard127/go-mc/nbt"
 )
 
 // WorldInfo content player info in server.

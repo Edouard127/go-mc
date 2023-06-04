@@ -1,8 +1,8 @@
 package block
 
 import (
-	"github.com/Tnze/go-mc/internal/data"
-	"github.com/Tnze/go-mc/level/block/states"
+	"github.com/Edouard127/go-mc/internal/data"
+	"github.com/Edouard127/go-mc/level/block/states"
 )
 
 type StateHolder struct {

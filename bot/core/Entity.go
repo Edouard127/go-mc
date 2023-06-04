@@ -1,9 +1,9 @@
 package core
 
 import (
-	"github.com/Tnze/go-mc/bot/maths"
-	"github.com/Tnze/go-mc/data/entity"
-	"github.com/Tnze/go-mc/data/enums"
+	"github.com/Edouard127/go-mc/bot/maths"
+	"github.com/Edouard127/go-mc/data/entity"
+	"github.com/Edouard127/go-mc/data/enums"
 	"github.com/google/uuid"
 )
 

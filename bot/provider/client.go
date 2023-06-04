@@ -1,10 +1,10 @@
 package provider
 
 import (
-	"github.com/Tnze/go-mc/bot/basic"
-	"github.com/Tnze/go-mc/bot/maths"
-	"github.com/Tnze/go-mc/bot/world"
-	"github.com/Tnze/go-mc/net"
+	"github.com/Edouard127/go-mc/bot/basic"
+	"github.com/Edouard127/go-mc/bot/maths"
+	"github.com/Edouard127/go-mc/bot/world"
+	"github.com/Edouard127/go-mc/net"
 	auth "github.com/maxsupermanhd/go-mc-ms-auth"
 )
 

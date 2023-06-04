@@ -8,8 +8,8 @@ import (
 	"compress/gzip"
 	_ "embed"
 	"fmt"
-	"github.com/Tnze/go-mc/level/block"
-	"github.com/Tnze/go-mc/nbt"
+	"github.com/Edouard127/go-mc/level/block"
+	"github.com/Edouard127/go-mc/nbt"
 	"go/format"
 	"log"
 	"os"
@@ -17,7 +17,7 @@ import (
 	"text/template"
 	"unicode"
 
-	"github.com/Tnze/go-mc/internal/generateutils"
+	"github.com/Edouard127/go-mc/internal/generateutils"
 )
 
 //go:embed blocks.go.tmpl

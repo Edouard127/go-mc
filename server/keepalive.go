@@ -4,7 +4,7 @@ import (
 	"container/list"
 	"context"
 	"errors"
-	"github.com/Tnze/go-mc/chat"
+	"github.com/Edouard127/go-mc/chat"
 	"time"
 )
 
