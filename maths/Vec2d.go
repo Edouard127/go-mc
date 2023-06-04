@@ -7,9 +7,13 @@ import (
 
 var NullVec2d = Vec2d[float64]{X: 0, Y: 0}
 
-type Vec2d[T constraints.Float] struct {
+type Vec2d[T constraints.Integer | constraints.Float] struct {
 	X, Y T
 	// Pitch, Yaw
+}
+
+func ParseVec2d[T constraints.Float](x, y T) Vec2d[T] {
+	return Vec2d[T]{X: x, Y: y}
 }
 
 func (v Vec2d[T]) Add(v2 Vec2d[T]) Vec2d[T] {
