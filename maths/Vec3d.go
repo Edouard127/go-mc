@@ -7,8 +7,12 @@ import (
 
 var NullVec3d = Vec3d[float64]{X: 0, Y: 0, Z: 0}
 
-type Vec3d[T constraints.Float] struct {
+type Vec3d[T constraints.Integer | constraints.Float] struct {
 	X, Y, Z T
+}
+
+func ParseVec3d[T constraints.Float](x, y, z T) Vec3d[T] {
+	return Vec3d[T]{X: x, Y: y, Z: z}
 }
 
 func (v Vec3d[T]) Add(vec3d Vec3d[T]) Vec3d[T] {
@@ -48,10 +52,6 @@ func (v Vec3d[T]) DistanceTo(vec3d Vec3d[T]) T {
 	return T(math.Sqrt(float64(xDiff*xDiff + yDiff*yDiff + zDiff*zDiff)))
 }
 
-func (v Vec3d[T]) Center() Vec3d[T] {
-	return Vec3d[T]{X: v.X + 0.5, Y: v.Y + 0.5, Z: v.Z + 0.5}
-}
-
 func (v Vec3d[T]) Offset(x, y, z T) Vec3d[T] {
 	return Vec3d[T]{X: v.X + x, Y: v.Y + y, Z: v.Z + z}
 }
@@ -77,6 +77,11 @@ func (v Vec3d[T]) Spread() (T, T, T) {
 	return v.X, v.Y, v.Z
 }
 
-func (v Vec3d[T]) ToChunkPos() [2]int32 {
-	return [2]int32{int32(v.X) >> 4, int32(v.Z) >> 4}
+func (v Vec3d[T]) ToChunkPos() Vec2d[int32] {
+	return Vec2d[int32]{int32(v.X) >> 4, int32(v.Z) >> 4}
+}
+
+func (v Vec3d[T]) IsValid() bool {
+	return !(math.IsNaN(float64(v.X)) || math.IsNaN(float64(v.Y)) || math.IsNaN(float64(v.Z))) &&
+		!(math.IsInf(float64(v.X), 0) || math.IsInf(float64(v.Y), 0) || math.IsInf(float64(v.Z), 0))
 }

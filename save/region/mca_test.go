@@ -13,13 +13,13 @@ import (
 
 func TestIn(t *testing.T) {
 	for i := -10000; i < 10000; i++ {
-		getX, _ := In(i, i)
+		getX, _ := In(int32(i), int32(i))
 		want := i % 32
 		if want < 0 {
 			want += 32
 		}
 
-		if getX != want {
+		if getX != int32(want) {
 			t.Errorf("fail when convert cord: get %d, want %d", getX, want)
 		}
 	}
@@ -34,7 +34,7 @@ func TestReadRegion(t *testing.T) {
 
 	for i := 0; i < 32; i++ {
 		for j := 0; j < 32; j++ {
-			s, err := r.ReadSector(In(i, j))
+			s, err := r.ReadSector(In(int32(i), int32(j)))
 			if err != nil {
 				continue
 			}
@@ -92,7 +92,7 @@ func TestCountChunks(t *testing.T) {
 	var count int
 	for i := 0; i < 32; i++ {
 		for j := 0; j < 32; j++ {
-			if r.ExistSector(i, j) {
+			if r.ExistSector(int32(i), int32(j)) {
 				count++
 			}
 		}
@@ -138,7 +138,7 @@ func TestWriteSectors(t *testing.T) {
 			t.Errorf("wrong region sector count. Got: %d, Want: %d", len(region.sectors), expectedSectorsNum)
 		}
 
-		if read, err := region.ReadSector(idx, 0); err != nil {
+		if read, err := region.ReadSector(int32(idx), 0); err != nil {
 			t.Fatal("read sector", err)
 		} else if !bytes.Equal(data, read) {
 			t.Fatal("read corrupted sector data")

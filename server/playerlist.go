@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/google/uuid"
@@ -30,7 +31,7 @@ func NewPlayerList(maxPlayers int) *PlayerList {
 	}
 }
 
-func (p *PlayerList) ClientJoin(client PlayerListClient, player PlayerSample) {
+func (p *PlayerList) ClientJoin(client KeepAliveClient, sample PlayerSample) {
 	p.playersLock.Lock()
 	defer p.playersLock.Unlock()
 
@@ -39,22 +40,33 @@ func (p *PlayerList) ClientJoin(client PlayerListClient, player PlayerSample) {
 		return
 	}
 
-	p.players[client] = player
+	p.players[client] = sample
 }
 
-func (p *PlayerList) ClientLeft(client PlayerListClient) {
+func (p *PlayerList) ClientLeft(client KeepAliveClient) {
 	p.playersLock.Lock()
 	defer p.playersLock.Unlock()
 	delete(p.players, client)
 }
 
 // CheckPlayer implements LoginChecker for PlayerList
-func (p *PlayerList) CheckPlayer(string, uuid.UUID, int32) (ok bool, reason chat.Message) {
+func (p *PlayerList) CheckPlayer(name string, uuid uuid.UUID, protocol int32) (ok bool, reason chat.Message) {
 	p.playersLock.Lock()
 	defer p.playersLock.Unlock()
 	if len(p.players) >= p.maxPlayer {
 		return false, chat.TranslateMsg("multiplayer.disconnect.server_full")
 	}
+
+	if protocol < ProtocolVersion {
+		return false, chat.TranslateMsg("multiplayer.disconnect.outdated_client")
+	}
+
+	for _, player := range p.players {
+		if player.Name == name || player.ID == uuid {
+			return false, chat.TranslateMsg("multiplayer.disconnect.duplicate_login")
+		}
+	}
+	fmt.Println("PlayerList: ", name, "joined")
 	return true, chat.Message{}
 }
 

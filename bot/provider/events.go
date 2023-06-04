@@ -3,11 +3,11 @@ package provider
 import (
 	"fmt"
 	"github.com/Edouard127/go-mc/bot/core"
-	"github.com/Edouard127/go-mc/bot/maths"
 	"github.com/Edouard127/go-mc/bot/screen"
 	"github.com/Edouard127/go-mc/bot/world"
 	"github.com/Edouard127/go-mc/data/effects"
 	"github.com/Edouard127/go-mc/level"
+	"github.com/Edouard127/go-mc/maths"
 	"runtime"
 	"time"
 	"unsafe"
@@ -19,8 +19,6 @@ import (
 	. "github.com/Edouard127/go-mc/data/slots"
 	pk "github.com/Edouard127/go-mc/net/packet"
 )
-
-type EventsListener struct{}
 
 func Attach(c *Client) {
 	c.Events.AddListener(

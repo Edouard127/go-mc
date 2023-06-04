@@ -3,7 +3,7 @@ package packet
 import (
 	"bytes"
 	"errors"
-	"github.com/Edouard127/go-mc/bot/maths"
+	"github.com/Edouard127/go-mc/maths"
 	"github.com/Edouard127/go-mc/nbt"
 	"github.com/google/uuid"
 	"io"

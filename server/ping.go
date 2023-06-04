@@ -43,25 +43,31 @@ type PlayerSample struct {
 
 func (s *Server) acceptListPing(conn *net.Conn) {
 	var p pk.Packet
-	for i := 0; i < 2; i++ { // Ping or List. Only allow check twice
-		if err := conn.ReadPacket(&p); err != nil {
+
+	if err := conn.ReadPacket(&p); err != nil {
+		return
+	}
+
+	if resp, err := s.listResp(); err != nil {
+		return
+	} else {
+		if err := conn.WritePacket(pk.Marshal(packetid.CPacketStatusResponse, pk.String(resp))); err != nil {
 			return
 		}
+	}
 
-		switch p.ID {
-		case packetid.SPacketStatusPing:
-			if resp, err := s.listResp(); err != nil {
-				break
-			} else {
-				if err := conn.WritePacket(pk.Marshal(packetid.CPacketStatusResponse, pk.String(resp))); err != nil {
-					return
-				}
-			}
-		case packetid.SPacketPongResponse: //Ping
-			if err := conn.WritePacket(p); err != nil {
-				return
-			}
-		}
+	if err := conn.ReadPacket(&p); err != nil {
+		return
+	}
+
+	var long pk.Long
+	if err := p.Scan(&long); err != nil {
+		return
+	}
+
+	p.ID = packetid.CPacketPingResponse
+	if err := conn.WritePacket(p); err != nil {
+		return
 	}
 }
 
@@ -85,7 +91,7 @@ func (s *Server) listResp() ([]byte, error) {
 	list.Players.Max = s.MaxPlayer()
 	list.Players.Online = s.OnlinePlayer()
 	list.Players.Sample = s.PlayerSamples()
-	list.Description = s.Description()
+	list.Description = chat.TextPtr(s.Description())
 	list.FavIcon = s.FavIcon()
 
 	return json.Marshal(list)

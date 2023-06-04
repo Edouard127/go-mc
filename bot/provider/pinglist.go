@@ -133,7 +133,7 @@ func pingAndList(ctx context.Context, addr string, conn *mcnet.Conn) (data []byt
 	//PING
 	startTime := time.Now()
 	if err := conn.WritePacket(pk.Marshal(
-		packetid.CPacketStatusPing,
+		packetid.SPacketPingRequest,
 		pk.Long(startTime.Unix()),
 	)); err != nil {
 		return nil, 0, fmt.Errorf("bot: send ping packet fail: %v", err)

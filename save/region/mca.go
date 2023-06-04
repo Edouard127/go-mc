@@ -21,7 +21,7 @@ type Region struct {
 
 // In calculate chunk's coordinates relative to region
 // 计算chunk在region中的相对坐标。即，除以32并取余。
-func In(cx, cz int) (int, int) {
+func In(cx, cz int32) (int32, int32) {
 	// c & (32-1)
 	// is equal to:
 	// (c %= 32) > 0 ? c : -c; //C language
@@ -30,7 +30,7 @@ func In(cx, cz int) (int, int) {
 
 // At calculate the region's coordinates where the chunk in
 // 计算chunk在哪一个region中
-func At(cx, cz int) (int, int) {
+func At(cx, cz int32) (int32, int32) {
 	return cx >> 5, cz >> 5
 }
 
@@ -133,7 +133,7 @@ func sectorLoc(offset int32) (sec, num int32) {
 }
 
 // ReadSector find and read the Chunk data from region
-func (r *Region) ReadSector(x, z int) (data []byte, err error) {
+func (r *Region) ReadSector(x, z int32) (data []byte, err error) {
 	sec, num := sectorLoc(r.offsets[z][x])
 	if sec == 0 {
 		return nil, errors.New("sector not exist")
@@ -222,7 +222,7 @@ func (r *Region) WriteSector(x, z int, data []byte) error {
 }
 
 // ExistSector return if a sector is existed
-func (r *Region) ExistSector(x, z int) bool {
+func (r *Region) ExistSector(x, z int32) bool {
 	return r.offsets[z][x] != 0
 }
 

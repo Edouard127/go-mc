@@ -2,8 +2,8 @@ package provider
 
 import (
 	"github.com/Edouard127/go-mc/bot/basic"
-	"github.com/Edouard127/go-mc/bot/maths"
 	"github.com/Edouard127/go-mc/bot/world"
+	"github.com/Edouard127/go-mc/maths"
 	"github.com/Edouard127/go-mc/net"
 	auth "github.com/maxsupermanhd/go-mc-ms-auth"
 )
@@ -17,9 +17,8 @@ type Client struct {
 	Player *Player
 	TPS    *maths.TpsCalculator
 
-	EventHandlers EventsListener
-	Events        Events
-	LoginPlugin   map[string]func(data []byte) ([]byte, error)
+	Events      Events
+	LoginPlugin map[string]func(data []byte) ([]byte, error)
 }
 
 func (c *Client) Close() error {
