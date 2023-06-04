@@ -1,7 +1,7 @@
 package core
 
 import (
-	. "github.com/Tnze/go-mc/data/slots"
+	. "github.com/Edouard127/go-mc/data/slots"
 	"github.com/google/uuid"
 )
 

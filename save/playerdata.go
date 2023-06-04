@@ -1,7 +1,7 @@
 package save
 
 import (
-	"github.com/Tnze/go-mc/nbt"
+	"github.com/Edouard127/go-mc/nbt"
 	"io"
 )
 

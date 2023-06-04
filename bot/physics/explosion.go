@@ -1,9 +1,9 @@
 package physics
 
 import (
-	"github.com/Tnze/go-mc/bot/core"
-	"github.com/Tnze/go-mc/bot/maths"
-	"github.com/Tnze/go-mc/bot/world"
+	"github.com/Edouard127/go-mc/bot/core"
+	"github.com/Edouard127/go-mc/bot/maths"
+	"github.com/Edouard127/go-mc/bot/world"
 )
 
 type ExplosionStrength float64

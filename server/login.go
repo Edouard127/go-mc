@@ -2,12 +2,12 @@ package server
 
 import (
 	"fmt"
-	"github.com/Tnze/go-mc/chat"
-	"github.com/Tnze/go-mc/data/packetid"
-	"github.com/Tnze/go-mc/net"
-	pk "github.com/Tnze/go-mc/net/packet"
-	"github.com/Tnze/go-mc/offline"
-	"github.com/Tnze/go-mc/server/auth"
+	"github.com/Edouard127/go-mc/chat"
+	"github.com/Edouard127/go-mc/data/packetid"
+	"github.com/Edouard127/go-mc/net"
+	pk "github.com/Edouard127/go-mc/net/packet"
+	"github.com/Edouard127/go-mc/offline"
+	"github.com/Edouard127/go-mc/server/auth"
 	"github.com/google/uuid"
 )
 

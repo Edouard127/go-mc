@@ -28,9 +28,9 @@ package server
 
 import (
 	"errors"
-	"github.com/Tnze/go-mc/data/packetid"
-	"github.com/Tnze/go-mc/net"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Edouard127/go-mc/data/packetid"
+	"github.com/Edouard127/go-mc/net"
+	pk "github.com/Edouard127/go-mc/net/packet"
 	"log"
 )
 

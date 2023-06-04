@@ -5,10 +5,10 @@ import (
 	"compress/gzip"
 	_ "embed"
 	"fmt"
-	"github.com/Tnze/go-mc/bot/maths"
-	"github.com/Tnze/go-mc/data/shapes"
-	"github.com/Tnze/go-mc/level/block/states"
-	"github.com/Tnze/go-mc/nbt"
+	"github.com/Edouard127/go-mc/bot/maths"
+	"github.com/Edouard127/go-mc/data/shapes"
+	"github.com/Edouard127/go-mc/level/block/states"
+	"github.com/Edouard127/go-mc/nbt"
 	"math/bits"
 )
 

@@ -1,7 +1,7 @@
 package states
 
 import (
-	"github.com/Tnze/go-mc/internal/utils"
+	"github.com/Edouard127/go-mc/internal/utils"
 	"golang.org/x/exp/constraints"
 	"strconv"
 )

@@ -1,7 +1,7 @@
 package world
 
 import (
-	"github.com/Tnze/go-mc/bot/maths"
+	"github.com/Edouard127/go-mc/bot/maths"
 	"math"
 )
 

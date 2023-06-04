@@ -11,13 +11,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/Tnze/go-mc/data/packetid"
+	"github.com/Edouard127/go-mc/data/packetid"
 	"io"
 	"net/http"
 	"strings"
 
-	"github.com/Tnze/go-mc/net/CFB8"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Edouard127/go-mc/net/CFB8"
+	pk "github.com/Edouard127/go-mc/net/packet"
 	auth "github.com/maxsupermanhd/go-mc-ms-auth"
 )
 

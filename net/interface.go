@@ -1,6 +1,6 @@
 package net
 
-import pk "github.com/Tnze/go-mc/net/packet"
+import pk "github.com/Edouard127/go-mc/net/packet"
 
 type Writer interface {
 	WritePacket(p pk.Packet) error

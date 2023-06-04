@@ -4,15 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Tnze/go-mc/chat"
+	"github.com/Edouard127/go-mc/chat"
 	"net"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/Tnze/go-mc/data/packetid"
-	mcnet "github.com/Tnze/go-mc/net"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Edouard127/go-mc/data/packetid"
+	mcnet "github.com/Edouard127/go-mc/net"
+	pk "github.com/Edouard127/go-mc/net/packet"
 )
 
 type Status struct {

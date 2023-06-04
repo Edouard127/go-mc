@@ -1,8 +1,8 @@
 package slots
 
 import (
-	"github.com/Tnze/go-mc/nbt"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Edouard127/go-mc/nbt"
+	pk "github.com/Edouard127/go-mc/net/packet"
 	"io"
 )
 

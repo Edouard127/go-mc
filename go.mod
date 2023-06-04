@@ -1,4 +1,4 @@
-module github.com/Tnze/go-mc
+module github.com/Edouard127/go-mc
 
 go 1.19
 

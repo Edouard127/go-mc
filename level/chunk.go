@@ -4,16 +4,16 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/Tnze/go-mc/bot/maths"
+	"github.com/Edouard127/go-mc/bot/maths"
 	"io"
 	"log"
 	"math/bits"
 	"strings"
 
-	"github.com/Tnze/go-mc/level/block"
-	"github.com/Tnze/go-mc/nbt"
-	pk "github.com/Tnze/go-mc/net/packet"
-	"github.com/Tnze/go-mc/save"
+	"github.com/Edouard127/go-mc/level/block"
+	"github.com/Edouard127/go-mc/nbt"
+	pk "github.com/Edouard127/go-mc/net/packet"
+	"github.com/Edouard127/go-mc/save"
 )
 
 type ChunkPos [2]int32

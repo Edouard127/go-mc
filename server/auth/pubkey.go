@@ -7,7 +7,7 @@ import (
 	"io"
 	"time"
 
-	pk "github.com/Tnze/go-mc/net/packet"
+	pk "github.com/Edouard127/go-mc/net/packet"
 )
 
 type PublicKey struct {

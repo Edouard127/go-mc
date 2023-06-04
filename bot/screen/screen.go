@@ -1,8 +1,8 @@
 package screen
 
 import (
-	"github.com/Tnze/go-mc/data/grids"
-	"github.com/Tnze/go-mc/data/slots"
+	"github.com/Edouard127/go-mc/data/grids"
+	"github.com/Edouard127/go-mc/data/slots"
 )
 
 type Manager struct {

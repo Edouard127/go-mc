@@ -2,22 +2,22 @@ package provider
 
 import (
 	"fmt"
-	"github.com/Tnze/go-mc/bot/core"
-	"github.com/Tnze/go-mc/bot/maths"
-	"github.com/Tnze/go-mc/bot/screen"
-	"github.com/Tnze/go-mc/bot/world"
-	"github.com/Tnze/go-mc/data/effects"
-	"github.com/Tnze/go-mc/level"
+	"github.com/Edouard127/go-mc/bot/core"
+	"github.com/Edouard127/go-mc/bot/maths"
+	"github.com/Edouard127/go-mc/bot/screen"
+	"github.com/Edouard127/go-mc/bot/world"
+	"github.com/Edouard127/go-mc/data/effects"
+	"github.com/Edouard127/go-mc/level"
 	"runtime"
 	"time"
 	"unsafe"
 
 	"github.com/google/uuid"
 
-	"github.com/Tnze/go-mc/chat"
-	"github.com/Tnze/go-mc/data/packetid"
-	. "github.com/Tnze/go-mc/data/slots"
-	pk "github.com/Tnze/go-mc/net/packet"
+	"github.com/Edouard127/go-mc/chat"
+	"github.com/Edouard127/go-mc/data/packetid"
+	. "github.com/Edouard127/go-mc/data/slots"
+	pk "github.com/Edouard127/go-mc/net/packet"
 )
 
 type EventsListener struct{}
