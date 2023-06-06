@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	auth "github.com/maxsupermanhd/go-mc-ms-auth"
 	"io"
 	"net"
@@ -89,9 +90,10 @@ func (c *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error {
 	)); err != nil {
 		return fmt.Errorf("login start: %w", err)
 	}
+
+	var p pk.Packet
 	for {
 		//Receive Packet
-		var p pk.Packet
 		c.Conn.ReadPacket(&p)
 
 		//Handle Packet
@@ -99,7 +101,7 @@ func (c *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error {
 		case packetid.CPacketLoginDisconnect:
 			var reason chat.Message
 			if err := p.Scan(&reason); err != nil {
-				return fmt.Errorf("login disconnect: %w", err)
+				break
 			}
 			return fmt.Errorf("login disconnect: %s", reason)
 
@@ -109,43 +111,26 @@ func (c *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error {
 			}
 
 		case packetid.CPacketLoginSuccess:
-			if err := p.Scan(
-				(*pk.UUID)(&c.Player.UUID),
-				(*pk.String)(&c.Player.DisplayName),
-			); err != nil {
+			var (
+				euuid pk.UUID
+				name  pk.String
+			)
+			if err := p.Scan(&euuid, &name); err != nil {
 				return fmt.Errorf("login success: %w", err)
 			}
+			c.Player.UUID = uuid.UUID(euuid)
+			c.Player.Username = string(name)
+			return nil
 		case packetid.CPacketSetCompression:
 			var threshold pk.VarInt
 			if err := p.Scan(&threshold); err != nil {
 				return fmt.Errorf("set compression: %w", err)
 			}
 			c.Conn.SetThreshold(int(threshold))
-
-		case packetid.CPacketPluginMessage:
-			var (
-				msgid   pk.VarInt
-				channel pk.Identifier
-				data    pk.PluginMessageData
-			)
-			if err := p.Scan(&msgid, &channel, &data); err != nil {
-				return fmt.Errorf("plugin message: %w", err)
-			}
-
-			handler, ok := c.LoginPlugin[string(channel)]
-			if ok {
-				data, err = handler(data)
-				if err != nil {
-					return fmt.Errorf("plugin message: %w", err)
-				}
-			}
-
-			if err := c.Conn.WritePacket(pk.Marshal(
-				packetid.CPacketPluginMessage,
-				msgid, pk.Boolean(ok),
-				pk.Opt{If: ok, Value: data},
-			)); err != nil {
-				return fmt.Errorf("plugin message: %w", err)
+		case packetid.CPacketLoginPluginRequest:
+			p.ID = packetid.SPacketLoginPluginResponse
+			if err := c.Conn.WritePacket(p); err != nil {
+				return fmt.Errorf("login plugin response: %w", err)
 			}
 		}
 	}

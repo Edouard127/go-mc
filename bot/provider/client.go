@@ -2,6 +2,7 @@ package provider
 
 import (
 	"github.com/Edouard127/go-mc/bot/basic"
+	"github.com/Edouard127/go-mc/bot/core"
 	"github.com/Edouard127/go-mc/bot/world"
 	"github.com/Edouard127/go-mc/maths"
 	"github.com/Edouard127/go-mc/net"
@@ -13,9 +14,10 @@ type Client struct {
 	Conn *net.Conn
 	Auth Auth
 
-	World  *world.World
-	Player *Player
-	TPS    *maths.TpsCalculator
+	World      *world.World
+	PlayerList *core.PlayerList
+	Player     *Player
+	TPS        *maths.TpsCalculator
 
 	Events      Events
 	LoginPlugin map[string]func(data []byte) ([]byte, error)
@@ -34,11 +36,12 @@ func (c *Client) Close() error {
 // and load your Name, UUID and AccessToken to client.
 func NewClient() *Client {
 	c := &Client{
-		Auth:   Auth{RSAuth: auth.RSAuth{Name: "Steve"}, KeyPair: auth.KeyPair{}},
-		World:  world.NewWorld(),
-		Player: NewPlayer(basic.DefaultSettings),
-		TPS:    new(maths.TpsCalculator),
-		Events: Events{handlers: make(map[int32]*handlerHeap)},
+		Auth:       Auth{RSAuth: auth.RSAuth{Name: "Steve"}, KeyPair: auth.KeyPair{}},
+		World:      world.NewWorld(),
+		PlayerList: core.NewPlayerList(),
+		Player:     NewPlayer(basic.DefaultSettings),
+		TPS:        new(maths.TpsCalculator),
+		Events:     Events{handlers: make(map[int32]*handlerHeap)},
 	}
 	c.TPS.SetCallback(c.handleTickers)
 	return c

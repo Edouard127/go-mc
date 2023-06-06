@@ -44,15 +44,7 @@ func (b *Block) feedStates(feeder *StateFeeder[Block]) *Block {
 }
 
 func (b *Block) GetValue(property states.Property[any]) StateID {
-	for k, v := range b.Properties {
-		if k == property {
-			fmt.Println("get value", property, v)
-			stateid := b.StateHolder.GetValue(property, v)
-			fmt.Println("stateid", stateid)
-			return stateid
-		}
-	}
-	return 0
+	return b.StateHolder.GetValue(property, b.Properties[property])
 }
 
 func (b *Block) SetValue(property states.Property[any], value uint32) *Block {

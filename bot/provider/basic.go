@@ -14,6 +14,7 @@ import (
 	"github.com/Edouard127/go-mc/maths"
 	pk "github.com/Edouard127/go-mc/net/packet"
 	"github.com/Edouard127/go-mc/net/transactions"
+	"github.com/google/uuid"
 	"math"
 )
 
@@ -25,6 +26,9 @@ type Player struct {
 	*screen.Manager
 	*transactions.Transactions
 	Settings             basic.Settings
+	expBar               float32
+	TotalExp             int32
+	Level                int32
 	isSpawn              bool
 	fallTicks            float32
 	fallDistance         float32
@@ -37,25 +41,23 @@ type Player struct {
 
 func NewPlayer(settings basic.Settings) *Player {
 	return &Player{
-		PlayerInfo: world.PlayerInfo{},
-		WorldInfo:  world.WorldInfo{},
-		EntityPlayer: &core.EntityPlayer{
-			EntityLiving: &core.EntityLiving{
-				Entity: &core.Entity{
-					Position: maths.Vec3d[float64]{},
-					Motion:   maths.Vec3d[float64]{},
-					Rotation: maths.Vec2d[float64]{},
-				},
-				ActivePotionEffects: make(map[int32]*effects.EffectStatus),
-			},
-			Screens: make(map[int]Container),
-		},
+		PlayerInfo:   world.PlayerInfo{},
+		WorldInfo:    world.WorldInfo{},
+		EntityPlayer: core.NewEntityPlayer("", 0, uuid.UUID{}, 116, 0, 0, 0, 0, 0), // temporary
 		Controller:   &core.Controller{},
 		Manager:      screen.NewManager(),
 		Transactions: transactions.NewTransactions(),
 		Settings:     settings,
 		isSpawn:      false,
 	}
+}
+
+func (p *Player) GetExp() (float32, int32, int32) {
+	return p.expBar, p.TotalExp, p.Level
+}
+
+func (p *Player) SetExp(bar float32, exp, total int32) {
+	p.expBar, p.TotalExp, p.Level = bar, total, exp
 }
 
 func (p *Player) Respawn(c *Client) (err error) {

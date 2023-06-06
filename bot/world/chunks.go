@@ -10,81 +10,31 @@ import (
 )
 
 type World struct {
-	Columns        map[ChunkPos]*Chunk
-	entities       map[int32]*core.EntityInterface
-	entitiesLiving map[int32]*core.EntityLivingInterface
-	entitiesPlayer map[int32]*core.EntityPlayerInterface
+	Columns  map[ChunkPos]*Chunk
+	Entities map[int32]core.EntityInterface
 }
 
-func NewWorld() (w *World) {
-	w = &World{
-		Columns:        make(map[ChunkPos]*Chunk),
-		entities:       make(map[int32]*core.EntityInterface),
-		entitiesLiving: make(map[int32]*core.EntityLivingInterface),
-		entitiesPlayer: make(map[int32]*core.EntityPlayerInterface),
+func NewWorld() *World {
+	return &World{
+		Columns:  make(map[ChunkPos]*Chunk),
+		Entities: make(map[int32]core.EntityInterface),
 	}
-	return
 }
 
-func (w *World) AddEntity(e core.EntityInterface) error {
-	if w.isValidEntity(&e) {
-		w.entities[e.GetID()] = &e
-		return nil
-	}
-	return fmt.Errorf("invalid entity")
+func (w *World) AddEntity(e core.EntityInterface) {
+	w.Entities[e.GetID()] = e
 }
 
-func (w *World) RemoveEntity(e *core.EntityInterface) error {
-	if w.isValidEntity(e) {
-		delete(w.entities, (*e).GetID())
-	}
-	return fmt.Errorf("invalid entity")
+func (w *World) RemoveEntity(e core.EntityInterface) {
+	delete(w.Entities, e.GetID())
 }
 
-func (w *World) GetEntities() map[int32]*core.EntityInterface {
-	return w.entities
+func (w *World) GetEntity(id int32) core.EntityInterface {
+	return w.Entities[id]
 }
 
-/*func (w *World) GetEntitiesByType(t interface{}) []*interface{} {
-	var entities []*interface{}
-	for _, e := range w.entities {
-		if reflect.TypeOf(*e) == reflect.TypeOf(t) {
-			entities = append(entities, e)
-		}
-	}
-	return entities
-}*/
-
-func (w *World) GetEntityByID(id int32) (int32, interface{}, error) {
-	for i, e := range w.entities {
-		fmt.Printf("Entity: %v, ID: %d, Search: %d\n", *e, (*e).GetID(), id)
-		if w.isValidEntity(e) && id == (*e).GetID() {
-			return i, *e, nil
-		}
-	}
-	for i, e := range w.entitiesLiving {
-		if id == (*e).GetID() {
-			return i, *e, nil
-		}
-	}
-	for i, e := range w.entitiesPlayer {
-		if id == (*e).GetID() {
-			return i, *e, nil
-		}
-	}
-	return -1, nil, fmt.Errorf("entity not found")
-}
-
-func (w *World) isValidEntity(e *core.EntityInterface) bool {
-	/*if _, ok := (*e).(core.Entity); ok {
-		return true
-	} else if _, ok := (*e).(*core.EntityLiving); ok {
-		return true
-	} else if _, ok := (*e).(*core.EntityPlayer); ok {
-		return true
-	}
-	return false*/
-	return true
+func (w *World) CastToLiving(e core.EntityInterface) core.EntityLivingInterface {
+	return e.(core.EntityLivingInterface)
 }
 
 func (w *World) GetBlock(pos maths.Vec3d[float64]) (*block.Block, error) {

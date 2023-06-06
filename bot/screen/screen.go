@@ -6,11 +6,11 @@ import (
 )
 
 type Manager struct {
-	Screens       map[int]Container
-	CurrentScreen *Container
-	Inventory     *grids.GenericInventory
 	Cursor        *slots.Slot
 	HeldItem      *slots.Slot
+	CurrentScreen *Container
+	Screens       map[int]Container
+	Inventory     *grids.GenericInventory
 	// The last state received from the server
 	StateID int32
 }
@@ -21,6 +21,16 @@ func NewManager() *Manager {
 		Screens:   fillContainers(inventory),
 		Inventory: inventory,
 	}
+}
+
+func (m *Manager) OpenScreen(id int32) {
+	c := m.Screens[int(id)]
+	m.CurrentScreen = &c
+}
+
+func (m *Manager) CloseScreen() {
+	m.CurrentScreen = nil
+	m.Cursor = nil
 }
 
 func fillContainers(inventory *grids.GenericInventory) map[int]Container {

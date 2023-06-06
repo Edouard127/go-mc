@@ -236,3 +236,29 @@ func (t Tuple) ReadFrom(r io.Reader) (n int64, err error) {
 	}
 	return
 }
+
+type Property struct {
+	Name, Value, Signature string
+}
+
+func (p Property) WriteTo(w io.Writer) (n int64, err error) {
+	return Tuple{
+		String(p.Name),
+		String(p.Value),
+		Option[String, *String]{
+			Has: p.Signature != "",
+			Val: String(p.Signature),
+		},
+	}.WriteTo(w)
+}
+
+func (p *Property) ReadFrom(r io.Reader) (n int64, err error) {
+	var signature Option[String, *String]
+	n, err = Tuple{
+		(*String)(&p.Name),
+		(*String)(&p.Value),
+		&signature,
+	}.ReadFrom(r)
+	p.Signature = string(signature.Val)
+	return
+}

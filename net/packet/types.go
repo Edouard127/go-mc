@@ -473,8 +473,8 @@ func (u UUID) String() string {
 	return (uuid.UUID)(u).String()
 }
 
-func (p *PluginMessageData) WriteTo(w io.Writer) (n int64, err error) {
-	nn, err := w.Write(*p)
+func (p PluginMessageData) WriteTo(w io.Writer) (n int64, err error) {
+	nn, err := w.Write(p)
 	return int64(nn), err
 }
 

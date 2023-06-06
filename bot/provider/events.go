@@ -6,6 +6,7 @@ import (
 	"github.com/Edouard127/go-mc/bot/screen"
 	"github.com/Edouard127/go-mc/bot/world"
 	"github.com/Edouard127/go-mc/data/effects"
+	"github.com/Edouard127/go-mc/data/entity"
 	"github.com/Edouard127/go-mc/level"
 	"github.com/Edouard127/go-mc/maths"
 	"runtime"
@@ -29,6 +30,7 @@ func Attach(c *Client) {
 		PacketHandler{Priority: 64, ID: packetid.CPacketDisconnect, F: Disconnect},
 		PacketHandler{Priority: 64, ID: packetid.CPacketUpdateHealth, F: UpdateHealth},
 		PacketHandler{Priority: int(^uint(0) >> 1), ID: packetid.CPacketSetTime, F: TimeUpdate},
+		PacketHandler{Priority: int(^uint(0) >> 1), ID: packetid.CPacketPlayerInfo, F: PlayerInfo},
 	)
 
 	c.Events.AddTicker(
@@ -51,30 +53,29 @@ type PlayerMessage struct {
 
 func SpawnEntity(c *Client, p pk.Packet) error {
 	var (
-		EntityID            pk.VarInt
-		EntityUUID          pk.UUID
-		TypeID              pk.Byte
-		X, Y, Z             pk.Double
-		Pitch, Yaw, HeadYaw pk.Angle
-		Data                pk.VarInt
+		id                  pk.VarInt
+		euuid               pk.UUID
+		t                   pk.Byte
+		x, y, z             pk.Double
+		pitch, yaw, headYaw pk.Angle
+		data                pk.VarInt
 		vX, vY, vZ          pk.Short
 	)
 
-	if err := p.Scan(&EntityID, &EntityUUID, &TypeID, &X, &Y, &Z, &Pitch, &Yaw, &HeadYaw, &Data, &vX, &vY, &vZ); err != nil {
+	if err := p.Scan(&id, &euuid, &t, &x, &y, &z, &pitch, &yaw, &headYaw, &data, &vX, &vY, &vZ); err != nil {
 		return fmt.Errorf("unable to read SpawnEntity packet: %w", err)
 	}
 
-	if err := c.World.AddEntity(core.NewEntity(
-		int32(EntityID),
-		uuid.UUID(EntityUUID),
-		int32(TypeID),
-		float64(X), float64(Y), float64(Z),
-		float64(Pitch), float64(Yaw),
-	)); err != nil {
-		return err
+	if entity.TypeEntityByID[int32(t)].IsLiving() {
+		c.World.AddEntity(
+			core.NewEntityLiving(int32(id), uuid.UUID(euuid), int32(t), float64(x), float64(y), float64(z), float64(yaw), float64(pitch)),
+		)
+	} else {
+		c.World.AddEntity(
+			core.NewEntity(int32(id), uuid.UUID(euuid), int32(t), float64(x), float64(y), float64(z), float64(yaw), float64(pitch)),
+		)
 	}
 
-	fmt.Println("SpawnEntity", EntityID, EntityUUID, TypeID, X, Y, Z, Pitch, Yaw, HeadYaw, Data, vX, vY, vZ)
 	return nil
 }
 
@@ -94,27 +95,19 @@ func SpawnExperienceOrb(c *Client, p pk.Packet) error {
 
 func SpawnPlayer(c *Client, p pk.Packet) error {
 	var (
-		EntityID   pk.VarInt
-		PlayerUUID pk.UUID
-		X, Y, Z    pk.Double
-		Yaw, Pitch pk.Angle
+		id         pk.VarInt
+		euuid      pk.UUID
+		x, y, z    pk.Double
+		yaw, pitch pk.Angle
 	)
 
-	if err := p.Scan(&EntityID, &PlayerUUID, &X, &Y, &Z, &Yaw, &Pitch); err != nil {
+	if err := p.Scan(&id, &euuid, &x, &y, &z, &yaw, &pitch); err != nil {
 		return fmt.Errorf("unable to read SpawnPlayer packet: %w", err)
 	}
 
-	if err := c.World.AddEntity(core.NewEntity(
-		int32(EntityID),
-		uuid.UUID(PlayerUUID),
-		116, // Player type
-		float64(X), float64(Y), float64(Z),
-		float64(Pitch), float64(Yaw),
-	)); err != nil {
-		return err
-	}
+	c.World.AddEntity(core.NewEntityPlayer(c.PlayerList.GetPlayer(uuid.UUID(euuid)).Name, int32(id), uuid.UUID(euuid), 116, float64(x), float64(y), float64(z), float64(yaw), float64(pitch)))
 
-	fmt.Println("SpawnPlayer", EntityID, PlayerUUID.String(), X, Y, Z, Yaw, Pitch)
+	fmt.Println("SpawnPlayer", id, euuid.String(), x, y, z, yaw, pitch)
 	return nil
 }
 
@@ -557,7 +550,6 @@ func KeepAlive(c *Client, p pk.Packet) error {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	fmt.Println("Alloc = ", m.Alloc/1024/1024, "MiB", "\tTotalAlloc = ", m.TotalAlloc/1024/1024, "MiB", "\tSys = ", m.Sys/1024/1024, "MiB", "\tNumGC = ", m.NumGC)
-
 	return nil
 }
 
@@ -637,6 +629,7 @@ func JoinGame(c *Client, p pk.Packet) error {
 	); err != nil {
 		return fmt.Errorf("unable to read JoinGame packet: %w", err)
 	}
+
 	if err := c.Conn.WritePacket(pk.Marshal( //PluginMessage packet
 		packetid.SPacketPluginMessage,
 		pk.Identifier("minecraft:brand"),
@@ -659,12 +652,7 @@ func JoinGame(c *Client, p pk.Packet) error {
 		return fmt.Errorf("unable to write ClientSettings packet: %w", err)
 	}
 
-	c.Player.EntityPlayer = core.NewEntityPlayer(c.Player.GetID(), c.Player.GetUUID(), 116, 0, 0, 0, 0, 0)
-
-	// Add the player to the world
-	if err := c.World.AddEntity(c.Player.EntityPlayer); err != nil {
-		return fmt.Errorf("unable to add player to the world: %w", err)
-	}
+	c.World.AddEntity(c.Player)
 
 	return nil
 }
@@ -691,19 +679,20 @@ func Entity(c *Client, p pk.Packet) error {
 
 func EntityPosition(c *Client, p pk.Packet) error {
 	var (
-		EntityID               pk.VarInt
-		DeltaX, DeltaY, DeltaZ pk.Short
-		OnGround               pk.Boolean
+		id         pk.VarInt
+		dX, dY, dZ pk.Short
+		onGround   pk.Boolean
 	)
 
-	if err := p.Scan(&EntityID, &DeltaX, &DeltaY, &DeltaZ, &OnGround); err != nil {
+	if err := p.Scan(&id, &dX, &dY, &dZ, &onGround); err != nil {
 		return fmt.Errorf("unable to read EntityPosition packet: %w", err)
 	}
 
-	if _, entity, err := c.World.GetEntityByID(int32(EntityID)); err == nil {
-		if t, ok := entity.(*core.Entity); ok {
-			t.AddRelativePosition(maths.Vec3d[float64]{X: float64(DeltaX), Y: float64(DeltaY), Z: float64(DeltaZ)})
-		}
+	if e := c.World.GetEntity(int32(id)); e != nil {
+		nX := e.GetPosition().X + (float64(dX) / 4096)
+		nY := e.GetPosition().Y + (float64(dY) / 4096)
+		nZ := e.GetPosition().Z + (float64(dZ) / 4096)
+		e.SetPosition(maths.Vec3d[float64]{X: nX, Y: nY, Z: nZ}.Spread())
 	}
 
 	return nil
@@ -711,14 +700,22 @@ func EntityPosition(c *Client, p pk.Packet) error {
 
 func EntityPositionRotation(c *Client, p pk.Packet) error {
 	var (
-		EntityID               pk.VarInt
-		DeltaX, DeltaY, DeltaZ pk.Short
-		Yaw, Pitch             pk.Angle
-		OnGround               pk.Boolean
+		id         pk.VarInt
+		dX, dY, dZ pk.Short
+		yaw, pitch pk.Angle
+		onGround   pk.Boolean
 	)
 
-	if err := p.Scan(&EntityID, &DeltaX, &DeltaY, &DeltaZ, &Yaw, &Pitch, &OnGround); err != nil {
+	if err := p.Scan(&id, &dX, &dY, &dZ, &yaw, &pitch, &onGround); err != nil {
 		return fmt.Errorf("unable to read EntityPositionRotation packet: %w", err)
+	}
+
+	if e := c.World.GetEntity(int32(id)); e != nil {
+		nX := e.GetPosition().X + (float64(dX) / 4096)
+		nY := e.GetPosition().Y + (float64(dY) / 4096)
+		nZ := e.GetPosition().Z + (float64(dZ) / 4096)
+		e.SetPosition(maths.Vec3d[float64]{X: nX, Y: nY, Z: nZ}.Spread())
+		e.SetRotation(float64(yaw), float64(pitch))
 	}
 
 	return nil
@@ -739,13 +736,17 @@ func EntityHeadRotation(c *Client, p pk.Packet) error {
 
 func EntityRotation(c *Client, p pk.Packet) error {
 	var (
-		EntityID   pk.VarInt
-		Yaw, Pitch pk.Angle
-		OnGround   pk.Boolean
+		id         pk.VarInt
+		yaw, pitch pk.Angle
+		onGround   pk.Boolean
 	)
 
-	if err := p.Scan(&EntityID, &Yaw, &Pitch, &OnGround); err != nil {
+	if err := p.Scan(&id, &yaw, &pitch, &onGround); err != nil {
 		return fmt.Errorf("unable to read EntityRotation packet: %w", err)
+	}
+
+	if e := c.World.GetEntity(int32(id)); e != nil {
+		e.SetRotation(float64(yaw), float64(pitch))
 	}
 
 	return nil
@@ -812,25 +813,9 @@ func CombatEvent(c *Client, p pk.Packet) error {
 }
 
 func PlayerInfo(c *Client, p pk.Packet) error {
-	/*var action pk.Byte
-	var players []struct {
-		UUID       pk.UUID
-		Name       pk.String
-		Properties []struct {
-			Name      pk.String
-			Value     pk.String
-			Signature pk.String
-		}
-		GameMode    pk.UnsignedByte
-		Latency     pk.VarInt
-		DisplayName pk.String
+	if err := p.Scan(c.PlayerList); err != nil {
+		return fmt.Errorf("unable to read PlayerInfo packet: %w", err)
 	}
-
-	if err := p.Scan(&action, &players); err != nil {
-		return err
-	}
-
-	fmt.Println("PlayerInfo", action, players)*/
 	return nil
 }
 
@@ -1186,17 +1171,11 @@ func EntityVelocity(c *Client, p pk.Packet) error {
 		return fmt.Errorf("unable to read EntityVelocity packet: %w", err)
 	}
 
-	if _, e, err := c.World.GetEntityByID(int32(entityID)); err == nil {
-		switch e.(type) {
-		case *core.Entity:
-			e.(*core.Entity).SetMotion(maths.Vec3d[float64]{X: float64(velocityX) / 8000, Y: float64(velocityY) / 8000, Z: float64(velocityZ) / 8000}.Spread())
-		case *core.EntityLiving:
-			e.(*core.EntityLiving).SetMotion(maths.Vec3d[float64]{X: float64(velocityX) / 8000, Y: float64(velocityY) / 8000, Z: float64(velocityZ) / 8000}.Spread())
-		case *core.EntityPlayer:
-			e.(*core.EntityPlayer).SetMotion(maths.Vec3d[float64]{X: float64(velocityX) / 8000, Y: float64(velocityY) / 8000, Z: float64(velocityZ) / 8000}.Spread())
-		}
-	} else {
-		return nil
+	if e := c.World.GetEntity(int32(entityID)); e != nil {
+		vX := float64(velocityX) / 8000
+		vY := float64(velocityY) / 8000
+		vZ := float64(velocityZ) / 8000
+		e.SetMotion(maths.Vec3d[float64]{X: vX, Y: vY, Z: vZ}.Spread())
 	}
 
 	return nil
