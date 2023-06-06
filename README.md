@@ -1,7 +1,8 @@
 # Go-MC
 
+Check out the original [project here](https://github.com/Tnze/go-mc)
 
-Minecraft for "rodents"
+Minecraft 1.19 for rodents
 
 ## Badges
 ![Downloads](https://img.shields.io/github/downloads/Edouard127/go-mc/total)
@@ -10,27 +11,21 @@ Minecraft for "rodents"
 
 ## Features
 
-- Ray-Tracing
-
-## Todo
-
-- [ ] Game physics
-- [ ] Inventory transactions
-- [ ] Movements
-- [ ] Chat
-- [ ] A* pathfinding
+- [x] 👍 Minecraft network protocol
+- [x] 👌 Client framework
+- [x] ⌛ Server framework
+- [x] 👍 Regions & Chunks & Blocks
+- [x] ❌ World generation
+- [x] 👍 Chat Message (Support both Json and old `§` format)
+- [x] 👍 Dual role RCON protocol (Server & Client)
+- [x] 👍 NBT (Based on reflection)
+- [x] 👌 SNBT ⇋ NBT
+- [x] ⌛ Yggdrasil (Mojang login)
+- [x] ⌛ Microsoft login
+- [x] ❌ Realms Server
 
 ## Documentation
 
-### Ray-Tracing
+[GoDoc](https://pkg.go.dev/github.com/Tnze/go-mc?tab=doc)
 
-You can cast a ray in the world to get the block you are looking at.
-```go
-start := c.Player.GetEyePos()
-end := maths.ProjectPosition(c.Player.Rotation, 5, 1.62) // Relative to the player's eye position
-result, err := c.World.RayTrace(start, start.Add(end))
-if err != nil {
-fmt.Println(err)
-}
-fmt.Println(result.String())
-```
+Real documentation will be written in the future. (Maybe :trollface:)
