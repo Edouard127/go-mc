@@ -8,8 +8,7 @@ import (
 )
 
 type Entity struct {
-	Name                string
-	Type                entity.TypeEntity
+	Type                *entity.TypeEntity
 	ID                  int32
 	UUID                uuid.UUID
 	lastPosition        maths.Vec3d[float64]
@@ -24,7 +23,8 @@ type Entity struct {
 
 type EntityInterface interface {
 	GetName() string
-	GetType() entity.TypeEntity
+	GetDisplayName() string
+	GetType() *entity.TypeEntity
 	GetID() int32
 	GetUUID() uuid.UUID
 	GetPosition() maths.Vec3d[float64]
@@ -40,16 +40,18 @@ type EntityInterface interface {
 	SetMotion(x, y, z float64)
 	SetSize(width, height float64)
 	IsInvulnerableTo(source enums.DamageSource) bool
-	IsLivingEntity() bool
-	IsPlayerEntity() bool
 	//IsEntityInsideOpaqueBlock() bool
 }
 
 func (e *Entity) GetName() string {
-	return e.Name
+	return e.Type.Name
 }
 
-func (e *Entity) GetType() entity.TypeEntity {
+func (e *Entity) GetDisplayName() string {
+	return e.Type.DisplayName
+}
+
+func (e *Entity) GetType() *entity.TypeEntity {
 	return e.Type
 }
 
@@ -107,10 +109,6 @@ func (e *Entity) IsLivingEntity() bool {
 	return false
 }
 
-func (e *Entity) IsPlayerEntity() bool {
-	return false
-}
-
 func (e *Entity) SetPosition(x, y, z float64) {
 	e.lastPosition = e.Position
 	e.Position = maths.Vec3d[float64]{X: x, Y: y, Z: z}
@@ -154,29 +152,14 @@ func (e *Entity) SetSize(width, height float64) {
 	}
 }
 
-func (e *Entity) AddRelativePosition(position maths.Vec3d[float64]) {
-	e.SetPosition(e.Position.MulScalar(32).Sub(position).MulScalar(32).MulScalar(128).Spread())
-}
-
-func (e *Entity) AddInvulnerableDamage(damageSource enums.DamageSource) {
-	e.invulnerableDamages = append(e.invulnerableDamages, damageSource)
-}
-
-func NewEntity(
-	EID int32,
-	EUUID uuid.UUID,
-	Type int32,
-	X, Y, Z float64,
-	Yaw, Pitch float64,
-) *Entity {
-	entityType := entity.TypeEntityByID[Type]
+func NewEntity(id int32, uuid uuid.UUID, t int32, x, y, z float64, yaw, pitch float64) *Entity {
+	entityType := entity.TypeEntityByID[t]
 	e := &Entity{
-		Name:     entityType.Name,
-		Type:     *entityType,
-		ID:       EID,
-		UUID:     EUUID,
-		Position: maths.Vec3d[float64]{X: X, Y: Y, Z: Z},
-		Rotation: maths.Vec2d[float64]{X: Yaw, Y: Pitch},
+		Type:     entityType,
+		ID:       id,
+		UUID:     uuid,
+		Position: maths.Vec3d[float64]{X: x, Y: y, Z: z},
+		Rotation: maths.Vec2d[float64]{X: yaw, Y: pitch},
 	}
 	e.SetSize(entityType.Width, entityType.Height)
 	return e

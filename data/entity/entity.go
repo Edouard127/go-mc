@@ -16,6 +16,11 @@ type TypeEntity struct {
 	Type        string
 }
 
+// IsLiving returns true if the entity is a living entity.
+func (t *TypeEntity) IsLiving() bool {
+	return t.Type == "mob" || t.Type == "animal" || t.Type == "ambient" || t.Type == "water_creature" || t.Type == "hostile" || t.Type == "player"
+}
+
 var (
 	Allay = TypeEntity{
 		ID:          0,

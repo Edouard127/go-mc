@@ -20,7 +20,7 @@ type EntityLiving struct {
 	MaxFood                 int32
 	Saturation              float32
 	Absorption              float32
-	ActiveItem              item.Item
+	ActiveItem              *item.Item
 	ActiveItemStackUseCount int32
 	ActivePotionEffects     map[int32]*effects.EffectStatus
 	dead                    bool
@@ -38,8 +38,14 @@ type EntityLivingInterface interface {
 	IsDead() bool
 	IsPotionActive(effect effects.Effect) bool
 	GetPotionEffect(effect effects.Effect) *effects.EffectStatus
-	IsInvulnerableTo(source enums.DamageSource) bool
-	//IsEntityInsideOpaqueBlock() bool
+}
+
+func (e *EntityLiving) GetName() string {
+	return e.Type.Name
+}
+
+func (e *EntityLiving) GetDisplayName() string {
+	return e.Type.DisplayName
 }
 
 func (e *EntityLiving) GetHealth(absorption bool) float32 {
@@ -82,22 +88,9 @@ func (e *EntityLiving) IsLivingEntity() bool {
 	return true
 }
 
-func (e *EntityLiving) IsPlayerEntity() bool {
-	return false
-}
-
-/*func (e *EntityLiving) IsEntityInsideOpaqueBlock() bool {
-	return e.Entity.IsEntityInsideOpaqueBlock()
-}*/
-
-func NewEntityLiving(EID int32,
-	EUUID uuid.UUID,
-	Type int32,
-	X, Y, Z float64,
-	Yaw, Pitch float64,
-) *EntityLiving {
+func NewEntityLiving(id int32, uuid uuid.UUID, t int32, x, y, z float64, yaw, pitch float64) *EntityLiving {
 	return &EntityLiving{
-		Entity:              NewEntity(EID, EUUID, Type, X, Y, Z, Yaw, Pitch),
+		Entity:              NewEntity(id, uuid, t, x, y, z, yaw, pitch),
 		ActivePotionEffects: make(map[int32]*effects.EffectStatus),
 	}
 }

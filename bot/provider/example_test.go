@@ -2,7 +2,6 @@ package provider
 
 import (
 	"encoding/hex"
-	"fmt"
 	"github.com/Edouard127/go-mc/data/packetid"
 	"github.com/Edouard127/go-mc/internal/utils"
 	"github.com/Edouard127/go-mc/offline"
@@ -26,7 +25,6 @@ func TestExampleClient_JoinServer_online(t *testing.T) {
 	c := NewClient()
 
 	if mcAuth, err := auth.GetMCcredentials(utils.GetCacheDirectory(), "88650e7e-efee-4857-b9a9-cf580a00ef43"); err != nil {
-		fmt.Printf("GetMCcredentials failed: %v\nWe can safely ignore this error if you are connecting on a offline server\n", err)
 		c.Auth.Name = "Steve"
 		c.Auth.UUID = offline.NameToUUID(c.Auth.Name).String()
 	} else {
