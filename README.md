@@ -26,6 +26,6 @@ Minecraft 1.19 for rodents
 
 ## Documentation
 
-[GoDoc](https://pkg.go.dev/github.com/Tnze/go-mc?tab=doc)
+[GoDoc](https://pkg.go.dev/github.com/Edouard127/go-mc?tab=doc)
 
 Real documentation will be written in the future. (Maybe :trollface:)
