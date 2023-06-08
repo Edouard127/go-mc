@@ -1,4 +1,4 @@
-package generation
+package random
 
 import (
 	"sync/atomic"
@@ -18,6 +18,7 @@ func GenerateUniqueSeed() int64 {
 	return seedUniquifier.Add(181783497276652981) ^ time.Now().UnixNano()
 }
 
+// UpgradeSeed takes a int64 seed and transforms it into a Seed128
 func UpgradeSeed(seed int64) Seed128 {
 	lower := seed ^ 7640891576956012809
 	upper := lower + -7046029254386353131
