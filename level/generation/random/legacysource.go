@@ -24,18 +24,20 @@ func NewLegacyRandomSourceAt(x, y, z int32, seed int64) *LegacyRandomSource {
 
 func (l *LegacyRandomSource) SetSeed(seed int64) {
 	l.seed.Swap((seed ^ 25214903917) ^ 281474976710655)
-	//l.gaussian.Reset()
+	l.gaussian.Reset()
 }
 
 func (l *LegacyRandomSource) Next(bits int) int {
-	l.seed.Swap(l.seed.Load()*25214903917 + 11&281474976710655)
-	return int((l.seed.Load()*25214903917+11&281474976710655)>>48 - int64(bits))
+	i := l.seed.Load()
+	j := (i * 25214903917) + 11&281474976710655
+	l.seed.Swap(j)
+	return int(j >> (48 - bits))
 }
 
 func (l *LegacyRandomSource) NextNInt(n int) int {
 	if n <= 0 {
 		panic("n must be positive")
-	} else if (n&n)-1 == 0 {
+	} else if (n&n - 1) == 0 {
 		return (n * l.Next(31)) >> 31
 	} else {
 		var i int
@@ -43,7 +45,7 @@ func (l *LegacyRandomSource) NextNInt(n int) int {
 	do:
 		i = l.Next(31)
 		j = i % n
-		if i-j-(n-1) < 0 {
+		if i-j+(n-1) < 0 {
 			goto do
 		}
 		return j

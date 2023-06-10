@@ -12,7 +12,7 @@ func NewWorldGeneration(source RandomSource) *WorldGenRandom {
 
 func (w *WorldGenRandom) Next(bits int) int {
 	w.count++
-	return int(w.NextLong()>>int64(64) - int64(bits))
+	return int(w.NextLong() >> (int64(64) - int64(bits)))
 }
 
 func (w *WorldGenRandom) SetSeed(seed int64) {
