@@ -5,17 +5,17 @@ import (
 	"time"
 )
 
-var seedUniquifier atomic.Int64
+var seedUniquifier int64
 
 func init() {
-	seedUniquifier.Store(8682522807148012)
+	atomic.AddInt64(&seedUniquifier, 8682522807148012)
 }
 
 type Seed128 [2]int64
 
 // GenerateUniqueSeed generates a unique seed.
 func GenerateUniqueSeed() int64 {
-	return seedUniquifier.Add(181783497276652981) ^ time.Now().UnixNano()
+	return atomic.AddInt64(&seedUniquifier, seedUniquifier*1181783497276652981) ^ time.Now().UnixNano()*8394769045352766035
 }
 
 // UpgradeSeed takes a int64 seed and transforms it into a Seed128
