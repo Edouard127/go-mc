@@ -34,7 +34,7 @@ func (l *LegacyRandomSource) Next(bits int) int {
 	return int(j >> (48 - bits))
 }
 
-func (l *LegacyRandomSource) NextNInt(n int) int {
+func (l *LegacyRandomSource) NextInt(n int) int {
 	if n <= 0 {
 		panic("n must be positive")
 	} else if (n&n - 1) == 0 {
@@ -53,19 +53,19 @@ func (l *LegacyRandomSource) NextNInt(n int) int {
 }
 
 func (l *LegacyRandomSource) NextLong() int64 {
-	return int64((l.NextNInt(32) << 32) + l.NextNInt(32))
+	return int64((l.NextInt(32) << 32) + l.NextInt(32))
 }
 
 func (l *LegacyRandomSource) NextBoolean() bool {
-	return l.NextInt() != 0
+	return l.NextInt(1) != 0
 }
 
 func (l *LegacyRandomSource) NextFloat() float32 {
-	return float32(float64(l.NextNInt(24)) * 5.9604645e-8)
+	return float32(float64(l.NextInt(24)) * 5.9604645e-8)
 }
 
 func (l *LegacyRandomSource) NextDouble() float64 {
-	return float64((l.NextNInt(26)<<27)+l.NextNInt(27)) * 1.110223e-16
+	return float64((l.NextInt(26)<<27)+l.NextInt(27)) * 1.110223e-16
 }
 
 func (l *LegacyRandomSource) NextGaussian() float64 {

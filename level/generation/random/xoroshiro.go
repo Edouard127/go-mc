@@ -1,18 +1,17 @@
-package generation
+package random
 
 import (
-	"github.com/Edouard127/go-mc/level/generation/random"
 	"github.com/Edouard127/go-mc/maths"
 )
 
-type Xoroshiro128 random.Seed128
+type Xoroshiro128 Seed128
 
-func NewXoroshiro128(seed random.Seed128) *Xoroshiro128 {
+func NewXoroshiro128(seed Seed128) *Xoroshiro128 {
 	return doXoroShiro128(seed[0], seed[1])
 }
 
 func doXoroShiro128(lower, higher int64) *Xoroshiro128 {
-	seed := random.Seed128{lower, higher}
+	seed := Seed128{lower, higher}
 	if lower|higher == 0 {
 		seed[0] = -7046029254386353131
 		seed[1] = 7640891576956012809

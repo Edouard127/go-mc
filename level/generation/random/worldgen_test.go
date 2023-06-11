@@ -32,5 +32,5 @@ func TestGenerateUniqueSeed(t *testing.T) {
 
 func TestWorldGenRandom_SeedSlimeChunk(t *testing.T) {
 	world := NewWorldGeneration(NewLegacyRandomSource(9209794931264193696))
-	AssertEqual(t, true, world.SeedSlimeChunk(int32(3), int32(-11), 987234911).NextNInt(10) == 0 && world.NextNInt(10) == 0)
+	AssertEqual(t, true, world.SeedSlimeChunk(int32(3), int32(-11), 987234911).NextInt(10) == 0 && world.NextInt(10) == 0)
 }
