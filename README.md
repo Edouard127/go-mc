@@ -15,7 +15,7 @@ Minecraft 1.19 for rodents
 - [x] 👌 Client framework
 - [x] ⌛ Server framework
 - [x] 👍 Regions & Chunks & Blocks
-- [x] ❌ World generation
+- [x] ⌛ World generation
 - [x] 👍 Chat Message (Support both Json and old `§` format)
 - [x] 👍 Dual role RCON protocol (Server & Client)
 - [x] 👍 NBT (Based on reflection)
