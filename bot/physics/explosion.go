@@ -24,14 +24,14 @@ func (e ExplosionStrength) GetExplosionRadius() float64 {
 
 type Explosion struct {
 	// The position of the explosion
-	Position maths.Vec3d[float64]
+	Position maths.Vec3d
 	// Strength of the explosion
 	Strength ExplosionStrength
 }
 
-func (e Explosion) GetAffectedEntities() []maths.Vec3d[float64] { return nil }
+func (e Explosion) GetAffectedEntities() []maths.Vec3d { return nil }
 
-func (e Explosion) CalculateDamage(pos maths.Vec3d[float64], entity core.EntityLiving, world *world.World, explosionType ExplosionStrength) float64 {
+func (e Explosion) CalculateDamage(pos maths.Vec3d, entity core.EntityLiving, world *world.World, explosionType ExplosionStrength) float64 {
 	radius := explosionType.GetExplosionRadius()
 	distance := entity.Position.DistanceTo(pos) / radius
 

@@ -2,127 +2,115 @@ package core
 
 import (
 	"github.com/Edouard127/go-mc/data/entity"
-	"github.com/Edouard127/go-mc/data/enums"
 	"github.com/Edouard127/go-mc/maths"
 	"github.com/google/uuid"
 )
 
-type Entity struct {
-	Type                *entity.TypeEntity
-	ID                  int32
-	UUID                uuid.UUID
-	lastPosition        maths.Vec3d[float64]
-	Position            maths.Vec3d[float64]
-	Rotation            maths.Vec2d[float64]
-	Motion              maths.Vec3d[float64]
-	BoundingBox         maths.AxisAlignedBB[float64]
-	Width, Height       float64
-	dataManager         map[int32]interface{}
-	invulnerableDamages []enums.DamageSource
+type UnaliveEntity struct {
+	Type          entity.TypeEntity
+	ID            int32
+	UUID          uuid.UUID
+	lastPosition  maths.Vec3d
+	Position      maths.Vec3d
+	Rotation      maths.Vec2d
+	Motion        maths.Vec3d
+	BoundingBox   maths.AxisAlignedBB[float64]
+	Width, Height float64
+	dataManager   map[int32]interface{}
 }
 
-type EntityInterface interface {
+type Entity interface {
 	GetName() string
 	GetDisplayName() string
-	GetType() *entity.TypeEntity
+	GetType() entity.TypeEntity
 	GetID() int32
 	GetUUID() uuid.UUID
-	GetPosition() maths.Vec3d[float64]
-	GetRotation() maths.Vec2d[float64]
-	GetMotion() maths.Vec3d[float64]
+	GetPosition() maths.Vec3d
+	GetRotation() maths.Vec2d
+	GetMotion() maths.Vec3d
 	GetBoundingBox() maths.AxisAlignedBB[float64]
 	GetWidth() float64
 	GetHeight() float64
 	GetDataManager() map[int32]interface{}
-	GetInvulnerableDamages() []enums.DamageSource
+	IsLivingEntity() bool
+	IsPlayer() bool
 	SetPosition(x, y, z float64)
 	SetRotation(yaw, pitch float64)
 	SetMotion(x, y, z float64)
 	SetSize(width, height float64)
-	IsInvulnerableTo(source enums.DamageSource) bool
-	//IsEntityInsideOpaqueBlock() bool
 }
 
-func (e *Entity) GetName() string {
+func (e *UnaliveEntity) GetName() string {
 	return e.Type.Name
 }
 
-func (e *Entity) GetDisplayName() string {
+func (e *UnaliveEntity) GetDisplayName() string {
 	return e.Type.DisplayName
 }
 
-func (e *Entity) GetType() *entity.TypeEntity {
+func (e *UnaliveEntity) GetType() entity.TypeEntity {
 	return e.Type
 }
 
-func (e *Entity) GetID() int32 {
+func (e *UnaliveEntity) GetID() int32 {
 	return e.ID
 }
 
-func (e *Entity) GetUUID() uuid.UUID {
+func (e *UnaliveEntity) GetUUID() uuid.UUID {
 	return e.UUID
 }
 
-func (e *Entity) GetPosition() maths.Vec3d[float64] {
+func (e *UnaliveEntity) GetPosition() maths.Vec3d {
 	return e.Position
 }
 
-func (e *Entity) GetRotation() maths.Vec2d[float64] {
+func (e *UnaliveEntity) GetRotation() maths.Vec2d {
 	return e.Rotation
 }
 
-func (e *Entity) GetMotion() maths.Vec3d[float64] {
+func (e *UnaliveEntity) GetMotion() maths.Vec3d {
 	return e.Motion
 }
 
-func (e *Entity) GetBoundingBox() maths.AxisAlignedBB[float64] {
+func (e *UnaliveEntity) GetBoundingBox() maths.AxisAlignedBB[float64] {
 	return e.BoundingBox
 
 }
 
-func (e *Entity) GetWidth() float64 {
+func (e *UnaliveEntity) GetWidth() float64 {
 	return e.Width
 }
 
-func (e *Entity) GetHeight() float64 {
+func (e *UnaliveEntity) GetHeight() float64 {
 	return e.Height
 }
 
-func (e *Entity) GetDataManager() map[int32]interface{} {
+func (e *UnaliveEntity) GetDataManager() map[int32]interface{} {
 	return e.dataManager
 }
 
-func (e *Entity) GetInvulnerableDamages() []enums.DamageSource {
-	return e.invulnerableDamages
-}
-
-func (e *Entity) IsInvulnerableTo(damageSource enums.DamageSource) bool {
-	for _, v := range e.invulnerableDamages {
-		if v == damageSource {
-			return true
-		}
-	}
+func (e *UnaliveEntity) IsLivingEntity() bool {
 	return false
 }
 
-func (e *Entity) IsLivingEntity() bool {
+func (e *UnaliveEntity) IsPlayer() bool {
 	return false
 }
 
-func (e *Entity) SetPosition(x, y, z float64) {
+func (e *UnaliveEntity) SetPosition(x, y, z float64) {
 	e.lastPosition = e.Position
-	e.Position = maths.Vec3d[float64]{X: x, Y: y, Z: z}
+	e.Position = maths.Vec3d{X: x, Y: y, Z: z}
 }
 
-func (e *Entity) SetRotation(yaw, pitch float64) {
-	e.Rotation = maths.Vec2d[float64]{X: yaw, Y: pitch}
+func (e *UnaliveEntity) SetRotation(yaw, pitch float64) {
+	e.Rotation = maths.Vec2d{X: yaw, Y: pitch}
 }
 
-func (e *Entity) SetMotion(x, y, z float64) {
-	e.Motion = maths.Vec3d[float64]{X: x, Y: y, Z: z}
+func (e *UnaliveEntity) SetMotion(x, y, z float64) {
+	e.Motion = maths.Vec3d{X: x, Y: y, Z: z}
 }
 
-func (e *Entity) SetSize(width, height float64) {
+func (e *UnaliveEntity) SetSize(width, height float64) {
 	if width != e.Width || height != e.Height {
 		f := e.Width
 		e.Width = width
@@ -152,14 +140,14 @@ func (e *Entity) SetSize(width, height float64) {
 	}
 }
 
-func NewEntity(id int32, uuid uuid.UUID, t int32, x, y, z float64, yaw, pitch float64) *Entity {
+func NewEntity(id int32, uuid uuid.UUID, t int32, x, y, z float64, yaw, pitch float64) *UnaliveEntity {
 	entityType := entity.TypeEntityByID[t]
-	e := &Entity{
+	e := &UnaliveEntity{
 		Type:     entityType,
 		ID:       id,
 		UUID:     uuid,
-		Position: maths.Vec3d[float64]{X: x, Y: y, Z: z},
-		Rotation: maths.Vec2d[float64]{X: yaw, Y: pitch},
+		Position: maths.Vec3d{X: x, Y: y, Z: z},
+		Rotation: maths.Vec2d{X: yaw, Y: pitch},
 	}
 	e.SetSize(entityType.Width, entityType.Height)
 	return e

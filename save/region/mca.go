@@ -11,17 +11,17 @@ import (
 // Region contain 32*32 chunks in one .mca file
 type Region struct {
 	f          io.ReadWriteSeeker
-	offsets    [32][32]int32
-	timestamps [32][32]int32
+	offsets    [32][32]int
+	timestamps [32][32]int
 
 	// sectors record if a sector is in used.
 	// contrary to mojang's, because false is the default value in Go.
-	sectors map[int32]bool
+	sectors map[int]bool
 }
 
 // In calculate chunk's coordinates relative to region
 // 计算chunk在region中的相对坐标。即，除以32并取余。
-func In(cx, cz int32) (int32, int32) {
+func In(cx, cz int) (int, int) {
 	// c & (32-1)
 	// is equal to:
 	// (c %= 32) > 0 ? c : -c; //C language
@@ -30,7 +30,7 @@ func In(cx, cz int32) (int32, int32) {
 
 // At calculate the region's coordinates where the chunk in
 // 计算chunk在哪一个region中
-func At(cx, cz int32) (int32, int32) {
+func At(cx, cz int) (int, int) {
 	return cx >> 5, cz >> 5
 }
 
@@ -52,7 +52,7 @@ func Open(name string) (r *Region, err error) {
 func Load(f io.ReadWriteSeeker) (r *Region, err error) {
 	r = &Region{
 		f:       f,
-		sectors: make(map[int32]bool),
+		sectors: make(map[int]bool),
 	}
 
 	// read the offsets
@@ -73,7 +73,7 @@ func Load(f io.ReadWriteSeeker) (r *Region, err error) {
 	for _, v := range r.offsets {
 		for _, v := range v {
 			if o, s := sectorLoc(v); o != 0 {
-				for i := int32(0); i < s; i++ {
+				for i := int(0); i < s; i++ {
 					r.sectors[o+i] = true
 				}
 			}
@@ -95,7 +95,7 @@ func Create(name string) (*Region, error) {
 // CreateWriter init the region
 func CreateWriter(f io.ReadWriteSeeker) (r *Region, err error) {
 	r = new(Region)
-	r.sectors = make(map[int32]bool)
+	r.sectors = make(map[int]bool)
 	r.f = f
 
 	// write the offsets
@@ -128,12 +128,12 @@ func (r *Region) Close() error {
 	return nil
 }
 
-func sectorLoc(offset int32) (sec, num int32) {
+func sectorLoc(offset int) (sec, num int) {
 	return (offset >> 8) & 0xFFFFFF, offset & 0xFF
 }
 
 // ReadSector find and read the Chunk data from region
-func (r *Region) ReadSector(x, z int32) (data []byte, err error) {
+func (r *Region) ReadSector(x, z int) (data []byte, err error) {
 	sec, num := sectorLoc(r.offsets[z][x])
 	if sec == 0 {
 		return nil, errors.New("sector not exist")
@@ -144,7 +144,7 @@ func (r *Region) ReadSector(x, z int32) (data []byte, err error) {
 	}
 	reader := io.LimitReader(r.f, 4096*int64(num))
 
-	var length int32
+	var length int
 	err = binary.Read(reader, binary.BigEndian, &length)
 	if err != nil {
 		return
@@ -166,7 +166,7 @@ func (r *Region) ReadSector(x, z int32) (data []byte, err error) {
 
 // WriteSector write Chunk data into region file
 func (r *Region) WriteSector(x, z int, data []byte) error {
-	need := int32((len(data) + 4 + 4096 - 1) / 4096)
+	need := int((len(data) + 4 + 4096 - 1) / 4096)
 	n, now := sectorLoc(r.offsets[z][x])
 
 	// maximum chunk size is 1MB
@@ -180,7 +180,7 @@ func (r *Region) WriteSector(x, z int, data []byte) error {
 		// we need to allocate new sectors
 
 		// mark the sectors previously used for this chunk as free
-		for i := int32(0); i < now; i++ {
+		for i := int(0); i < now; i++ {
 			r.sectors[n+i] = false
 		}
 
@@ -189,14 +189,14 @@ func (r *Region) WriteSector(x, z int, data []byte) error {
 
 		// mark the sectors previously used for this chunk as used
 		now = need
-		for i := int32(0); i < need; i++ {
+		for i := int(0); i < need; i++ {
 			r.sectors[n+i] = true
 		}
 
 		r.offsets[z][x] = (n << 8) | (need & 0xFF)
 
 		// update file head
-		err := r.setHead(x, z, uint32(r.offsets[z][x]), uint32(time.Now().Unix()))
+		err := r.setHead(x, z, uint(r.offsets[z][x]), uint(time.Now().Unix()))
 		if err != nil {
 			return err
 		}
@@ -207,7 +207,7 @@ func (r *Region) WriteSector(x, z int, data []byte) error {
 		return err
 	}
 	//data length
-	err = binary.Write(r.f, binary.BigEndian, int32(len(data)))
+	err = binary.Write(r.f, binary.BigEndian, int(len(data)))
 	if err != nil {
 		return err
 	}
@@ -222,7 +222,7 @@ func (r *Region) WriteSector(x, z int, data []byte) error {
 }
 
 // ExistSector return if a sector is existed
-func (r *Region) ExistSector(x, z int32) bool {
+func (r *Region) ExistSector(x, z int) bool {
 	return r.offsets[z][x] != 0
 }
 
@@ -243,8 +243,8 @@ func (r *Region) PadToFullSector() error {
 	return nil
 }
 
-func (r *Region) findSpace(need int32) (n int32) {
-	for i := int32(0); i < need; i++ {
+func (r *Region) findSpace(need int) (n int) {
+	for i := int(0); i < need; i++ {
 		if r.sectors[n+i] {
 			n += i + 1
 			i = -1
@@ -253,16 +253,16 @@ func (r *Region) findSpace(need int32) (n int32) {
 	return
 }
 
-func (r *Region) setHead(x, z int, offset, timestamp uint32) (err error) {
+func (r *Region) setHead(x, z int, offset, timestamp uint) (err error) {
 	var buf [4]byte
 
-	binary.BigEndian.PutUint32(buf[:], offset)
+	binary.BigEndian.PutUint32(buf[:], uint32(offset))
 	_, err = r.writeAt(buf[:], 4*(int64(z)*32+int64(x)))
 	if err != nil {
 		return
 	}
 
-	binary.BigEndian.PutUint32(buf[:], timestamp)
+	binary.BigEndian.PutUint32(buf[:], uint32(timestamp))
 	_, err = r.writeAt(buf[:], 4096+4*(int64(z)*32+int64(x)))
 	if err != nil {
 		return

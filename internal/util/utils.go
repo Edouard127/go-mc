@@ -1,4 +1,4 @@
-package generateutils
+package util
 
 import (
 	"strings"

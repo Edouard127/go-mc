@@ -7,7 +7,7 @@ import (
 )
 
 type Slot struct {
-	Index pk.Short // This is used with the transaction system
+	Index pk.Short // The index is relative to the position in the current container, this field should not be used
 	ID    pk.VarInt
 	Count pk.Byte
 	NBT   nbt.RawMessage

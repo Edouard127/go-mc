@@ -2,17 +2,9 @@ package random
 
 import (
 	"fmt"
-	"reflect"
+	"github.com/Edouard127/go-mc/internal/util"
 	"testing"
 )
-
-// AssertEqual checks if values are equal
-func AssertEqual(t *testing.T, a interface{}, b interface{}) {
-	if a == b {
-		return
-	}
-	t.Errorf("Received %v (type %v), expected %v (type %v)", b, reflect.TypeOf(b), a, reflect.TypeOf(a))
-}
 
 func TestUpgradeSeed(t *testing.T) {
 	fmt.Println(UpgradeSeed(84978056))
@@ -32,5 +24,5 @@ func TestGenerateUniqueSeed(t *testing.T) {
 
 func TestWorldGenRandom_SeedSlimeChunk(t *testing.T) {
 	world := NewWorldGeneration(NewLegacyRandomSource(9209794931264193696))
-	AssertEqual(t, true, world.SeedSlimeChunk(int32(3), int32(-11), 987234911).NextInt(10) == 0 && world.NextInt(10) == 0)
+	util.AssertEqual(t, true, world.SeedSlimeChunk(int32(3), int32(-11), 987234911).NextInt(10) == 0 && world.NextInt(10) == 0)
 }

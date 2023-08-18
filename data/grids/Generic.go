@@ -23,12 +23,6 @@ func InitGenericContainer(name string, id, size int, inventory *GenericInventory
 	}
 }
 
-func (g *Generic) ApplyData(data []slots.Slot) {
-	for _, i := range data {
-		fmt.Println(i)
-	}
-}
-
 func (g *Generic) OnClose() error { return nil }
 
 func (g *Generic) GetSlot(i int) *slots.Slot {

@@ -57,7 +57,7 @@ type (
 	VarLong int64
 
 	//Position x as a 26-bit integer, followed by y as a 12-bit integer, followed by z as a 26-bit integer (all signed, two's complement)
-	Position maths.Vec3d[float64]
+	Position maths.Vec3d
 
 	//Angle is rotation angle in steps of 1/256 of a full turn
 	Angle Byte

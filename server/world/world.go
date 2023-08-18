@@ -16,7 +16,7 @@ type World struct {
 	config        Config
 	chunkProvider ChunkProvider
 
-	chunks   map[maths.Vec2d[int32]]*LoadedChunk
+	chunks   map[maths.Vec2i]*LoadedChunk
 	loaders  map[ChunkViewer]*loader
 	tickLock sync.Mutex
 
@@ -50,7 +50,7 @@ func NewWorld(logger *zap.Logger, name string, provider ChunkProvider, config Co
 	w = &World{
 		log:           logger,
 		config:        config,
-		chunks:        make(map[maths.Vec2d[int32]]*LoadedChunk),
+		chunks:        make(map[maths.Vec2i]*LoadedChunk),
 		loaders:       make(map[ChunkViewer]*loader),
 		players:       make(map[Client]*Player),
 		chunkProvider: provider,
@@ -94,7 +94,7 @@ func (w *World) RemovePlayer(c Client, p *Player) {
 	// delete the player from entity system.
 	w.playerViews.Delete(p.view)
 	w.playerViews.Find(
-		/*bvh.TouchPoint[vec3d, aabb3d](bvh.Vec3[float64](p.Position))*/ nil,
+		/*bvh.TouchPoint[vec3d, aabb3d](bvh.Vec3d[float64](p.Position))*/ nil,
 		func(n *playerViewNode) bool {
 			n.Value.ViewRemoveEntities([]int32{p.EntityID})
 			delete(n.Value.EntitiesInView, p.EntityID)
@@ -103,8 +103,8 @@ func (w *World) RemovePlayer(c Client, p *Player) {
 	)
 }
 
-func (w *World) loadChunk(pos maths.Vec2d[int32]) bool {
-	logger := w.log.With(zap.Int32("x", pos.X), zap.Int32("z", pos.Y))
+func (w *World) loadChunk(pos maths.Vec2i) bool {
+	logger := w.log.With(zap.Int("x", pos.X), zap.Int("z", pos.Y))
 	logger.Debug("Loading chunk")
 	c, err := w.chunkProvider.GetChunk(pos)
 	if err != nil {
@@ -128,8 +128,8 @@ func (w *World) loadChunk(pos maths.Vec2d[int32]) bool {
 	return true
 }
 
-func (w *World) unloadChunk(pos maths.Vec2d[int32]) {
-	logger := w.log.With(zap.Int32("x", pos.X), zap.Int32("z", pos.Y))
+func (w *World) unloadChunk(pos maths.Vec2i) {
+	logger := w.log.With(zap.Int("x", pos.X), zap.Int("z", pos.Y))
 	logger.Debug("Unloading chunk")
 	c, ok := w.chunks[pos]
 	if !ok {

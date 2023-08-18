@@ -4,12 +4,11 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"github.com/Edouard127/go-mc/internal/util"
 	"go/format"
 	"log"
 	"os"
 	"text/template"
-
-	"github.com/Edouard127/go-mc/internal/generateutils"
 )
 
 type registry struct {
@@ -36,8 +35,8 @@ type tempData struct {
 var temp = template.Must(template.
 	New("block_template").
 	Funcs(template.FuncMap{
-		"UpperTheFirst": generateutils.UpperTheFirst,
-		"ToGoTypeName":  generateutils.ToGoTypeName,
+		"UpperTheFirst": util.UpperTheFirst,
+		"ToGoTypeName":  util.ToGoTypeName,
 		"Generator":     func() string { return "data/registry/generate.go" },
 	}).
 	Parse(tempSource),

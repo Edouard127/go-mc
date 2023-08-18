@@ -1,36 +1,38 @@
 package states
 
-import (
-	"github.com/Edouard127/go-mc/internal/utils"
-	"golang.org/x/exp/constraints"
-	"strconv"
-)
-
 type Property[Type any] interface {
 	GetName() string
-	GetValue(other string) any
-	CanUpdate(other uint32) bool // other is either an int, PropertyEnum or bool
+	GetValue(other any) any
+	CanUpdate(other any) bool // other is either an int, PropertyEnum or bool
 	GetValues() []any
-	HashCode() uint64
 }
 
-type PropertyInteger[Type constraints.Integer] struct {
-	Property[int]
+type PropertyInteger struct {
 	name     string
 	min, max int
-	values   []Type
+	values   []any
 }
 
-func fillInteger(min, max int) []int {
-	var values []int
+type PropertyBoolean struct {
+	name   string
+	values []any
+}
+
+type PropertyEnum[OfType PropertiesEnum] struct {
+	name   string
+	values map[string]OfType
+}
+
+func fillInteger(min, max int) []any {
+	var values []any
 	for i := min; i <= max; i++ {
 		values = append(values, i)
 	}
 	return values
 }
 
-func NewPropertyInteger(name string, min, max int) *PropertyInteger[int] {
-	return &PropertyInteger[int]{
+func NewPropertyInteger(name string, min, max int) *PropertyInteger {
+	return &PropertyInteger{
 		name:   name,
 		min:    min,
 		max:    max,
@@ -38,104 +40,52 @@ func NewPropertyInteger(name string, min, max int) *PropertyInteger[int] {
 	}
 }
 
-func (p PropertyInteger[Type]) GetName() string {
+func (p PropertyInteger) GetName() string {
 	return p.name
 }
 
-func (p PropertyInteger[Type]) GetValue(other string) any {
-	if value, err := strconv.Atoi(other); err == nil {
-		if value >= p.min && value <= p.max {
-			return value
-		}
+func (p PropertyInteger) GetValue(other any) any {
+	if int(other.(uint32)) >= p.min && int(other.(uint32)) <= p.max {
+		return other
 	}
 	return p.min
 }
 
-func (p PropertyInteger[Type]) CanUpdate(other uint32) bool {
-	return p.min <= int(other) && int(other) <= p.max
+func (p PropertyInteger) CanUpdate(other any) bool {
+	return p.min <= int(other.(uint32)) && int(other.(uint32)) <= p.max
 }
 
-func (p PropertyInteger[Type]) GetValues() []any {
-	values := make([]any, len(p.values))
-	for i, value := range p.values {
-		values[i] = value
-	}
-	return values
+func (p PropertyInteger) GetValues() []any {
+	return p.values
 }
 
-func (p PropertyInteger[Type]) HashCode() uint64 {
-	h := uint64(17) // choose a random initial value
-	h = h*31 + utils.HashString(p.name)
-	h = h*31 + uint64(p.min)
-	h = h*31 + uint64(p.max)
-	for _, value := range p.values {
-		h = h*31 + uint64(value)
-	}
-	return h
-}
-
-type PropertyBoolean[Type bool] struct {
-	Property[bool]
-	name   string
-	values []Type
-}
-
-func NewPropertyBoolean(name string) *PropertyBoolean[bool] {
-	return &PropertyBoolean[bool]{
+func NewPropertyBoolean(name string) *PropertyBoolean {
+	return &PropertyBoolean{
 		name:   name,
-		values: []bool{true, false},
+		values: []any{true, false},
 	}
 }
 
-func (p PropertyBoolean[Type]) GetName() string {
+func (p PropertyBoolean) GetName() string {
 	return p.name
 }
 
-func (p PropertyBoolean[Type]) GetValue(other string) any {
-	if value, err := strconv.ParseBool(other); err == nil {
-		return value
-	}
-	return false
+func (p PropertyBoolean) GetValue(other any) any {
+	return other.(bool)
 }
 
-func (p PropertyBoolean[Type]) CanUpdate(other uint32) bool {
+func (p PropertyBoolean) CanUpdate(other any) bool {
 	return true // For now we will assume that all booleans are valid
 }
 
-func (p PropertyBoolean[Type]) GetValues() []any {
-	values := make([]any, len(p.values))
-	for i, value := range p.values {
-		values[i] = value
-	}
-	return values
+func (p PropertyBoolean) GetValues() []any {
+	return p.values
 }
 
-func (p PropertyBoolean[Type]) HashCode() uint64 {
-	h := uint64(17) // choose a random initial value
-	h = h*31 + utils.HashString(p.name)
-	for _, value := range p.values {
-		// Get the value from the binary
-		var x int
-		if value {
-			x = 1
-		} else {
-			x = 0
-		}
-		h = h*31 + uint64(x)
-	}
-	return h
-}
-
-type PropertyEnum[Type PropertiesEnum] struct {
-	Property[Type]
-	name  string
-	names map[string]Type
-}
-
-func NewPropertyEnum[Type PropertiesEnum](name string, names map[string]Type) *PropertyEnum[Type] {
+func NewPropertyEnum[Type PropertiesEnum](name string, values map[string]Type) *PropertyEnum[Type] {
 	return &PropertyEnum[Type]{
-		name:  name,
-		names: names,
+		name:   name,
+		values: values,
 	}
 }
 
@@ -143,8 +93,8 @@ func (p PropertyEnum[Type]) GetName() string {
 	return p.name
 }
 
-func (p PropertyEnum[Type]) GetValue(other string) any {
-	for _, value := range p.names {
+func (p PropertyEnum[Type]) GetValue(other any) any {
+	for _, value := range p.values {
 		if value.String() == other {
 			return value
 		}
@@ -152,9 +102,9 @@ func (p PropertyEnum[Type]) GetValue(other string) any {
 	panic("invalid value")
 }
 
-func (p PropertyEnum[Type]) CanUpdate(other uint32) bool {
-	for _, value := range p.names {
-		if value.Value() == byte(other) {
+func (p PropertyEnum[Type]) CanUpdate(other any) bool {
+	for _, value := range p.values {
+		if value.Value() == byte(other.(uint32)) {
 			return true
 		}
 	}
@@ -163,17 +113,8 @@ func (p PropertyEnum[Type]) CanUpdate(other uint32) bool {
 
 func (p PropertyEnum[Type]) GetValues() []any {
 	var values []any
-	for _, value := range p.names {
+	for _, value := range p.values {
 		values = append(values, value)
 	}
 	return values
-}
-
-func (p PropertyEnum[Type]) HashCode() uint64 {
-	h := uint64(17) // choose a random initial value
-	h = h*31 + utils.HashString(p.name)
-	for _, value := range p.names {
-		h = h*31 + uint64(len(value.String()))
-	}
-	return h
 }

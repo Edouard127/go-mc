@@ -65,6 +65,5 @@ func fillContainers(inventory *grids.GenericInventory) map[int]Container {
 type Container interface {
 	GetSlot(int) *slots.Slot
 	SetSlot(int, slots.Slot) error
-	ApplyData([]slots.Slot)
 	OnClose() error
 }

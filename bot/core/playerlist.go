@@ -17,7 +17,7 @@ func NewPlayerList() *PlayerList {
 	}
 }
 
-func (p PlayerList) ReadFrom(r io.Reader) (int64, error) {
+func (p *PlayerList) ReadFrom(r io.Reader) (int64, error) {
 	var action pk.VarInt
 	var uuids []pk.UUID
 	var players []PlayerEntry

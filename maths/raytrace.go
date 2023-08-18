@@ -1,11 +1,11 @@
 package maths
 
 type RayTraceResult struct {
-	Position Vec3d[float64]
+	Position Vec3d
 }
 
-func RayTraceBlocks(start, end Vec3d[float64]) []Vec3d[float64] {
-	var result []Vec3d[float64]
+func RayTraceBlocks(start, end Vec3d) []Vec3d {
+	var result []Vec3d
 	diff := end.Sub(start)
 	distance := diff.Length()
 	if distance == 0 {

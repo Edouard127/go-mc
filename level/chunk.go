@@ -47,25 +47,25 @@ type Chunk struct {
 	Status      ChunkStatus
 }
 
-func (c *Chunk) IsBlockLoaded(vec3d maths.Vec3d[float64]) bool {
+func (c *Chunk) IsBlockLoaded(vec3d maths.Vec3d) bool {
 	_, err := c.GetBlock(vec3d)
 	return err == nil
 }
 
-func (c *Chunk) GetBlock(vec3d maths.Vec3d[float64]) (*block.Block, error) {
+func (c *Chunk) GetBlock(vec3d maths.Vec3d) (error, *block.Block) {
 	X, Y, Z := int(vec3d.X), int(vec3d.Y), int(vec3d.Z)
 	Y += 64 // Offset so that Y=-64 is the index 0 of the array
 	if Y < 0 || Y >= len(c.Sections)*16 {
-		return block.Air, fmt.Errorf("y=%d out of bound", Y)
+		return fmt.Errorf("y=%d out of bound", Y), block.Air
 	}
 	if t := c.Sections[Y>>4]; t.States != nil {
-		return block.StateList[t.States.Get(Y&15<<8|Z&15<<4|X&15)], nil
+		return nil, block.StateList[t.States.Get(Y&15<<8|Z&15<<4|X&15)]
 	} else {
-		return block.Air, fmt.Errorf("y=%d out of bound", Y)
+		return fmt.Errorf("y=%d out of bound", Y), block.Air
 	}
 }
 
-func (c *Chunk) SetBlock(d maths.Vec3d[float64], i int) {
+func (c *Chunk) SetBlock(d maths.Vec3d, i int) {
 	X, Y, Z := int(d.X), int(d.Y), int(d.Z)
 	Y += 64 // Offset so that Y=-64 is the index 0 of the array
 	if Y < 0 || Y >= len(c.Sections)*16 {
@@ -231,7 +231,7 @@ func readStatesPalette(palette []save.BlockState, data []uint64) (blockCount int
 		if b.IsAir() {
 			blockCount++
 		}
-		statePalette[i] = b.StateID()
+		statePalette[i] = b.State()
 	}
 	paletteData = NewStatesPaletteContainerWithData(16*16*16, data, statePalette)
 	return

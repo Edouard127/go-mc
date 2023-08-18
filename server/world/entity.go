@@ -13,10 +13,10 @@ func NewEntityID() int32 {
 
 type Entity struct {
 	EntityID int32
-	Position maths.Vec3d[float64]
-	Rotation maths.Vec2d[float32]
-	ChunkPos maths.Vec2d[int32]
+	Position maths.Vec3d
+	Rotation maths.Vec2f
+	ChunkPos maths.Vec2i
 	OnGround bool
-	pos0     maths.Vec3d[float64]
-	rot0     maths.Vec2d[float32]
+	pos0     maths.Vec3d
+	rot0     maths.Vec2f
 }

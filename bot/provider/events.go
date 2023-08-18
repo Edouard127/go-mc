@@ -3,7 +3,6 @@ package provider
 import (
 	"fmt"
 	"github.com/Edouard127/go-mc/bot/core"
-	"github.com/Edouard127/go-mc/bot/screen"
 	"github.com/Edouard127/go-mc/bot/world"
 	"github.com/Edouard127/go-mc/data/effects"
 	"github.com/Edouard127/go-mc/data/entity"
@@ -67,11 +66,11 @@ func SpawnEntity(c *Client, p pk.Packet) error {
 	}
 
 	if entity.TypeEntityByID[int32(t)].IsLiving() {
-		c.World.AddEntity(
+		c.World.Add(
 			core.NewEntityLiving(int32(id), uuid.UUID(euuid), int32(t), float64(x), float64(y), float64(z), float64(yaw), float64(pitch)),
 		)
 	} else {
-		c.World.AddEntity(
+		c.World.Add(
 			core.NewEntity(int32(id), uuid.UUID(euuid), int32(t), float64(x), float64(y), float64(z), float64(yaw), float64(pitch)),
 		)
 	}
@@ -105,7 +104,7 @@ func SpawnPlayer(c *Client, p pk.Packet) error {
 		return fmt.Errorf("unable to read SpawnPlayer packet: %w", err)
 	}
 
-	c.World.AddEntity(core.NewEntityPlayer(c.PlayerList.GetPlayer(uuid.UUID(euuid)).Name, int32(id), uuid.UUID(euuid), 116, float64(x), float64(y), float64(z), float64(yaw), float64(pitch)))
+	c.World.Add(core.NewEntityPlayer(c.PlayerList.GetPlayer(uuid.UUID(euuid)).Name, int32(id), uuid.UUID(euuid), 116, float64(x), float64(y), float64(z), float64(yaw), float64(pitch)))
 
 	fmt.Println("SpawnPlayer", id, euuid.String(), x, y, z, yaw, pitch)
 	return nil
@@ -341,15 +340,14 @@ func SetContainerContent(c *Client, p pk.Packet) error {
 	}
 
 	c.Player.Manager.StateID = int32(StateID)
-	var container screen.Container
-	if ContainerID == 0 {
-		container = c.Player.Inventory
-	} else {
-		container, _ = c.Player.Manager.Screens[int(ContainerID)] // Let's assume that the container exists
-	}
+	container := c.Player.Manager.Screens[int(ContainerID)]
 
-	// copy the slot data to container
-	container.ApplyData(SlotData)
+	for i, data := range SlotData {
+		err := container.SetSlot(i, data)
+		if err != nil {
+			return err
+		}
+	}
 
 	fmt.Println("SetContainerContent", ContainerID, StateID, SlotData, CarriedItem)
 	return nil
@@ -531,18 +529,9 @@ func ChangeGameState(c *Client, p pk.Packet) error {
 }
 
 func KeepAlive(c *Client, p pk.Packet) error {
-	var keepAliveID pk.Long
-
-	if err := p.Scan(&keepAliveID); err != nil {
-		return fmt.Errorf("unable to read KeepAlive packet: %w", err)
-	}
-
-	if err := c.Conn.WritePacket(
-		pk.Marshal(
-			packetid.SPacketKeepAlive,
-			keepAliveID,
-		),
-	); err != nil {
+	p.ID = packetid.SPacketKeepAlive
+	err := c.Conn.WritePacket(p)
+	if err != nil {
 		return fmt.Errorf("unable to write KeepAlive packet: %w", err)
 	}
 
@@ -652,7 +641,7 @@ func JoinGame(c *Client, p pk.Packet) error {
 		return fmt.Errorf("unable to write ClientSettings packet: %w", err)
 	}
 
-	c.World.AddEntity(c.Player)
+	c.World.Add(c.Player)
 
 	return nil
 }
@@ -671,7 +660,7 @@ func Entity(c *Client, p pk.Packet) error {
 	var entityID pk.Int
 
 	if err := p.Scan(&entityID); err != nil {
-		return fmt.Errorf("unable to read Entity packet: %w", err)
+		return fmt.Errorf("unable to read UnaliveEntity packet: %w", err)
 	}
 
 	return nil
@@ -692,7 +681,7 @@ func EntityPosition(c *Client, p pk.Packet) error {
 		nX := e.GetPosition().X + (float64(dX) / 4096)
 		nY := e.GetPosition().Y + (float64(dY) / 4096)
 		nZ := e.GetPosition().Z + (float64(dZ) / 4096)
-		e.SetPosition(maths.Vec3d[float64]{X: nX, Y: nY, Z: nZ}.Spread())
+		e.SetPosition(maths.Vec3d{X: nX, Y: nY, Z: nZ}.Spread())
 	}
 
 	return nil
@@ -714,7 +703,7 @@ func EntityPositionRotation(c *Client, p pk.Packet) error {
 		nX := e.GetPosition().X + (float64(dX) / 4096)
 		nY := e.GetPosition().Y + (float64(dY) / 4096)
 		nZ := e.GetPosition().Z + (float64(dZ) / 4096)
-		e.SetPosition(maths.Vec3d[float64]{X: nX, Y: nY, Z: nZ}.Spread())
+		e.SetPosition(nX, nY, nZ)
 		e.SetRotation(float64(yaw), float64(pitch))
 	}
 
@@ -832,8 +821,8 @@ func SyncPlayerPosition(c *Client, p pk.Packet) error {
 		return fmt.Errorf("unable to read SyncPlayerPosition packet: %w", err)
 	}
 
-	position := maths.Vec3d[float64]{X: float64(X), Y: float64(Y), Z: float64(Z)}
-	rotation := maths.Vec2d[float64]{X: float64(Pitch), Y: float64(Yaw)}
+	position := maths.Vec3d{X: float64(X), Y: float64(Y), Z: float64(Z)}
+	rotation := maths.Vec2d{X: float64(Pitch), Y: float64(Yaw)}
 
 	if Flags&0x01 != 0 {
 		c.Player.Position = c.Player.Position.Add(position)
@@ -1172,10 +1161,7 @@ func EntityVelocity(c *Client, p pk.Packet) error {
 	}
 
 	if e := c.World.GetEntity(int32(entityID)); e != nil {
-		vX := float64(velocityX) / 8000
-		vY := float64(velocityY) / 8000
-		vZ := float64(velocityZ) / 8000
-		e.SetMotion(maths.Vec3d[float64]{X: vX, Y: vY, Z: vZ}.Spread())
+		e.SetMotion(float64(velocityX)/8000, float64(velocityY)/8000, float64(velocityZ)/8000)
 	}
 
 	return nil

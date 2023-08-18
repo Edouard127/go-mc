@@ -3,7 +3,7 @@ package provider
 import (
 	"encoding/hex"
 	"github.com/Edouard127/go-mc/data/packetid"
-	"github.com/Edouard127/go-mc/internal/utils"
+	"github.com/Edouard127/go-mc/internal/util"
 	"github.com/Edouard127/go-mc/offline"
 	"github.com/Edouard127/go-mc/yggdrasil"
 	auth "github.com/maxsupermanhd/go-mc-ms-auth"
@@ -24,7 +24,7 @@ func TestExamplePingAndList(t *testing.T) {
 func TestExampleClient_JoinServer_online(t *testing.T) {
 	c := NewClient()
 
-	if mcAuth, err := auth.GetMCcredentials(utils.GetCacheDirectory(), "88650e7e-efee-4857-b9a9-cf580a00ef43"); err != nil {
+	if mcAuth, err := auth.GetMCcredentials(util.GetCacheDirectory(), "88650e7e-efee-4857-b9a9-cf580a00ef43"); err != nil {
 		c.Auth.Name = "Steve"
 		c.Auth.UUID = offline.NameToUUID(c.Auth.Name).String()
 	} else {

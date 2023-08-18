@@ -28,7 +28,7 @@ func NewProvider(dir string, limiter *rate.Limiter) ChunkProvider {
 
 var ErrReachRateLimit = errors.New("reach rate limit")
 
-func (p *ChunkProvider) GetChunk(pos maths.Vec2d[int32]) (c *level.Chunk, errRet error) {
+func (p *ChunkProvider) GetChunk(pos maths.Vec2i) (c *level.Chunk, errRet error) {
 	if !p.limiter.Allow() {
 		return nil, ErrReachRateLimit
 	}
@@ -65,7 +65,7 @@ func (p *ChunkProvider) GetChunk(pos maths.Vec2d[int32]) (c *level.Chunk, errRet
 	return c, nil
 }
 
-func (p *ChunkProvider) getRegion(rx, rz int32) (*region.Region, error) {
+func (p *ChunkProvider) getRegion(rx, rz int) (*region.Region, error) {
 	filename := fmt.Sprintf("r.%d.%d.mca", rx, rz)
 	path := filepath.Join(p.dir, filename)
 	r, err := region.Open(path)
@@ -75,7 +75,7 @@ func (p *ChunkProvider) getRegion(rx, rz int32) (*region.Region, error) {
 	return r, err
 }
 
-func (p *ChunkProvider) PutChunk(pos maths.Vec2d[int32], c *level.Chunk) (err error) {
+func (p *ChunkProvider) PutChunk(pos maths.Vec2i, c *level.Chunk) (err error) {
 	//var chunk save.Chunk
 	//err = level.ChunkToSave(c, &chunk)
 	//if err != nil {
@@ -152,9 +152,9 @@ func (p *PlayerProvider) GetPlayer(name string, id uuid.UUID, pubKey *auth.Publi
 	player = &Player{
 		Entity: Entity{
 			EntityID: NewEntityID(),
-			Position: maths.ParseVec3d[float64](data.Pos[0], data.Pos[1], data.Pos[2]),
-			Rotation: maths.ParseVec2d[float32](data.Rotation[0], data.Rotation[1]),
-			ChunkPos: maths.Vec2d[int32]{X: int32(data.Pos[0]) >> 5, Y: int32(data.Pos[2]) >> 5},
+			Position: maths.Vec3d{X: data.Pos[0], Y: data.Pos[1], Z: data.Pos[2]},
+			Rotation: maths.Vec2f{X: data.Rotation[0], Y: data.Rotation[1]},
+			ChunkPos: maths.Vec2i{X: int(data.Pos[0]) >> 5, Y: int(data.Pos[2]) >> 5},
 		},
 		Name:           name,
 		UUID:           id,

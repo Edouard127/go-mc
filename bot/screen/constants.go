@@ -3,14 +3,6 @@ package screen
 type Mode int
 type Button int
 
-func (m Mode) Int() int {
-	return int(m)
-}
-
-func (b Button) Int() int {
-	return int(b)
-}
-
 // Mode 0
 const (
 	LeftClick Button = iota

@@ -30,8 +30,8 @@ func NewPlayer(name string, uuid uuid.UUID, key *auth.PublicKey, properties []au
 	}
 }
 
-func (p *Player) chunkPosition() maths.Vec2d[int32] { return p.ChunkPos }
-func (p *Player) chunkRadius() int32                { return p.ViewDistance }
+func (p *Player) chunkPosition() maths.Vec2i { return p.ChunkPos }
+func (p *Player) chunkRadius() int32         { return p.ViewDistance }
 
 // getView calculate the visual range enclosure with Position and ViewDistance of a player.
 func (p *Player) getView() aabb3d {

@@ -8,6 +8,7 @@ import (
 	"compress/gzip"
 	_ "embed"
 	"fmt"
+	"github.com/Edouard127/go-mc/internal/util"
 	"github.com/Edouard127/go-mc/level/block"
 	"github.com/Edouard127/go-mc/nbt"
 	"go/format"
@@ -16,8 +17,6 @@ import (
 	"strings"
 	"text/template"
 	"unicode"
-
-	"github.com/Edouard127/go-mc/internal/generateutils"
 )
 
 //go:embed blocks.go.tmpl
@@ -26,8 +25,8 @@ var tempSource string
 var temp = template.Must(template.
 	New("block_template").
 	Funcs(template.FuncMap{
-		"UpperTheFirst": generateutils.UpperTheFirst,
-		"ToGoTypeName":  generateutils.ToGoTypeName,
+		"UpperTheFirst": util.UpperTheFirst,
+		"ToGoTypeName":  util.ToGoTypeName,
 		"ToStructLiteral": func(s interface{}) string {
 			return fmt.Sprintf("%#v", s)[6:]
 		},
@@ -43,8 +42,8 @@ var tempSource2 string
 var temp2 = template.Must(template.
 	New("block_template").
 	Funcs(template.FuncMap{
-		"UpperTheFirst": generateutils.UpperTheFirst,
-		"ToGoTypeName":  generateutils.ToGoTypeName,
+		"UpperTheFirst": util.UpperTheFirst,
+		"ToGoTypeName":  util.ToGoTypeName,
 		"ToStructLiteral": func(s interface{}) string {
 			return fmt.Sprintf("%#v", s)[6:]
 		},
@@ -143,19 +142,20 @@ func GetDefaultValues(mapped map[string]any) string {
 	if len(mapped) == 0 {
 		return ""
 	}
-	var result string
+	var result = ".Register("
 	for key, value := range mapped {
 		switch value.(type) {
 		case int8:
-			result += fmt.Sprintf(".registerState(%s, %v)", GetRealName(key, value)+"Property", value != 0)
+			result += GetRealName(key, value) + "Property, "
 		case int32:
 			// Here we can assume that the default state is the first state
-			result += fmt.Sprintf(".registerState(%s, %v)", GetRealName(key, value)+"Property", separateIntOr(toInt(value))[0])
+			result += GetRealName(key, value) + "Property, "
 		case string:
-			result += fmt.Sprintf(".registerState(states.%s, states.%v)", GetRealName(key, value)+"Property", GetTrueValue(key, upperTheFirst(value.(string))))
+			typeName := GetRealName(key, value)
+			result += fmt.Sprintf("states.%s, ", typeName+"Property")
 		}
 	}
-	return result
+	return strings.TrimSuffix(result+")", ", ")
 }
 
 func CanContinue(key string, value any) bool {

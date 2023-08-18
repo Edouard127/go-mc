@@ -1,6 +1,7 @@
 package transactions
 
 import (
+	"github.com/Edouard127/go-mc/bot/screen"
 	"github.com/Edouard127/go-mc/data/slots"
 	pk "github.com/Edouard127/go-mc/net/packet"
 	"io"
@@ -14,7 +15,7 @@ type SlotAction struct {
 	Changed []*slots.Slot
 }
 
-func NewSlotAction(slot, button, mode int, cursor *slots.Slot, items ...*slots.Slot) *SlotAction {
+func NewSlotAction(slot int, button screen.Button, mode screen.Mode, cursor *slots.Slot, items ...*slots.Slot) *SlotAction {
 	return &SlotAction{
 		Slot:    pk.Short(slot),
 		Button:  pk.Byte(button),

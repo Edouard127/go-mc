@@ -12,47 +12,41 @@ import (
 	"math/bits"
 )
 
+var counter int
+
 type Block struct {
 	*BlockProperty
 	*StateHolder
-	Name   string
-	feeder StateFeeder[Block]
+	Name string
 }
 
 func NewBlock(name string, property *BlockProperty) *Block {
-	return &Block{
+	counter++
+	return (&Block{
 		BlockProperty: property,
-		StateHolder:   NewStateHolder(make(map[states.Property[any]]uint32)),
+		StateHolder:   NewStateHolder(make(map[states.Property[any]]uint32), StateID(counter-1)),
 		Name:          name,
-	}
+	}).Register()
 }
 
-func (b *Block) registerState(property states.Property[any], value any) *Block {
-	// This is still not complete, some properties are not registered, please use ToStateID and StateList
-	return b.SetValue(property, parseState(value))
-}
-
-func (b *Block) feedStates(feeder *StateFeeder[Block]) *Block {
-	properties := make([]states.Property[any], 0, len(b.Properties))
-	for k := range b.Properties {
-		properties = append(properties, k)
-	}
-	feeder.FeedState(b.StateHolder, properties)
-	b.feeder = *feeder
-	//BitsPerBlock = bits.Len(uint(feeder.max))
-	return b
-}
-
-func (b *Block) GetValue(property states.Property[any]) StateID {
-	return b.StateHolder.GetValue(property, b.Properties[property])
-}
-
-func (b *Block) SetValue(property states.Property[any], value uint32) *Block {
-	if !property.CanUpdate(value) {
-		fmt.Println(fmt.Errorf("invalid value %v for property %v", value, property))
+func (b *Block) Register(anyp ...any) *Block {
+	if len(anyp) > 0 {
+		for i := range anyp {
+			p := anyp[i].(states.Property[any])
+			values := p.GetValues()
+			for k := range values {
+				sub := make(map[states.Property[any]]uint32)
+				for j := range anyp {
+					// Bug, doesn't make a list of possible combinations, but a list of values[k]
+					sub[anyp[j].(states.Property[any])] = parseState(values[k])
+				}
+				b.PutNeighbors(StateID(counter), sub)
+				counter++
+			}
+			b.SetValue(p, parseState(values[0]))
+		}
 	}
 
-	b.Properties[property] = value
 	return b
 }
 
@@ -73,12 +67,8 @@ func parseState(v any) uint32 {
 	}
 }
 
-func (b *Block) StateID() StateID {
-	return b.GetValue(nil)
-}
-
 func (b *Block) Is(other *Block) bool {
-	return b.Name == other.Name && b.StateID() == other.StateID()
+	return b.State() == other.State()
 }
 
 func (b *Block) IsAir() bool {
@@ -90,7 +80,7 @@ func (b *Block) IsLiquid() bool {
 }
 
 func (b *Block) GetCollisionBox() maths.AxisAlignedBB[float64] {
-	aabb := shapes.GetShape(b.Name, int(b.StateID()))
+	aabb := shapes.GetShape(b.Name, int(b.State()))
 	return maths.AxisAlignedBB[float64]{
 		MinX: aabb[0], MinY: aabb[1], MinZ: aabb[2],
 		MaxX: aabb[3], MaxY: aabb[4], MaxZ: aabb[5],

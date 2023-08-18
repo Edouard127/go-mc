@@ -2,17 +2,16 @@ package core
 
 import (
 	"github.com/Edouard127/go-mc/data/effects"
-	"github.com/Edouard127/go-mc/data/enums"
 	"github.com/Edouard127/go-mc/data/item"
 	"github.com/Edouard127/go-mc/maths"
 	"github.com/google/uuid"
 )
 
-var EyePosVec = maths.Vec3d[float64]{Y: 1.62}
+var EyePosVec = maths.Vec3d{Y: 1.62}
 var EyePos = 1.62
 
 type EntityLiving struct {
-	*Entity
+	*UnaliveEntity
 	health                  float32
 	minHealth               float32
 	maxHealth               float32
@@ -28,16 +27,6 @@ type EntityLiving struct {
 	MoveStrafing            float32
 	MoveForward             float32
 	MoveVertical            float32
-}
-
-type EntityLivingInterface interface {
-	EntityInterface
-	GetHealth(absorption bool) float32
-	SetHealth(health float32) bool
-	GetEyePos() maths.Vec3d[float64]
-	IsDead() bool
-	IsPotionActive(effect effects.Effect) bool
-	GetPotionEffect(effect effects.Effect) *effects.EffectStatus
 }
 
 func (e *EntityLiving) GetName() string {
@@ -63,7 +52,7 @@ func (e *EntityLiving) SetHealth(health float32) bool {
 	return false
 }
 
-func (e *EntityLiving) GetEyePos() maths.Vec3d[float64] {
+func (e *EntityLiving) GetEyePos() maths.Vec3d {
 	return e.Position.Add(EyePosVec)
 }
 
@@ -80,17 +69,13 @@ func (e *EntityLiving) GetPotionEffect(effect effects.Effect) *effects.EffectSta
 	return e.ActivePotionEffects[effect.ID]
 }
 
-func (e *EntityLiving) IsInvulnerableTo(source enums.DamageSource) bool {
-	return e.Entity.IsInvulnerableTo(source)
-}
-
 func (e *EntityLiving) IsLivingEntity() bool {
 	return true
 }
 
 func NewEntityLiving(id int32, uuid uuid.UUID, t int32, x, y, z float64, yaw, pitch float64) *EntityLiving {
 	return &EntityLiving{
-		Entity:              NewEntity(id, uuid, t, x, y, z, yaw, pitch),
+		UnaliveEntity:       NewEntity(id, uuid, t, x, y, z, yaw, pitch),
 		ActivePotionEffects: make(map[int32]*effects.EffectStatus),
 	}
 }

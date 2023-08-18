@@ -11,21 +11,21 @@ import (
 // chunks pointed by the position, and the radius of loader will be load。
 type loader struct {
 	loaderSource
-	loaded      map[maths.Vec2d[int32]]struct{}
-	loadQueue   []maths.Vec2d[int32]
-	unloadQueue []maths.Vec2d[int32]
+	loaded      map[maths.Vec2i]struct{}
+	loadQueue   []maths.Vec2i
+	unloadQueue []maths.Vec2i
 	limiter     *rate.Limiter
 }
 
 type loaderSource interface {
-	chunkPosition() maths.Vec2d[int32]
+	chunkPosition() maths.Vec2i
 	chunkRadius() int32
 }
 
 func newLoader(source loaderSource, limiter *rate.Limiter) (l *loader) {
 	l = &loader{
 		loaderSource: source,
-		loaded:       make(map[maths.Vec2d[int32]]struct{}),
+		loaded:       make(map[maths.Vec2i]struct{}),
 		limiter:      limiter,
 	}
 	l.calcLoadingQueue()
@@ -51,8 +51,7 @@ func (l *loader) calcUnusedChunks() {
 	l.unloadQueue = l.unloadQueue[:0]
 	for chunk := range l.loaded {
 		player := l.chunkPosition()
-		r := l.chunkRadius()
-		if distance2i(maths.Vec2d[int32]{X: chunk.X - player.X, Y: chunk.Y - player.Y}) > float64(r) {
+		if distance2i(maths.Vec2i{X: chunk.X - player.X, Y: chunk.Y - player.Y}) > float64(l.chunkRadius()) {
 			l.loadQueue = append(l.loadQueue, chunk)
 		}
 	}
@@ -60,18 +59,18 @@ func (l *loader) calcUnusedChunks() {
 
 // loadList is chunks in a certain distance of (0, 0), order by Euclidean distance
 // the more forward the chunk is, the closer it to (0, 0)
-var loadList []maths.Vec2d[int32]
+var loadList []maths.Vec2i
 
 // radiusIdx[i] is the count of chunks in loadList and the distance of i
 var radiusIdx []int
 
 func init() {
-	const maxR int32 = 32
+	const maxR = 32
 
 	// calculate loadList
 	for x := -maxR; x <= maxR; x++ {
 		for z := -maxR; z <= maxR; z++ {
-			pos := maths.Vec2d[int32]{X: x, Y: z}
+			pos := maths.Vec2i{X: x, Y: z}
 			if distance2i(pos) < float64(maxR) {
 				loadList = append(loadList, pos)
 			}
@@ -93,6 +92,6 @@ func init() {
 }
 
 // distance calculates the Euclidean distance that a position to the origin point
-func distance2i(pos maths.Vec2d[int32]) float64 {
+func distance2i(pos maths.Vec2i) float64 {
 	return math.Sqrt(float64(pos.X*pos.X) + float64(pos.Y*pos.Y))
 }

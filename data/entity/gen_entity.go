@@ -36,7 +36,7 @@ type TypeEntity struct {
 }
 
 // IsLiving returns true if the entity is a living entity.
-func (t *TypeEntity) IsLiving() bool {
+func (t TypeEntity) IsLiving() bool {
 	return t.Type == "mob" || t.Type == "animal" || t.Type == "ambient" || t.Type == "water_creature" || t.Type == "hostile" || t.Type == "player"
 }
 
@@ -54,18 +54,18 @@ var (
 )
 
 // ByID is an index of minecraft entities by their ID.
-var TypeEntityByID = map[int32]*TypeEntity{ {{range .}}
-	{{.ID}}: &{{.CamelName}},{{end}}
+var TypeEntityByID = map[int32]TypeEntity{ {{range .}}
+	{{.ID}}: {{.CamelName}},{{end}}
 }
 
 // ByName is an index of minecraft entities by their name.
-var TypeEntityByName = map[string]*TypeEntity{ {{range .}}
-	"{{.Name}}": &{{.CamelName}},{{end}}
+var TypeEntityByName = map[string]TypeEntity{ {{range .}}
+	"{{.Name}}": {{.CamelName}},{{end}}
 }
 
 // ByDisplayName is an index of minecraft entities by their display name.
-var TypeEntityByDisplayName = map[string]*TypeEntity{ {{range .}}
-	"{{.DisplayName}}": &{{.CamelName}},{{end}}
+var TypeEntityByDisplayName = map[string]TypeEntity{ {{range .}}
+	"{{.DisplayName}}": {{.CamelName}},{{end}}
 }`
 )
 

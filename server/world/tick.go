@@ -26,9 +26,9 @@ func (w *World) tick(n uint) {
 
 func (w *World) subtickChunkLoad() {
 	for c, p := range w.players {
-		x := int32(p.Position.X) >> 4
-		z := int32(p.Position.Z) >> 4
-		newChunkPos := maths.Vec2d[int32]{X: x, Y: z}
+		x := int(p.Position.X) >> 4
+		z := int(p.Position.Z) >> 4
+		newChunkPos := maths.Vec2i{X: x, Y: z}
 		if newChunkPos != p.ChunkPos {
 			p.ChunkPos = newChunkPos
 			c.SendSetChunkCacheCenter(newChunkPos)
@@ -65,7 +65,7 @@ LoadChunk:
 			viewer.ViewChunkUnload(pos)
 		}
 	}
-	var unloadQueue []maths.Vec2d[int32]
+	var unloadQueue []maths.Vec2i
 	for pos, chunk := range w.chunks {
 		if len(chunk.viewers) == 0 {
 			unloadQueue = append(unloadQueue, pos)
@@ -138,17 +138,17 @@ func (w *World) subtickUpdateEntities() {
 	// TODO: entity list should be traversed here, but players are the only entities now.
 	for _, e := range w.players {
 		// sending Update Entity Position pack to every player who can see it, when it moves.
-		var delta maths.Vec3d[int16]
-		var rot maths.Vec2d[int8]
+		var delta maths.Vec3s
+		var rot maths.Vec2b
 		if e.Position != e.pos0 { // TODO: send Teleport Entity pack instead when moving distance is greater than 8.
-			delta = maths.Vec3d[int16]{
+			delta = maths.Vec3s{
 				X: int16((e.pos0.X - e.Position.X) * 32 * 128),
 				Y: int16((e.pos0.Y - e.Position.Y) * 32 * 128),
 				Z: int16((e.pos0.Z - e.Position.Z) * 32 * 128),
 			}
 		}
 		if e.Rotation != e.rot0 {
-			rot = maths.Vec2d[int8]{
+			rot = maths.Vec2b{
 				X: int8(e.rot0.X * 256 / 360),
 				Y: int8(e.rot0.Y * 256 / 360),
 			}

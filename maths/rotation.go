@@ -4,7 +4,8 @@ import (
 	"math"
 )
 
-func ProjectPosition(rotation Vec2d[float64], distance float64, offsetY float64) Vec3d[float64] {
+func ProjectPosition(rotation Vec2d, distance float64, offsetY float64) Vec3d {
+	// FIXME
 	x := distance * math.Sin(ToRadians(rotation.X)) * math.Cos(ToRadians(rotation.Y))
 	y := 0.0
 	if rotation.Y > 0 {
@@ -13,15 +14,15 @@ func ProjectPosition(rotation Vec2d[float64], distance float64, offsetY float64)
 		y = distance * math.Sin(ToRadians(rotation.Y))
 	}
 	z := distance * math.Cos(ToRadians(rotation.X)) * math.Cos(ToRadians(rotation.X))
-	return Vec3d[float64]{X: x, Y: y + offsetY, Z: z}
+	return Vec3d{X: x, Y: y + offsetY, Z: z}
 }
 
-func GetVectorFromRotation(rotation Vec2d[float64]) Vec3d[float64] {
+func GetVectorFromRotation(rotation Vec2d) Vec3d {
 	f := math.Cos(ToRadians(-rotation.Y)*0.017453292 - math.Pi)
 	f1 := math.Sin(ToRadians(-rotation.Y)*0.017453292 - math.Pi)
 	f2 := -math.Cos(ToRadians(-rotation.X) * 0.017453292)
 	f3 := math.Sin(ToRadians(-rotation.X) * 0.017453292)
-	return Vec3d[float64]{X: f1 * f2, Y: f3, Z: f * f2}
+	return Vec3d{X: f1 * f2, Y: f3, Z: f * f2}
 }
 
 func ToDegrees(angle float64) float64 {
