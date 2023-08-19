@@ -20,14 +20,15 @@ import (
 	pk "github.com/Edouard127/go-mc/net/packet"
 )
 
-func Attach(c *Client) {
+// Attach attaches the core handlers to the client
+func Attach(c *Client) *Client {
 	c.Events.AddListener(
-		PacketHandler{Priority: 64, ID: packetid.CPacketLogin, F: JoinGame},
-		PacketHandler{Priority: 64, ID: packetid.CPacketKeepAlive, F: KeepAlive},
-		PacketHandler{Priority: 64, ID: packetid.CPacketChatMessage, F: ChatMessage},
-		PacketHandler{Priority: 64, ID: packetid.CPacketSystemMessage, F: ChatMessage},
-		PacketHandler{Priority: 64, ID: packetid.CPacketDisconnect, F: Disconnect},
-		PacketHandler{Priority: 64, ID: packetid.CPacketUpdateHealth, F: UpdateHealth},
+		PacketHandler{Priority: 0, ID: packetid.CPacketLogin, F: JoinGame},
+		PacketHandler{Priority: 0, ID: packetid.CPacketKeepAlive, F: KeepAlive},
+		PacketHandler{Priority: 0, ID: packetid.CPacketChatMessage, F: ChatMessage},
+		PacketHandler{Priority: 0, ID: packetid.CPacketSystemMessage, F: ChatMessage},
+		PacketHandler{Priority: 0, ID: packetid.CPacketDisconnect, F: Disconnect},
+		PacketHandler{Priority: 0, ID: packetid.CPacketUpdateHealth, F: UpdateHealth},
 		PacketHandler{Priority: int(^uint(0) >> 1), ID: packetid.CPacketSetTime, F: TimeUpdate},
 		PacketHandler{Priority: int(^uint(0) >> 1), ID: packetid.CPacketPlayerInfo, F: PlayerInfo},
 	)
@@ -36,6 +37,8 @@ func Attach(c *Client) {
 		TickHandler{Priority: int(^uint(0) >> 1), F: ApplyPhysics},
 		TickHandler{Priority: int(^uint(0) >> 1), F: RunTransactions},
 	)
+
+	return c
 }
 
 type PlayerMessage struct {

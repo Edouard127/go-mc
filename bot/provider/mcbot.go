@@ -6,13 +6,8 @@ package provider
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/pem"
-	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	auth "github.com/maxsupermanhd/go-mc-ms-auth"
-	"io"
 	"net"
 	"strconv"
 
@@ -80,10 +75,10 @@ func (c *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error {
 		packetid.SPacketLoginStart,
 		pk.String(c.Auth.Name),
 		pk.Opt{
-			If: c.Auth.AsTk != "",
+			If: c.Auth.AccessToken != "",
 			Value: pk.Tuple{
 				pk.Boolean(true),
-				keyPair(c.Auth.KeyPair),
+				c.Auth.KeyPair,
 			},
 			Else: pk.Boolean(false),
 		},
@@ -134,22 +129,4 @@ func (c *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error {
 			}
 		}
 	}
-}
-
-type keyPair auth.KeyPair
-
-func (k keyPair) WriteTo(w io.Writer) (int64, error) {
-	block, _ := pem.Decode([]byte(k.KeyPair.PublicKey))
-	if block == nil {
-		return 0, errors.New("pem decode error: no data is found")
-	}
-	signature, err := base64.StdEncoding.DecodeString(k.PublicKeySignature)
-	if err != nil {
-		return 0, err
-	}
-	return pk.Tuple{
-		pk.Long(k.ExpiresAt.UnixMilli()),
-		pk.ByteArray(block.Bytes),
-		pk.ByteArray(signature),
-	}.WriteTo(w)
 }

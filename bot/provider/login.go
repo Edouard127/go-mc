@@ -11,6 +11,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/Edouard127/go-mc/auth/data"
 	"github.com/Edouard127/go-mc/data/packetid"
 	"io"
 	"net/http"
@@ -18,11 +19,7 @@ import (
 
 	"github.com/Edouard127/go-mc/net/CFB8"
 	pk "github.com/Edouard127/go-mc/net/packet"
-	auth "github.com/maxsupermanhd/go-mc-ms-auth"
 )
-
-// Auth includes an account
-type Auth auth.Auth
 
 func handleEncryptionRequest(c *Client, p pk.Packet) error {
 	// 创建AES对称加密密钥
@@ -118,12 +115,12 @@ type request struct {
 	ServerID        string  `json:"serverId"`
 }
 
-func loginAuth(auth Auth, shareSecret []byte, er encryptionRequest) error {
+func loginAuth(auth data.Auth, shareSecret []byte, er encryptionRequest) error {
 	digest := authDigest(er.ServerID, shareSecret, er.PublicKey)
 
 	requestPacket, err := json.Marshal(
 		request{
-			AccessToken: auth.AsTk,
+			AccessToken: auth.AccessToken,
 			SelectedProfile: profile{
 				ID:   auth.UUID,
 				Name: auth.Name,

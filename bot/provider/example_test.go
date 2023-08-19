@@ -1,12 +1,9 @@
 package provider
 
 import (
-	"encoding/hex"
+	"github.com/Edouard127/go-mc/auth/data"
+	"github.com/Edouard127/go-mc/auth/microsoft"
 	"github.com/Edouard127/go-mc/data/packetid"
-	"github.com/Edouard127/go-mc/internal/util"
-	"github.com/Edouard127/go-mc/offline"
-	"github.com/Edouard127/go-mc/yggdrasil"
-	auth "github.com/maxsupermanhd/go-mc-ms-auth"
 	"log"
 	"testing"
 )
@@ -17,19 +14,16 @@ func TestExamplePingAndList(t *testing.T) {
 		log.Fatalf("ping and list server fail: %v", err)
 	}
 
-	log.Println("Status:", string(resp))
+	log.Println("Status:", resp)
 	log.Println("Delay:", delay)
 }
 
 func TestExampleClient_JoinServer_online(t *testing.T) {
 	c := NewClient()
 
-	if mcAuth, err := auth.GetMCcredentials(util.GetCacheDirectory(), "88650e7e-efee-4857-b9a9-cf580a00ef43"); err != nil {
-		c.Auth.Name = "Steve"
-		c.Auth.UUID = offline.NameToUUID(c.Auth.Name).String()
-	} else {
-		c.Auth = Auth(mcAuth)
-	}
+	c.Auth = microsoft.LoginFromCache(func(auth data.Auth) bool {
+		return auth.Name == "Kamigen"
+	})
 
 	//Login
 	if err := c.JoinServer("localhost:25565"); err != nil {
@@ -77,10 +71,6 @@ func TestExampleClient_JoinServer_online(t *testing.T) {
 
 func TestExampleClient_JoinServer_offline(t *testing.T) {
 	c := NewClient()
-	c.Auth.Name = "Tnze" // set its name before login.
-
-	id := offline.NameToUUID(c.Auth.Name) // optional, get uuid of offline mode game
-	c.Auth.UUID = hex.EncodeToString(id[:])
 
 	//Login
 	if err := c.JoinServer("127.0.0.1"); err != nil {
@@ -122,42 +112,6 @@ func TestExampleClient_JoinServer_offline(t *testing.T) {
 
 	//JoinGame
 	if err := c.HandleGame(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func ExampleClient_JoinServer_online() {
-	c := NewClient()
-
-	// Login Mojang account to get AccessToken
-	// To use Microsoft Account, see issue #106
-	// https://github.com/Tnze/go-mc/issues/106
-	auth, err := yggdrasil.Authenticate("Your E-mail", "Your Password")
-	if err != nil {
-		panic(err)
-	}
-
-	// As long as you set these three fields correctly,
-	// the client can connect to the online-mode server
-	c.Auth.UUID, c.Auth.Name = auth.SelectedProfile()
-	c.Auth.AsTk = auth.AccessToken()
-
-	//Connect server
-	err = c.JoinServer("127.0.0.1")
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("Login success")
-
-	// Register event handlers
-	// 	c.Events.GameStart = onGameStartFunc
-	// 	c.Events.ChatMsg = onChatMsgFunc
-	// 	c.Events.Disconnect = onDisconnectFunc
-	//	...
-
-	//Join the game
-	err = c.HandleGame()
-	if err != nil {
 		log.Fatal(err)
 	}
 }

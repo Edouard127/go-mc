@@ -26,5 +26,5 @@ func TestExampleServer_Ping(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Log(string(data))
+	t.Log(data)
 }
