@@ -1295,8 +1295,6 @@ func TimeUpdate(c *Client, p pk.Packet) error {
 		TimeOfDay pk.Long
 	)
 
-	c.TPS.Update()
-
 	if err := p.Scan(&WorldAge, &TimeOfDay); err != nil {
 		return fmt.Errorf("unable to read TimeUpdate packet: %w", err)
 	}
