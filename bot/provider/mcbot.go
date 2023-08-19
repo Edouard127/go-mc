@@ -23,17 +23,17 @@ const DefaultPort = mcnet.DefaultPort
 
 // JoinServer connect a Minecraft server for playing the game.
 // Using roughly the same way to parse address as minecraft.
-func (c *Client) JoinServer(addr string) (err error) {
-	return c.join(context.Background(), &mcnet.DefaultDialer, addr)
+func (cl *Client) JoinServer(addr string) (err error) {
+	return cl.join(context.Background(), &mcnet.DefaultDialer, addr)
 }
 
 // JoinServerWithDialer is similar to JoinServer but using a Dialer.
-func (c *Client) JoinServerWithDialer(d *net.Dialer, addr string) (err error) {
+func (cl *Client) JoinServerWithDialer(d *net.Dialer, addr string) (err error) {
 	dialer := (*mcnet.Dialer)(d)
-	return c.join(context.Background(), dialer, addr)
+	return cl.join(context.Background(), dialer, addr)
 }
 
-func (c *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error {
+func (cl *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error {
 	const Handshake = 0x00
 	// Split Host and Port
 	host, portStr, err := net.SplitHostPort(addr)
@@ -43,10 +43,10 @@ func (c *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error {
 		_, records, err := net.LookupSRV("minecraft", "tcp", host)
 		if err == nil && len(records) > 0 {
 			addr = net.JoinHostPort(addr, strconv.Itoa(int(records[0].Port)))
-			return c.join(ctx, d, addr)
+			return cl.join(ctx, d, addr)
 		} else {
 			addr = net.JoinHostPort(addr, strconv.Itoa(DefaultPort))
-			return c.join(ctx, d, addr)
+			return cl.join(ctx, d, addr)
 		}
 	} else {
 		port, err = strconv.ParseInt(portStr, 0, 16)
@@ -56,12 +56,12 @@ func (c *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error {
 	}
 
 	// Dial connection
-	if c.Conn, err = d.DialMCContext(ctx, addr); err != nil {
+	if cl.Conn, err = d.DialMCContext(ctx, addr); err != nil {
 		return fmt.Errorf("dial connection: %w", err)
 	}
 
 	// Handshake
-	if err := c.Conn.WritePacket(pk.Marshal(
+	if err := cl.Conn.WritePacket(pk.Marshal(
 		Handshake,
 		pk.VarInt(ProtocolVersion),
 		pk.String(host),
@@ -71,14 +71,14 @@ func (c *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error {
 		return fmt.Errorf("handshake: %w", err)
 	}
 	// Login Start
-	if err := c.Conn.WritePacket(pk.Marshal(
+	if err := cl.Conn.WritePacket(pk.Marshal(
 		packetid.SPacketLoginStart,
-		pk.String(c.Auth.Name),
+		pk.String(cl.Auth.Name),
 		pk.Opt{
-			If: c.Auth.AccessToken != "",
+			If: cl.Auth.AccessToken != "",
 			Value: pk.Tuple{
 				pk.Boolean(true),
-				c.Auth.KeyPair,
+				cl.Auth.KeyPair,
 			},
 			Else: pk.Boolean(false),
 		},
@@ -89,7 +89,7 @@ func (c *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error {
 	var p pk.Packet
 	for {
 		//Receive Packet
-		c.Conn.ReadPacket(&p)
+		cl.Conn.ReadPacket(&p)
 
 		//Handle Packet
 		switch p.ID {
@@ -101,7 +101,7 @@ func (c *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error {
 			return fmt.Errorf("login disconnect: %s", reason)
 
 		case packetid.CPacketEncryptionRequest:
-			if err := handleEncryptionRequest(c, p); err != nil {
+			if err := handleEncryptionRequest(cl, p); err != nil {
 				return fmt.Errorf("encryption request: %w", err)
 			}
 
@@ -113,18 +113,18 @@ func (c *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error {
 			if err := p.Scan(&euuid, &name); err != nil {
 				return fmt.Errorf("login success: %w", err)
 			}
-			c.Player.UUID = uuid.UUID(euuid)
-			c.Player.Username = string(name)
+			cl.Player.UUID = uuid.UUID(euuid)
+			cl.Player.Username = string(name)
 			return nil
 		case packetid.CPacketSetCompression:
 			var threshold pk.VarInt
 			if err := p.Scan(&threshold); err != nil {
 				return fmt.Errorf("set compression: %w", err)
 			}
-			c.Conn.SetThreshold(int(threshold))
+			cl.Conn.SetThreshold(int(threshold))
 		case packetid.CPacketLoginPluginRequest:
 			p.ID = packetid.SPacketLoginPluginResponse
-			if err := c.Conn.WritePacket(p); err != nil {
+			if err := cl.Conn.WritePacket(p); err != nil {
 				return fmt.Errorf("login plugin response: %w", err)
 			}
 		}
