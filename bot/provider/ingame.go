@@ -3,55 +3,32 @@ package provider
 import (
 	"fmt"
 	pk "github.com/Edouard127/go-mc/net/packet"
+	"time"
 )
 
 // HandleGame receive server packet and response them correctly.
 // Note that HandleGame will block if you don't receive from Events.
-func (c *Client) HandleGame() error {
+func (cl *Client) HandleGame() error {
+	var e1 error
+	go func() {
+		for {
+			e1 = cl.Events.Tick(cl)
+			if e1 != nil {
+				panic(fmt.Errorf("tick error: %v", e1))
+			}
+			time.Sleep(time.Microsecond * 50)
+		}
+	}()
+
 	var p pk.Packet
+	var e2 error
 	for {
-		//Read packets
-		if err := c.Conn.ReadPacket(&p); err != nil {
-			fmt.Printf("read packet error %x: %v", p.ID, err)
-			return err
+		if e2 = cl.Conn.ReadPacket(&p); e2 != nil {
+			panic(fmt.Errorf("read packet error %x: %v", p.ID, e2))
 		}
 
-		//handle packets
-		if err := c.handlePacket(p); err != nil {
-			fmt.Println("handle packet error:", err)
-			return err
+		if e2 = cl.Events.HandlePacket(cl, p); e2 != nil {
+			panic(fmt.Errorf("handle packet error %x: %v", p.ID, e2))
 		}
 	}
-}
-
-func (c *Client) handlePacket(p pk.Packet) (err error) {
-	if c.Events.generic != nil {
-		for _, handler := range *c.Events.generic {
-			err = handler.F(c, p)
-			if err != nil {
-				return
-			}
-		}
-	}
-	if listeners := c.Events.handlers[p.ID]; listeners != nil {
-		for _, handler := range *listeners {
-			err = handler.F(c, p)
-			if err != nil {
-				return
-			}
-		}
-	}
-	return
-}
-
-func (c *Client) handleTickers() (err error) {
-	if c.Events.tickers != nil {
-		for _, handler := range *c.Events.tickers {
-			err = handler.F(c)
-			if err != nil {
-				return
-			}
-		}
-	}
-	return
 }

@@ -23,19 +23,19 @@ import (
 // Attach attaches the core handlers to the client
 func Attach(c *Client) *Client {
 	c.Events.AddListener(
-		PacketHandler{Priority: 0, ID: packetid.CPacketLogin, F: JoinGame},
-		PacketHandler{Priority: 0, ID: packetid.CPacketKeepAlive, F: KeepAlive},
-		PacketHandler{Priority: 0, ID: packetid.CPacketChatMessage, F: ChatMessage},
-		PacketHandler{Priority: 0, ID: packetid.CPacketSystemMessage, F: ChatMessage},
-		PacketHandler{Priority: 0, ID: packetid.CPacketDisconnect, F: Disconnect},
-		PacketHandler{Priority: 0, ID: packetid.CPacketUpdateHealth, F: UpdateHealth},
-		PacketHandler{Priority: int(^uint(0) >> 1), ID: packetid.CPacketSetTime, F: TimeUpdate},
-		PacketHandler{Priority: int(^uint(0) >> 1), ID: packetid.CPacketPlayerInfo, F: PlayerInfo},
+		PacketHandler[Client]{Priority: 0, ID: packetid.CPacketLogin, F: JoinGame},
+		PacketHandler[Client]{Priority: 0, ID: packetid.CPacketKeepAlive, F: KeepAlive},
+		PacketHandler[Client]{Priority: 0, ID: packetid.CPacketChatMessage, F: ChatMessage},
+		PacketHandler[Client]{Priority: 0, ID: packetid.CPacketSystemMessage, F: ChatMessage},
+		PacketHandler[Client]{Priority: 0, ID: packetid.CPacketDisconnect, F: Disconnect},
+		PacketHandler[Client]{Priority: 0, ID: packetid.CPacketUpdateHealth, F: UpdateHealth},
+		PacketHandler[Client]{Priority: int(^uint(0) >> 1), ID: packetid.CPacketSetTime, F: TimeUpdate},
+		PacketHandler[Client]{Priority: int(^uint(0) >> 1), ID: packetid.CPacketPlayerInfo, F: PlayerInfo},
 	)
 
 	c.Events.AddTicker(
-		TickHandler{Priority: int(^uint(0) >> 1), F: ApplyPhysics},
-		TickHandler{Priority: int(^uint(0) >> 1), F: RunTransactions},
+		TickHandler[Client]{Priority: int(^uint(0) >> 1), F: ApplyPhysics},
+		TickHandler[Client]{Priority: int(^uint(0) >> 1), F: RunTransactions},
 	)
 
 	return c

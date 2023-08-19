@@ -17,12 +17,12 @@ type Client struct {
 	PlayerList *core.PlayerList
 	Player     *Player
 
-	Events      Events
+	Events      Events[Client]
 	LoginPlugin map[string]func(data []byte) ([]byte, error)
 }
 
-func (c *Client) Close() error {
-	return c.Conn.Close()
+func (cl *Client) Close() error {
+	return cl.Conn.Close()
 }
 
 // NewClient creates a new Client
@@ -34,6 +34,6 @@ func NewClient() *Client {
 		World:      world.NewWorld(),
 		PlayerList: core.NewPlayerList(),
 		Player:     NewPlayer(basic.DefaultSettings),
-		Events:     Events{handlers: make(map[int32]*handlerHeap)},
+		Events:     Events[Client]{handlers: make(map[int32]*handlerHeap[Client]), tickers: new(tickerHeap[Client])},
 	})
 }
