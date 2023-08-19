@@ -27,6 +27,7 @@ const (
 const (
 	MinecraftAuthorizationEndpoint = "https://api.minecraftservices.com/authentication/login_with_xbox"
 	MinecraftProfileEndpoint       = "https://api.minecraftservices.com/minecraft/profile"
+	MinecraftCertificateEndpoint   = "https://api.minecraftservices.com/player/certificates"
 	MinecraftAuthRelay             = "rp://api.minecraftservices.com/"
 )
 

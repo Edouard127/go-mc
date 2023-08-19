@@ -16,7 +16,7 @@ type Profile struct {
 type Auth struct {
 	Profile
 	MicrosoftAuth
-	KeyPairResp
+	KeyPair KeyPairResp
 }
 
 type MicrosoftAuth struct {
