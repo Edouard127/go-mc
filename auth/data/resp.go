@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-type KeyPairResp struct {
-	KeyPair struct {
+type KeyPair struct {
+	Pair struct {
 		PrivateKey string `json:"privateKey"`
 		PublicKey  string `json:"publicKey"`
 	} `json:"keyPair"`
@@ -20,8 +20,8 @@ type KeyPairResp struct {
 	RefreshedAfter       time.Time `json:"refreshedAfter"`
 }
 
-func (k KeyPairResp) WriteTo(w io.Writer) (int64, error) {
-	block, _ := pem.Decode([]byte(k.KeyPair.PublicKey))
+func (k KeyPair) WriteTo(w io.Writer) (int64, error) {
+	block, _ := pem.Decode([]byte(k.Pair.PublicKey))
 	if block == nil {
 		return 0, fmt.Errorf("pem decode error: no data is found")
 	}

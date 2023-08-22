@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"crypto/rand"
+	"encoding/binary"
 	"fmt"
 	"github.com/Edouard127/go-mc/bot/basic"
 	"github.com/Edouard127/go-mc/bot/core"
@@ -15,7 +17,7 @@ import (
 	pk "github.com/Edouard127/go-mc/net/packet"
 	"github.com/Edouard127/go-mc/net/transactions"
 	"github.com/google/uuid"
-	"math"
+	"time"
 )
 
 type Player struct {
@@ -72,24 +74,15 @@ func (p *Player) Respawn(c *Client) (err error) {
 }
 
 func (p *Player) Chat(c *Client, msg string) error {
+	var salt int64
+	binary.Read(rand.Reader, binary.BigEndian, &salt)
+
 	var (
-		message = pk.String(msg[:int(math.Min(float64(len(msg)), 256))])
-		//timestamp = pk.Long(time.Now().Unix())
-		/*salt             = pk.Long(0)
-		signatureLength  = pk.VarInt(0)
-		signature        = pk.String("")
-		signaturePreview = pk.Boolean(false)*/
+		message   = pk.String(msg[:min(len(msg), 256)])
+		timestamp = pk.Long(time.Now().Unix())
 	)
 
-	err := c.Conn.WritePacket(pk.Marshal(
-		packetid.SPacketChatMessage,
-		message,
-		//timestamp,
-		/*salt,
-		signatureLength,
-		signature,
-		signaturePreview,*/
-	))
+	err := c.Conn.WritePacket(pk.Marshal(packetid.SPacketChatMessage, message, timestamp, pk.Long(salt), pk.ByteArray(c.Auth.KeyPair.PublicKeySignatureV2), pk.Boolean(true)))
 	if err != nil {
 		return err
 	}

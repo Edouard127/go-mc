@@ -120,10 +120,10 @@ func loginAuth(auth data.Auth, shareSecret []byte, er encryptionRequest) error {
 
 	requestPacket, err := json.Marshal(
 		request{
-			AccessToken: auth.AccessToken,
+			AccessToken: auth.Microsoft.AccessToken,
 			SelectedProfile: profile{
-				ID:   auth.UUID,
-				Name: auth.Name,
+				ID:   auth.Profile.UUID,
+				Name: auth.Profile.Name,
 			},
 			ServerID: digest,
 		},

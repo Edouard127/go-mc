@@ -15,11 +15,11 @@ type Profile struct {
 
 type Auth struct {
 	Profile
-	MicrosoftAuth
-	KeyPair KeyPairResp
+	Microsoft
+	KeyPair
 }
 
-type MicrosoftAuth struct {
+type Microsoft struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 	ExpiresIn    int64  `json:"expires_in"`
@@ -36,7 +36,7 @@ type DeviceCodeRequest struct {
 }
 
 type DeviceCodeResponse struct {
-	MicrosoftAuth
+	Microsoft
 	Error string `json:"error"`
 }
 

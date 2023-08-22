@@ -11,12 +11,12 @@ var ServicesURL = "https://api.minecraftservices.com"
 
 var client = http.DefaultClient
 
-func GetOrFetchKeyPair(accessToken string) (data.KeyPairResp, error) {
+func GetOrFetchKeyPair(accessToken string) (data.KeyPair, error) {
 	return fetchKeyPair(accessToken) // TODO: cache
 }
 
-func fetchKeyPair(accessToken string) (data.KeyPairResp, error) {
-	var keyPairResp data.KeyPairResp
+func fetchKeyPair(accessToken string) (data.KeyPair, error) {
+	var keyPairResp data.KeyPair
 	err := post("/player/certificates", accessToken, &keyPairResp)
 	return keyPairResp, err
 }

@@ -49,7 +49,7 @@ func (cl *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error 
 			return cl.join(ctx, d, addr)
 		}
 	} else {
-		port, err = strconv.ParseInt(portStr, 0, 16)
+		port, err = strconv.ParseInt(portStr, 0, 32)
 		if err != nil {
 			return fmt.Errorf("parse port: %w", err)
 		}
@@ -73,9 +73,9 @@ func (cl *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error 
 	// Login Start
 	if err := cl.Conn.WritePacket(pk.Marshal(
 		packetid.SPacketLoginStart,
-		pk.String(cl.Auth.Name),
+		pk.String(cl.Auth.Profile.Name),
 		pk.Opt{
-			If: cl.Auth.AccessToken != "",
+			If: cl.Auth.Microsoft.AccessToken != "",
 			Value: pk.Tuple{
 				pk.Boolean(true),
 				cl.Auth.KeyPair,

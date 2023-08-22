@@ -206,7 +206,7 @@ func MinecraftLogin(xboxSecure data.XboxLiveAuth, save bool) (data.Auth, error) 
 
 	var minecraftResp data.Auth
 	json.NewDecoder(resp.Body).Decode(&minecraftResp)
-	minecraftResp.MicrosoftAuth.ExpiresAt = time.Now().Unix() + minecraftResp.ExpiresIn
+	minecraftResp.Microsoft.ExpiresAt = time.Now().Unix() + minecraftResp.Microsoft.ExpiresIn
 	minecraftResp.Profile, err = MinecraftProfile(minecraftResp)
 	minecraftResp.KeyPair, err = MinecraftCertificate(minecraftResp)
 
@@ -224,13 +224,13 @@ func MinecraftRefresh(auth data.Auth) (data.Auth, error) {
 	var err error
 	auth, err = CertificateRefresh(auth)
 
-	if auth.MicrosoftAuth.ExpiresAt > time.Now().Unix() {
+	if auth.Microsoft.ExpiresAt > time.Now().Unix() {
 		return auth, nil
 	}
 
 	resp, err := postForm(LiveTokenRefresh, map[string]any{
 		"client_id":     MicrosoftClientID,
-		"refresh_token": auth.RefreshToken,
+		"refresh_token": auth.Microsoft.RefreshToken,
 		"grant_type":    "refresh_token",
 		"redirect_uri":  MicrosoftNativeClient,
 	}, nil)
@@ -238,11 +238,11 @@ func MinecraftRefresh(auth data.Auth) (data.Auth, error) {
 		return data.Auth{}, err
 	}
 
-	var authResp data.MicrosoftAuth
+	var authResp data.Microsoft
 	json.NewDecoder(resp.Body).Decode(&authResp)
 
 	authResp.ExpiresAt = time.Now().Unix() + authResp.ExpiresIn
-	auth.MicrosoftAuth = authResp
+	auth.Microsoft = authResp
 
 	if auth.Profile.UUID == "" {
 		auth.Profile, err = MinecraftProfile(auth)
@@ -257,7 +257,7 @@ func MinecraftRefresh(auth data.Auth) (data.Auth, error) {
 // MinecraftProfile fetches the profile of a Minecraft account.
 func MinecraftProfile(auth data.Auth) (data.Profile, error) {
 	resp, err := get(MinecraftProfileEndpoint, map[string]string{
-		"Authorization": "Bearer " + auth.AccessToken,
+		"Authorization": "Bearer " + auth.Microsoft.AccessToken,
 	})
 	if err != nil {
 		return data.Profile{}, err
@@ -271,15 +271,15 @@ func MinecraftProfile(auth data.Auth) (data.Profile, error) {
 
 // MinecraftCertificate fetches the certificate of a Minecraft account.
 // This is required for joining servers and sending messages on strict servers.
-func MinecraftCertificate(auth data.Auth) (data.KeyPairResp, error) {
+func MinecraftCertificate(auth data.Auth) (data.KeyPair, error) {
 	resp, err := postForm(MinecraftCertificateEndpoint, nil, map[string]string{
-		"Authorization": "Bearer " + auth.AccessToken,
+		"Authorization": "Bearer " + auth.Microsoft.AccessToken,
 	})
 	if err != nil {
-		return data.KeyPairResp{}, err
+		return data.KeyPair{}, err
 	}
 
-	var keypair data.KeyPairResp
+	var keypair data.KeyPair
 	err = json.NewDecoder(resp.Body).Decode(&keypair)
 
 	return keypair, err
@@ -308,10 +308,7 @@ func WriteMinecraftAccount(account data.Auth) error {
 
 	var accounts []data.Auth
 	accounts = append(accounts, account)
-	fmt.Println(accounts)
-
 	json.NewEncoder(f).Encode(accounts)
-	fmt.Println(accounts)
 
 	return nil
 }
@@ -319,7 +316,17 @@ func WriteMinecraftAccount(account data.Auth) error {
 func LoginFromCache(f func(auth data.Auth) bool) data.Auth {
 	accounts, err := ReadMinecraftAccounts()
 	if err != nil {
-		return data.Auth{}
+		xbox, err := LoginWithDeviceCode()
+		if err != nil {
+			panic(err)
+		}
+
+		mc, err := MinecraftLogin(xbox, true)
+		if err != nil {
+			panic(err)
+		}
+
+		return mc
 	}
 
 	if f == nil {
@@ -360,13 +367,22 @@ func ReadMinecraftAccounts() ([]data.Auth, error) {
 }
 
 func GetAccountFile() *os.File {
-	dir, _ := os.UserConfigDir()
-	f, _ := os.OpenFile(fmt.Sprintf("%s/.go-mc/accounts.json", dir), os.O_CREATE|os.O_RDWR, 0644)
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		panic(err)
+	}
+	if os.MkdirAll(fmt.Sprintf("%s/.go-mc", dir), 0755) != nil {
+		panic(err)
+	}
+	f, err := os.OpenFile(fmt.Sprintf("%s/.go-mc/accounts.json", dir), os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		panic(err)
+	}
 	return f
 }
 
-func getTokens(url string) (data.MicrosoftAuth, error) {
-	var msauth data.MicrosoftAuth
+func getTokens(url string) (data.Microsoft, error) {
+	var msauth data.Microsoft
 
 	msauth.AccessToken = data.Match(`access_token=([^&]+)`, url)
 	msauth.RefreshToken = data.Match(`refresh_token=([^&]+)`, url)

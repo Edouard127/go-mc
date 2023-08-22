@@ -22,11 +22,11 @@ func TestExampleClient_JoinServer_online(t *testing.T) {
 	c := NewClient()
 
 	c.Auth = microsoft.LoginFromCache(func(auth data.Auth) bool {
-		return auth.Name == "Kamigen"
+		return auth.Profile.Name == "aluwakbar"
 	})
 
 	//Login
-	if err := c.JoinServer("localhost:25565"); err != nil {
+	if err := c.JoinServer("ToxicNRV.aternos.me:33835"); err != nil {
 		log.Fatal(err)
 	}
 	log.Println("Login success")
