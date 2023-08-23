@@ -2,11 +2,9 @@ package level
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"github.com/Edouard127/go-mc/maths"
 	"io"
-	"log"
 	"math/bits"
 	"strings"
 
@@ -41,10 +39,11 @@ func (c *ChunkPos) ReadFrom(r io.Reader) (n int64, err error) {
 }
 
 type Chunk struct {
-	Sections    []Section
 	HeightMaps  HeightMaps
+	Sections    []Section
 	BlockEntity []BlockEntity
 	Status      ChunkStatus
+	Light       LightData
 }
 
 func (c *Chunk) IsBlockLoaded(vec3d maths.Vec3d) bool {
@@ -52,16 +51,16 @@ func (c *Chunk) IsBlockLoaded(vec3d maths.Vec3d) bool {
 	return err == nil
 }
 
-func (c *Chunk) GetBlock(vec3d maths.Vec3d) (error, *block.Block) {
+func (c *Chunk) GetBlock(vec3d maths.Vec3d) (*block.Block, error) {
 	X, Y, Z := int(vec3d.X), int(vec3d.Y), int(vec3d.Z)
 	Y += 64 // Offset so that Y=-64 is the index 0 of the array
 	if Y < 0 || Y >= len(c.Sections)*16 {
-		return fmt.Errorf("y=%d out of bound", Y), block.Air
+		return block.Air, fmt.Errorf("y=%d out of bound", Y)
 	}
 	if t := c.Sections[Y>>4]; t.States != nil {
-		return nil, block.StateList[t.States.Get(Y&15<<8|Z&15<<4|X&15)]
+		return block.StateList[t.States.Get(Y&15<<8|Z&15<<4|X&15)], nil
 	} else {
-		return fmt.Errorf("y=%d out of bound", Y), block.Air
+		return block.Air, fmt.Errorf("y=%d out of bound", Y)
 	}
 }
 
@@ -165,7 +164,12 @@ func EmptyChunk(secs int) *Chunk {
 	return &Chunk{
 		Sections: sections,
 		HeightMaps: HeightMaps{
-			MotionBlocking: NewBitStorage(bits.Len(uint(secs)*16), 16*16, nil),
+			WorldSurfaceWG:         NewBitStorage(bits.Len(uint(secs)*16+1), 16*16, nil),
+			WorldSurface:           NewBitStorage(bits.Len(uint(secs)*16+1), 16*16, nil),
+			OceanFloorWG:           NewBitStorage(bits.Len(uint(secs)*16+1), 16*16, nil),
+			OceanFloor:             NewBitStorage(bits.Len(uint(secs)*16+1), 16*16, nil),
+			MotionBlocking:         NewBitStorage(bits.Len(uint(secs)*16+1), 16*16, nil),
+			MotionBlockingNoLeaves: NewBitStorage(bits.Len(uint(secs)*16+1), 16*16, nil),
 		},
 		Status: StatusEmpty,
 	}
@@ -343,59 +347,36 @@ func (c *Chunk) WriteTo(w io.Writer) (int64, error) {
 }
 
 func (c *Chunk) ReadFrom(r io.Reader) (int64, error) {
-	/*
-		From https://github.com/maxsupermanhd/WebChunk/blob/7ba5b2394ddc7a8d3ab90c31fb511c920ca2c62c/proxy/chunkProcessor.go#L437
-	*/
-	var (
-		HeightMaps struct {
-			MotionBlocking         []uint64 `nbt:"MOTION_BLOCKING"`
-			MotionBlockingNoLeaves []uint64 `nbt:"MOTION_BLOCKING_NO_LEAVES"`
-			OceanFloor             []uint64 `nbt:"OCEAN_FLOOR"`
-			WorldSurface           []uint64 `nbt:"WORLD_SURFACE"`
-		}
-		Sections pk.ByteArray
-	)
+	var sectionData pk.ByteArray
+	n, err := pk.Tuple{pk.NBT(&c.HeightMaps), &sectionData, pk.Array(&c.BlockEntity), &c.Light}.ReadFrom(r)
+	if err != nil {
+		return n, err
+	}
 
-	n, err := pk.Tuple{
-		pk.NBT(&HeightMaps),
-		&Sections,
-		pk.Array(&c.BlockEntity),
-		&LightData{
-			SkyLightMask:   make(pk.BitSet, (16*16*16-1)>>6+1),
-			BlockLightMask: make(pk.BitSet, (16*16*16-1)>>6+1),
-			SkyLight:       []pk.ByteArray{},
-			BlockLight:     []pk.ByteArray{},
-		},
-	}.ReadFrom(r)
-
-	d := bytes.NewReader(Sections)
-	dl := len(Sections)
-	c.Sections = make([]Section, 0)
-	for {
-		if dl == 0 {
+	data := bytes.NewReader(sectionData)
+	dataLen := len(sectionData)
+	c.Sections = make([]Section, len(sectionData))
+	for i := 0; i < len(sectionData); i++ {
+		// ?????
+		if dataLen < 8 {
 			break
 		}
-		if dl < 200 { // whole chunk structure is 207 if completely empty?
-			break
-		}
-		ss := &Section{
+
+		section := &Section{
 			BlockCount: 0,
 			States:     NewStatesPaletteContainer(16*16*16, 0),
 			Biomes:     NewBiomesPaletteContainer(4*4*4, 0),
 		}
-		n, err := ss.ReadFrom(d)
-		if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
-			log.Printf("EOF while decoding chunk data while reading section %d", len(Sections))
-			break
-		}
-		if n == 0 {
-			continue
-		}
-		dl -= int(n)
-		c.Sections = append(c.Sections, *ss)
-	}
 
-	return n, err
+		nn, err := section.ReadFrom(data)
+		if err != nil {
+			return n, err
+		}
+
+		dataLen -= int(nn)
+		c.Sections[i] = *section
+	}
+	return n, nil
 }
 
 func (c *Chunk) Data() ([]byte, error) {
@@ -422,10 +403,12 @@ func (c *Chunk) PutData(data []byte) error {
 }
 
 type HeightMaps struct {
-	MotionBlocking         *BitStorage
-	MotionBlockingNoLeaves *BitStorage
-	OceanFloor             *BitStorage
-	WorldSurface           *BitStorage
+	WorldSurfaceWG         *BitStorage // test = NOT_AIR
+	WorldSurface           *BitStorage // test = NOT_AIR
+	OceanFloorWG           *BitStorage // test = MATERIAL_MOTION_BLOCKING
+	OceanFloor             *BitStorage // test = MATERIAL_MOTION_BLOCKING
+	MotionBlocking         *BitStorage // test = BlocksMotion or isFluid
+	MotionBlockingNoLeaves *BitStorage // test = BlocksMotion or isFluid
 }
 
 type BlockEntity struct {

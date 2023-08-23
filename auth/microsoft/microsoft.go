@@ -281,6 +281,7 @@ func MinecraftCertificate(auth data.Auth) (data.KeyPair, error) {
 
 	var keypair data.KeyPair
 	err = json.NewDecoder(resp.Body).Decode(&keypair)
+	keypair.UUID = auth.Profile.UUID
 
 	return keypair, err
 }

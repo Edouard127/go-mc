@@ -29,6 +29,7 @@ const (
 	MinecraftProfileEndpoint       = "https://api.minecraftservices.com/minecraft/profile"
 	MinecraftCertificateEndpoint   = "https://api.minecraftservices.com/player/certificates"
 	MinecraftAuthRelay             = "rp://api.minecraftservices.com/"
+	MinecraftAuthenticateEndpoint  = "https://authserver.mojang.com/authenticate"
 )
 
 const (

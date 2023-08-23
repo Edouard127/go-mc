@@ -3,12 +3,12 @@ package provider
 import (
 	"fmt"
 	"github.com/Edouard127/go-mc/bot/core"
+	"github.com/Edouard127/go-mc/bot/screen"
 	"github.com/Edouard127/go-mc/bot/world"
 	"github.com/Edouard127/go-mc/data/effects"
 	"github.com/Edouard127/go-mc/data/entity"
 	"github.com/Edouard127/go-mc/level"
 	"github.com/Edouard127/go-mc/maths"
-	"runtime"
 	"time"
 	"unsafe"
 
@@ -28,9 +28,10 @@ func Attach(c *Client) *Client {
 		PacketHandler[Client]{Priority: 0, ID: packetid.CPacketChatMessage, F: ChatMessage},
 		PacketHandler[Client]{Priority: 0, ID: packetid.CPacketSystemMessage, F: ChatMessage},
 		PacketHandler[Client]{Priority: 0, ID: packetid.CPacketDisconnect, F: Disconnect},
-		PacketHandler[Client]{Priority: 0, ID: packetid.CPacketUpdateHealth, F: UpdateHealth},
-		PacketHandler[Client]{Priority: int(^uint(0) >> 1), ID: packetid.CPacketSetTime, F: TimeUpdate},
-		PacketHandler[Client]{Priority: int(^uint(0) >> 1), ID: packetid.CPacketPlayerInfo, F: PlayerInfo},
+		PacketHandler[Client]{Priority: 0, ID: packetid.CPacketSetHealth, F: UpdateHealth},
+		PacketHandler[Client]{Priority: int(^uint(0) >> 1), ID: packetid.CPacketUpdateTime, F: TimeUpdate},
+		PacketHandler[Client]{Priority: int(^uint(0) >> 1), ID: packetid.CPacketPlayerInfoUpdate, F: PlayerInfo},
+		PacketHandler[Client]{Priority: int(^uint(0) >> 1), ID: packetid.CPacketPlayerInfoRemove, F: PlayerInfo},
 	)
 
 	c.Events.AddTicker(
@@ -327,14 +328,14 @@ func MultiBlockChange(c *Client, p pk.Packet) error {
 
 func SetContainerContent(c *Client, p pk.Packet) error {
 	var (
-		ContainerID pk.UnsignedByte
+		id          pk.UnsignedByte
 		StateID     pk.VarInt
 		SlotData    []Slot
 		CarriedItem Slot
 	)
 
 	if err := p.Scan(
-		&ContainerID,
+		&id,
 		&StateID,
 		pk.Array(&SlotData),
 		&CarriedItem,
@@ -342,8 +343,15 @@ func SetContainerContent(c *Client, p pk.Packet) error {
 		return fmt.Errorf("failed to scan SetContainerContent: %w", err)
 	}
 
+	var container screen.Container
+
 	c.Player.Manager.StateID = int32(StateID)
-	container := c.Player.Manager.Screens[int(ContainerID)]
+
+	if id == 0 {
+		container = c.Player.Inventory
+	} else {
+		container = c.Player.Manager.Screens[int(id)]
+	}
 
 	for i, data := range SlotData {
 		err := container.SetSlot(i, data)
@@ -352,7 +360,7 @@ func SetContainerContent(c *Client, p pk.Packet) error {
 		}
 	}
 
-	fmt.Println("SetContainerContent", ContainerID, StateID, SlotData, CarriedItem)
+	fmt.Println("SetContainerContent", id, StateID, SlotData, CarriedItem)
 	return nil
 }
 
@@ -538,10 +546,6 @@ func KeepAlive(c *Client, p pk.Packet) error {
 		return fmt.Errorf("unable to write KeepAlive packet: %w", err)
 	}
 
-	// DEV
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	fmt.Println("Alloc = ", m.Alloc/1024/1024, "MiB", "\tTotalAlloc = ", m.TotalAlloc/1024/1024, "MiB", "\tSys = ", m.Sys/1024/1024, "MiB", "\tNumGC = ", m.NumGC)
 	return nil
 }
 
@@ -811,17 +815,16 @@ func PlayerInfo(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func SyncPlayerPosition(c *Client, p pk.Packet) error {
+func PlayerPosition(c *Client, p pk.Packet) error {
 	var (
 		X, Y, Z    pk.Double
 		Yaw, Pitch pk.Float
 		Flags      pk.Byte
 		TeleportID pk.VarInt
-		Dismount   pk.Boolean
 	)
 
-	if err := p.Scan(&X, &Y, &Z, &Yaw, &Pitch, &Flags, &TeleportID, &Dismount); err != nil {
-		return fmt.Errorf("unable to read SyncPlayerPosition packet: %w", err)
+	if err := p.Scan(&X, &Y, &Z, &Yaw, &Pitch, &Flags, &TeleportID); err != nil {
+		return fmt.Errorf("unable to read PlayerPosition packet: %w", err)
 	}
 
 	position := maths.Vec3d{X: float64(X), Y: float64(Y), Z: float64(Z)}

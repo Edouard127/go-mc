@@ -123,7 +123,7 @@ func (p *Player) Jump() {
 }
 
 func (p *Player) travel(c *Client) error {
-	err, result := c.World.GetBlock(p.Position)
+	result, err := c.World.GetBlock(p.Position)
 	if err != nil {
 		return err
 	}
@@ -167,8 +167,7 @@ func (p *Player) travel(c *Client) error {
 		f6 := 0.91
 
 		if p.OnGround {
-			position := maths.Vec3d{X: p.Position.X, Y: p.BoundingBox.MinY - 1, Z: p.Position.Z}
-			err, result = c.World.GetBlock(position)
+			result, err = c.World.GetBlock(p.Position.Sub(maths.Vec3d{Y: 1}))
 			if err != nil {
 				return err
 			}
@@ -208,7 +207,7 @@ func (p *Player) move(moveType enums.MoverType, c *Client, motion maths.Vec3d) e
 	y := motion.Y
 	z := motion.Z
 
-	err, result := c.World.GetBlock(p.Position)
+	result, err := c.World.GetBlock(p.Position)
 	if err != nil {
 		return err
 	}
@@ -329,7 +328,7 @@ func ApplyPhysics(c *Client) error {
 	}*/
 
 	if c.Player.Controller.Jump {
-		err, result := c.World.GetBlock(c.Player.Position)
+		result, err := c.World.GetBlock(c.Player.Position)
 		if err != nil {
 			return err
 		}

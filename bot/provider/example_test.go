@@ -26,12 +26,11 @@ func TestExampleClient_JoinServer_online(t *testing.T) {
 	})
 
 	//Login
-	if err := c.JoinServer("ToxicNRV.aternos.me:33835"); err != nil {
+	if err := c.JoinServer("localhost:25565"); err != nil {
 		log.Fatal(err)
 	}
 	log.Println("Login success")
 
-	Attach(c)
 	//Register event handlers
 	c.Events.AddListener(
 		/* Inventory transactions */
@@ -41,6 +40,7 @@ func TestExampleClient_JoinServer_online(t *testing.T) {
 
 		/* Physic */
 		PacketHandler[Client]{ID: packetid.CPacketChunkData, Priority: 0, F: ChunkData},
+		PacketHandler[Client]{ID: packetid.CPacketUnloadChunk, Priority: 0, F: UnloadChunk},
 		PacketHandler[Client]{ID: packetid.CPacketExplosion, Priority: 0, F: Explosion},
 
 		/* Entities */
@@ -56,9 +56,9 @@ func TestExampleClient_JoinServer_online(t *testing.T) {
 		PacketHandler[Client]{ID: packetid.CPacketEntityRotation, Priority: 0, F: EntityRotation},
 		PacketHandler[Client]{ID: packetid.CPacketVehicleMove, Priority: 0, F: VehicleMove},
 		PacketHandler[Client]{ID: packetid.CPacketLookAt, Priority: 0, F: LookAt},
-		PacketHandler[Client]{ID: packetid.CPacketSyncPosition, Priority: 0, F: SyncPlayerPosition},
+		PacketHandler[Client]{ID: packetid.CPacketPlayerPosition, Priority: 0, F: PlayerPosition},
 		PacketHandler[Client]{ID: packetid.CPacketEntityEffect, Priority: 0, F: EntityEffect},
-		PacketHandler[Client]{ID: packetid.CPacketEntityVelocity, Priority: 0, F: EntityVelocity},
+		PacketHandler[Client]{ID: packetid.CPacketSetEntityVelocity, Priority: 0, F: EntityVelocity},
 
 		PacketHandler[Client]{ID: packetid.CPacketPlayerAbilities, Priority: 0, F: PlayerAbilities},
 	)
@@ -103,9 +103,9 @@ func TestExampleClient_JoinServer_offline(t *testing.T) {
 		PacketHandler[Client]{ID: packetid.CPacketEntityRotation, Priority: 0, F: EntityRotation},
 		PacketHandler[Client]{ID: packetid.CPacketVehicleMove, Priority: 0, F: VehicleMove},
 		PacketHandler[Client]{ID: packetid.CPacketLookAt, Priority: 0, F: LookAt},
-		PacketHandler[Client]{ID: packetid.CPacketSyncPosition, Priority: 0, F: SyncPlayerPosition},
+		PacketHandler[Client]{ID: packetid.CPacketPlayerPosition, Priority: 0, F: PlayerPosition},
 		PacketHandler[Client]{ID: packetid.CPacketEntityEffect, Priority: 0, F: EntityEffect},
-		PacketHandler[Client]{ID: packetid.CPacketEntityVelocity, Priority: 0, F: EntityVelocity},
+		PacketHandler[Client]{ID: packetid.CPacketSetEntityVelocity, Priority: 0, F: EntityVelocity},
 
 		PacketHandler[Client]{ID: packetid.CPacketPlayerAbilities, Priority: 0, F: PlayerAbilities},
 	)

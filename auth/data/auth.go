@@ -1,6 +1,7 @@
 package data
 
 import (
+	"fmt"
 	"io"
 	"regexp"
 	"strings"
@@ -17,6 +18,10 @@ type Auth struct {
 	Profile
 	Microsoft
 	KeyPair
+}
+
+func (a Auth) SessionID() string {
+	return fmt.Sprintf("token:%s:%s", a.Microsoft.AccessToken, a.Profile.UUID)
 }
 
 type Microsoft struct {

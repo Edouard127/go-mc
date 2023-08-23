@@ -63,18 +63,18 @@ func (w *World) predicateSearch(nth int, predicate func(entity core.Entity) bool
 	return nil
 }
 
-func (w *World) GetBlock(pos maths.Vec3d) (error, *block.Block) {
+func (w *World) GetBlock(pos maths.Vec3d) (*block.Block, error) {
 	w.worldSync.Lock()
 	defer w.worldSync.Unlock()
 	chunk, ok := w.Columns[ChunkPos{int32(pos.X) >> 4, int32(pos.Z) >> 4}]
 	if ok {
 		return chunk.GetBlock(pos)
 	}
-	return fmt.Errorf("chunk not found"), block.Air
+	return block.Air, fmt.Errorf("chunk not found")
 }
 
 func (w *World) MustGetBlock(pos maths.Vec3d) *block.Block {
-	err, b := w.GetBlock(pos)
+	b, err := w.GetBlock(pos)
 	if err != nil {
 		panic(err)
 	}
@@ -124,8 +124,8 @@ func (w *World) RayTrace(start, end maths.Vec3d) (maths.RayTraceResult, error) {
 	}
 
 	for _, pos := range maths.RayTraceBlocks(start, end) {
-		err, result := w.GetBlock(pos)
-		if err != nil || result == block.Air {
+		result, err := w.GetBlock(pos)
+		if result == block.Air || err != nil {
 			continue
 		}
 		return maths.RayTraceResult{pos}, nil

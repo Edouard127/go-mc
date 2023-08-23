@@ -18,7 +18,7 @@ import (
 )
 
 // ProtocolVersion is the protocol version number of minecraft net protocol
-const ProtocolVersion = 759
+const ProtocolVersion = 763
 const DefaultPort = mcnet.DefaultPort
 
 // JoinServer connect a Minecraft server for playing the game.
@@ -74,14 +74,8 @@ func (cl *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error 
 	if err := cl.Conn.WritePacket(pk.Marshal(
 		packetid.SPacketLoginStart,
 		pk.String(cl.Auth.Profile.Name),
-		pk.Opt{
-			If: cl.Auth.Microsoft.AccessToken != "",
-			Value: pk.Tuple{
-				pk.Boolean(true),
-				cl.Auth.KeyPair,
-			},
-			Else: pk.Boolean(false),
-		},
+		pk.Boolean(true),
+		pk.UUID(uuid.MustParse(cl.Auth.Profile.UUID)),
 	)); err != nil {
 		return fmt.Errorf("login start: %w", err)
 	}
@@ -98,7 +92,7 @@ func (cl *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error 
 			if err := p.Scan(&reason); err != nil {
 				break
 			}
-			return fmt.Errorf("login disconnect: %s", reason)
+			return fmt.Errorf("login disconnect: %s, %s", reason, reason.Translate)
 
 		case packetid.CPacketEncryptionRequest:
 			if err := handleEncryptionRequest(cl, p); err != nil {
@@ -115,6 +109,11 @@ func (cl *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error 
 			}
 			cl.Player.UUID = uuid.UUID(euuid)
 			cl.Player.Username = string(name)
+			/*cl.Conn.WritePacket(pk.Marshal(
+				packetid.SPacketPlayerSession,
+				pk.String(cl.Auth.SessionID()),
+				cl.Auth.KeyPair.ToSession(cl.Auth.Profile.UUID),
+			))*/
 			return nil
 		case packetid.CPacketSetCompression:
 			var threshold pk.VarInt

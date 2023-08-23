@@ -16,7 +16,7 @@ func (cl *Client) HandleGame() error {
 			if e1 != nil {
 				panic(fmt.Errorf("tick error: %v", e1))
 			}
-			time.Sleep(time.Microsecond * 50)
+			time.Sleep(time.Millisecond * 50)
 		}
 	}()
 
@@ -24,7 +24,7 @@ func (cl *Client) HandleGame() error {
 	var e2 error
 	for {
 		if e2 = cl.Conn.ReadPacket(&p); e2 != nil {
-			panic(fmt.Errorf("read packet error %x: %v", p.ID, e2))
+			panic(fmt.Errorf("read packet error 0x%x: %v", p.ID, e2))
 		}
 
 		if e2 = cl.Events.HandlePacket(cl, p); e2 != nil {
