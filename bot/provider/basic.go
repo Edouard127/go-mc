@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/binary"
 	"fmt"
@@ -90,7 +91,7 @@ func (p *Player) Chat(c *Client, msg string) error {
 	return nil
 }
 
-func RunTransactions(c *Client) error {
+func RunTransactions(c *Client, cancel context.CancelFunc) error {
 	if t := c.Player.Transactions.Next(); t == nil {
 		return nil
 	} else {
@@ -305,7 +306,7 @@ func (p *Player) updateFallState(y float64, onGround bool, getBlock block.Block)
 	}
 }
 
-func ApplyPhysics(c *Client) error {
+func ApplyPhysics(c *Client, cancel context.CancelFunc) error {
 	if err := c.Conn.WritePacket(
 		pk.Marshal(
 			packetid.SPacketPlayerPosition,

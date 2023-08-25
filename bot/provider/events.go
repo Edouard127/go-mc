@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"github.com/Edouard127/go-mc/bot/core"
 	"github.com/Edouard127/go-mc/bot/screen"
@@ -23,20 +24,20 @@ import (
 // Attach attaches the core handlers to the client
 func Attach(c *Client) *Client {
 	c.Events.AddListener(
-		PacketHandler[Client]{Priority: 0, ID: packetid.CPacketLogin, F: JoinGame},
-		PacketHandler[Client]{Priority: 0, ID: packetid.CPacketKeepAlive, F: KeepAlive},
-		PacketHandler[Client]{Priority: 0, ID: packetid.CPacketChatMessage, F: ChatMessage},
-		PacketHandler[Client]{Priority: 0, ID: packetid.CPacketSystemMessage, F: ChatMessage},
-		PacketHandler[Client]{Priority: 0, ID: packetid.CPacketDisconnect, F: Disconnect},
-		PacketHandler[Client]{Priority: 0, ID: packetid.CPacketSetHealth, F: UpdateHealth},
-		PacketHandler[Client]{Priority: int(^uint(0) >> 1), ID: packetid.CPacketUpdateTime, F: TimeUpdate},
-		PacketHandler[Client]{Priority: int(^uint(0) >> 1), ID: packetid.CPacketPlayerInfoUpdate, F: PlayerInfo},
-		PacketHandler[Client]{Priority: int(^uint(0) >> 1), ID: packetid.CPacketPlayerInfoRemove, F: PlayerInfo},
+		PacketHandler[Client]{Priority: 50, ID: packetid.CPacketLogin, F: JoinGame},
+		PacketHandler[Client]{Priority: 50, ID: packetid.CPacketKeepAlive, F: KeepAlive},
+		PacketHandler[Client]{Priority: 50, ID: packetid.CPacketChatMessage, F: ChatMessage},
+		PacketHandler[Client]{Priority: 50, ID: packetid.CPacketSystemMessage, F: ChatMessage},
+		PacketHandler[Client]{Priority: 50, ID: packetid.CPacketDisconnect, F: Disconnect},
+		PacketHandler[Client]{Priority: 50, ID: packetid.CPacketSetHealth, F: UpdateHealth},
+		PacketHandler[Client]{Priority: 50, ID: packetid.CPacketUpdateTime, F: TimeUpdate},
+		PacketHandler[Client]{Priority: 50, ID: packetid.CPacketPlayerInfoUpdate, F: PlayerInfo},
+		PacketHandler[Client]{Priority: 50, ID: packetid.CPacketPlayerInfoRemove, F: PlayerInfo},
 	)
 
 	c.Events.AddTicker(
-		TickHandler[Client]{Priority: int(^uint(0) >> 1), F: ApplyPhysics},
-		TickHandler[Client]{Priority: int(^uint(0) >> 1), F: RunTransactions},
+		TickHandler[Client]{Priority: 50, F: ApplyPhysics},
+		TickHandler[Client]{Priority: 50, F: RunTransactions},
 	)
 
 	return c
@@ -54,7 +55,7 @@ type PlayerMessage struct {
 	TimeStamp         time.Time
 }
 
-func SpawnEntity(c *Client, p pk.Packet) error {
+func SpawnEntity(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		id                  pk.VarInt
 		euuid               pk.UUID
@@ -82,7 +83,7 @@ func SpawnEntity(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func SpawnExperienceOrb(c *Client, p pk.Packet) error {
+func SpawnExperienceOrb(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		entityID pk.VarInt
 		x, y, z  pk.Double
@@ -96,7 +97,7 @@ func SpawnExperienceOrb(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func SpawnPlayer(c *Client, p pk.Packet) error {
+func SpawnPlayer(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		id         pk.VarInt
 		euuid      pk.UUID
@@ -110,11 +111,10 @@ func SpawnPlayer(c *Client, p pk.Packet) error {
 
 	c.World.Add(core.NewEntityPlayer(c.PlayerList.GetPlayer(uuid.UUID(euuid)).Name, int32(id), uuid.UUID(euuid), 116, float64(x), float64(y), float64(z), float64(yaw), float64(pitch)))
 
-	fmt.Println("SpawnPlayer", id, euuid.String(), x, y, z, yaw, pitch)
 	return nil
 }
 
-func EntityAnimation(c *Client, p pk.Packet) error {
+func EntityAnimation(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		entityID  pk.VarInt
 		animation pk.Byte
@@ -127,7 +127,7 @@ func EntityAnimation(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func AwardStatistics(c *Client, p pk.Packet) error {
+func AwardStatistics(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	/*var count pk.VarInt
 	var statistics []struct {
 		Name  pk.String
@@ -136,13 +136,12 @@ func AwardStatistics(c *Client, p pk.Packet) error {
 
 	/*if err := p.Scan(&count, &statistics); err != nil {
 		return err
-	}
+	}*/
 
-	fmt.Println("Statistics", count, statistics)*/
 	return nil
 }
 
-func SetBlockDestroyStage(c *Client, p pk.Packet) error {
+func SetBlockDestroyStage(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		entityID pk.VarInt
 		location pk.Position
@@ -156,20 +155,19 @@ func SetBlockDestroyStage(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func BlockEntityData(c *Client, p pk.Packet) error {
+func BlockEntityData(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	/*var location pk.Position
 	var action pk.Byte
 	var nbtData pk
 
 	if err := p.Scan(&location, &action, &nbtData); err != nil {
 		return err
-	}
+	}*/
 
-	fmt.Println("UpdateBlockEntity", location, action, nbtData)*/
 	return nil
 }
 
-func BlockAction(c *Client, p pk.Packet) error {
+func BlockAction(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		location    pk.Position
 		actionID    pk.Byte
@@ -184,7 +182,7 @@ func BlockAction(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func BlockChange(c *Client, p pk.Packet) error {
+func BlockChange(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		location  pk.Position
 		blockType pk.VarInt
@@ -197,7 +195,7 @@ func BlockChange(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func BossBar(c *Client, p pk.Packet) error {
+func BossBar(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var uuid pk.UUID
 	var action pk.Byte
 
@@ -242,74 +240,40 @@ func BossBar(c *Client, p pk.Packet) error {
 
 		err = p.Scan(&flags)
 	case 6:
-		//fmt.Println("BossBar", uuid, action)
+		//
 	}
 
 	return nil
 }
 
-func ServerDifficulty(c *Client, p pk.Packet) (err error) {
+func ServerDifficulty(c *Client, p pk.Packet) error {
 	var difficulty pk.Byte
 
 	return p.Scan(&difficulty)
 }
 
-func TabComplete(c *Client, p pk.Packet) error {
+func TabComplete(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	/*var count pk.VarInt
 	var matches []pk.String
 
 	if err := p.Scan(&count, &matches); err != nil {
 		return err
-	}
+	}*/
 
-	fmt.Println("TabComplete", count, matches)*/
 	return nil
 }
 
-func ChatMessage(c *Client, p pk.Packet) error {
+func ChatMessage(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var message chat.Message
 
 	if err := p.Scan(&message); err != nil {
 		return fmt.Errorf("unable to read ChatMessage packet: %w", err)
 	}
-	/*
-		// Get 2 random items from the inventory
-		var (
-			item1      *Slot
-			item2      *Slot
-			item1Index int32
-			item2Index int32
-		)
-		for i, v := range c.Player.Inventory.Slots {
-			if v.ID != 0 {
-				if item1 == nil {
-					item1 = &v
-					item1Index = int32(i)
-				} else if item2 == nil {
-					item2 = &v
-					item2Index = int32(i)
-					break
-				}
-			}
-		}
-
-		if item1 == nil || item2 == nil {
-			return nil
-		}
-		// Create a new inventory transaction
-		builder := transactions.TransactionBuilder{
-			WindowID: 0,
-			StateID:  pk.VarInt(c.Player.StateID),
-			Actions:  transactions.SwitchSlot(item1Index, item1, item2Index, item2),
-		}
-		c.Player.Transactions.Post(builder.Build())*/
-
-	fmt.Println("ChatMessage", message)
 
 	return nil
 }
 
-func MultiBlockChange(c *Client, p pk.Packet) error {
+func MultiBlockChange(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	/*var chunkX pk.Int
 	var chunkZ pk.Int
 	var recordCount pk.VarInt
@@ -320,13 +284,12 @@ func MultiBlockChange(c *Client, p pk.Packet) error {
 
 	if err := p.Scan(&chunkX, &chunkZ, &recordCount, &records); err != nil {
 		return err
-	}
+	}*/
 
-	fmt.Println("MultiBlockChange", chunkX, chunkZ, recordCount, records)*/
 	return nil
 }
 
-func SetContainerContent(c *Client, p pk.Packet) error {
+func SetContainerContent(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		id          pk.UnsignedByte
 		StateID     pk.VarInt
@@ -360,11 +323,10 @@ func SetContainerContent(c *Client, p pk.Packet) error {
 		}
 	}
 
-	fmt.Println("SetContainerContent", id, StateID, SlotData, CarriedItem)
 	return nil
 }
 
-func CloseContainer(c *Client, p pk.Packet) error {
+func CloseContainer(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var windowID pk.Byte
 
 	if err := p.Scan(&windowID); err != nil {
@@ -374,7 +336,7 @@ func CloseContainer(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func CloseWindow(c *Client, p pk.Packet) error {
+func CloseWindow(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var windowID pk.Byte
 
 	if err := p.Scan(&windowID); err != nil {
@@ -384,7 +346,7 @@ func CloseWindow(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func SetContainerProperty(c *Client, p pk.Packet) error {
+func SetContainerProperty(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		windowID pk.Byte
 		property pk.Short
@@ -398,16 +360,18 @@ func SetContainerProperty(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func SetContainerSlot(c *Client, p pk.Packet) (err error) {
+func SetContainerSlot(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		ContainerID pk.Byte
 		StateID     pk.VarInt
 		SlotID      pk.Short
 		SlotData    Slot
 	)
-	if err = p.Scan(&ContainerID, &StateID, &SlotID, &SlotData); err != nil {
+	if err := p.Scan(&ContainerID, &StateID, &SlotID, &SlotData); err != nil {
 		return fmt.Errorf("failed to scan SetSlot: %w", err)
 	}
+
+	var err error
 
 	c.Player.Manager.StateID = int32(StateID)
 	switch ContainerID {
@@ -423,10 +387,10 @@ func SetContainerSlot(c *Client, p pk.Packet) (err error) {
 		}
 	}
 
-	return
+	return err
 }
 
-func SetCooldown(c *Client, p pk.Packet) error {
+func SetCooldown(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		itemID pk.VarInt
 		ticks  pk.VarInt
@@ -439,7 +403,7 @@ func SetCooldown(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func PluginMessage(c *Client, p pk.Packet) error {
+func PluginMessage(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		channel pk.String
 		data    pk.ByteArray
@@ -452,7 +416,7 @@ func PluginMessage(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func NamedSoundEffect(c *Client, p pk.Packet) error {
+func NamedSoundEffect(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		soundName      pk.String
 		soundCategory  pk.Byte
@@ -468,17 +432,16 @@ func NamedSoundEffect(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func Disconnect(c *Client, p pk.Packet) error {
+func Disconnect(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var reason chat.Message
 	if err := p.Scan(&reason); err != nil {
 		return fmt.Errorf("failed to scan Disconnect: %w", err)
 	}
 
-	fmt.Println("Disconnect:", reason)
 	return nil
 }
 
-func EntityStatus(c *Client, p pk.Packet) error {
+func EntityStatus(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var entityID pk.Int
 	var entityStatus pk.Byte
 
@@ -489,7 +452,7 @@ func EntityStatus(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func Explosion(c *Client, p pk.Packet) error {
+func Explosion(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		x, y, z    pk.Float
 		radius     pk.Float
@@ -513,11 +476,10 @@ func Explosion(c *Client, p pk.Packet) error {
 		return fmt.Errorf("unable to read Explosion packet: %w", err)
 	}
 
-	fmt.Println("Explosion", x, y, z, radius, records, data, mX, mY, mZ)
 	return nil
 }
 
-func UnloadChunk(c *Client, p pk.Packet) error {
+func UnloadChunk(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var chunk level.ChunkPos
 
 	if err := p.Scan(&chunk); err != nil {
@@ -528,7 +490,7 @@ func UnloadChunk(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func ChangeGameState(c *Client, p pk.Packet) error {
+func ChangeGameState(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var reason pk.UnsignedByte
 	var value pk.Float
 
@@ -539,7 +501,7 @@ func ChangeGameState(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func KeepAlive(c *Client, p pk.Packet) error {
+func KeepAlive(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	p.ID = packetid.SPacketKeepAlive
 	err := c.Conn.WritePacket(p)
 	if err != nil {
@@ -549,7 +511,7 @@ func KeepAlive(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func ChunkData(c *Client, p pk.Packet) error {
+func ChunkData(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		ChunkPos level.ChunkPos
 		Chunk    level.Chunk
@@ -562,11 +524,12 @@ func ChunkData(c *Client, p pk.Packet) error {
 	}
 
 	c.World.Columns[ChunkPos] = &Chunk
+	fmt.Println("ChunkData")
 
 	return nil
 }
 
-func Effect(c *Client, p pk.Packet) error {
+func Effect(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var effectID pk.Int
 	var location pk.Position
 	var data pk.Int
@@ -579,7 +542,7 @@ func Effect(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func Particle(c *Client, p pk.Packet) error {
+func Particle(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	/*var particleID pk.String
 	var longDistance pk.Boolean
 	var x pk.Float
@@ -594,13 +557,12 @@ func Particle(c *Client, p pk.Packet) error {
 
 	if err := p.Scan(&particleID, &longDistance, &x, &y, &z, &offsetX, &offsetY, &offsetZ, &particleData, &particleCount, &data); err != nil {
 		return err
-	}
+	}*/
 
-	fmt.Println("Particle", particleID, longDistance, x, y, z, offsetX, offsetY, offsetZ, particleData, particleCount, data)*/
 	return nil
 }
 
-func JoinGame(c *Client, p pk.Packet) error {
+func JoinGame(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	if err := p.Scan(
 		(*pk.Int)(&c.Player.ID),
 		(*pk.Boolean)(&c.Player.Hardcore),
@@ -653,7 +615,7 @@ func JoinGame(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func Map(c *Client, p pk.Packet) error {
+func Map(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var Map world.Map
 
 	if err := p.Scan(&Map); err != nil {
@@ -663,7 +625,7 @@ func Map(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func Entity(c *Client, p pk.Packet) error {
+func Entity(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var entityID pk.Int
 
 	if err := p.Scan(&entityID); err != nil {
@@ -673,7 +635,7 @@ func Entity(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func EntityPosition(c *Client, p pk.Packet) error {
+func EntityPosition(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		id         pk.VarInt
 		dX, dY, dZ pk.Short
@@ -694,7 +656,7 @@ func EntityPosition(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func EntityPositionRotation(c *Client, p pk.Packet) error {
+func EntityPositionRotation(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		id         pk.VarInt
 		dX, dY, dZ pk.Short
@@ -717,7 +679,7 @@ func EntityPositionRotation(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func EntityHeadRotation(c *Client, p pk.Packet) error {
+func EntityHeadRotation(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		EntityID pk.VarInt
 		HeadYaw  pk.Angle
@@ -730,7 +692,7 @@ func EntityHeadRotation(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func EntityRotation(c *Client, p pk.Packet) error {
+func EntityRotation(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		id         pk.VarInt
 		yaw, pitch pk.Angle
@@ -748,7 +710,7 @@ func EntityRotation(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func VehicleMove(c *Client, p pk.Packet) error {
+func VehicleMove(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		X, Y, Z    pk.Double
 		Yaw, Pitch pk.Float
@@ -761,7 +723,7 @@ func VehicleMove(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func OpenSignEditor(c *Client, p pk.Packet) error {
+func OpenSignEditor(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var location pk.Position
 
 	if err := p.Scan(&location); err != nil {
@@ -771,7 +733,7 @@ func OpenSignEditor(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func CraftRecipeResponse(c *Client, p pk.Packet) error {
+func CraftRecipeResponse(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var windowID pk.UnsignedByte
 	var recipe pk.String
 
@@ -782,7 +744,7 @@ func CraftRecipeResponse(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func PlayerAbilities(c *Client, p pk.Packet) error {
+func PlayerAbilities(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var flags pk.UnsignedByte
 	var flyingSpeed pk.Float
 	var fov pk.Float
@@ -794,7 +756,7 @@ func PlayerAbilities(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func CombatEvent(c *Client, p pk.Packet) error {
+func CombatEvent(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var event pk.Byte
 	var duration pk.Int
 	var entityID pk.Int
@@ -804,18 +766,17 @@ func CombatEvent(c *Client, p pk.Packet) error {
 		return fmt.Errorf("unable to read CombatEvent packet: %w", err)
 	}
 
-	fmt.Println("CombatEvent", event, duration, entityID, message)
 	return nil
 }
 
-func PlayerInfo(c *Client, p pk.Packet) error {
+func PlayerInfo(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	if err := p.Scan(c.PlayerList); err != nil {
 		return fmt.Errorf("unable to read PlayerInfo packet: %w", err)
 	}
 	return nil
 }
 
-func PlayerPosition(c *Client, p pk.Packet) error {
+func PlayerPosition(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		X, Y, Z    pk.Double
 		Yaw, Pitch pk.Float
@@ -854,7 +815,7 @@ func PlayerPosition(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func PlayerPositionAndLook(c *Client, p pk.Packet) error {
+func PlayerPositionAndLook(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		x          pk.Double
 		y          pk.Double
@@ -872,7 +833,7 @@ func PlayerPositionAndLook(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func UseBed(c *Client, p pk.Packet) error {
+func UseBed(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var entityID pk.Int
 	var location pk.Position
 
@@ -883,7 +844,7 @@ func UseBed(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func UnlockRecipes(c *Client, p pk.Packet) error {
+func UnlockRecipes(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	/*var action pk.Byte
 	var craftingBookOpen pk.Boolean
 	var filter pk.Boolean
@@ -891,24 +852,22 @@ func UnlockRecipes(c *Client, p pk.Packet) error {
 
 	if err := p.Scan(&action, &craftingBookOpen, &filter, &recipes); err != nil {
 		return err
-	}
+	}*/
 
-	fmt.Println("UnlockRecipes", action, craftingBookOpen, filter, recipes)*/
 	return nil
 }
 
-func DestroyEntities(c *Client, p pk.Packet) error {
+func DestroyEntities(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	/*var entityIDs []pk.Int
 
 	if err := p.Scan(&entityIDs); err != nil {
 		return err
-	}
+	}*/
 
-	fmt.Println("DestroyEntities", entityIDs)*/
 	return nil
 }
 
-func RemoveEntityEffect(c *Client, p pk.Packet) error {
+func RemoveEntityEffect(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var entityID pk.Int
 	var effectID pk.Byte
 
@@ -919,7 +878,7 @@ func RemoveEntityEffect(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func ResourcePackSend(c *Client, p pk.Packet) error {
+func ResourcePackSend(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		url  pk.String
 		hash pk.String
@@ -932,7 +891,7 @@ func ResourcePackSend(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func Respawn(c *Client, p pk.Packet) error {
+func Respawn(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var copyMeta bool
 	if err := p.Scan(
 		(*pk.String)(&c.Player.DimensionType),
@@ -950,7 +909,7 @@ func Respawn(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func SelectAdvancementTab(c *Client, p pk.Packet) error {
+func SelectAdvancementTab(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var hasID pk.Boolean
 	var identifier pk.String
 
@@ -961,7 +920,7 @@ func SelectAdvancementTab(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func WorldBorder(c *Client, p pk.Packet) error {
+func WorldBorder(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		action         pk.Byte
 		radius         pk.Double
@@ -981,7 +940,7 @@ func WorldBorder(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func Camera(c *Client, p pk.Packet) error {
+func Camera(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var cameraID pk.Int
 
 	if err := p.Scan(&cameraID); err != nil {
@@ -991,7 +950,7 @@ func Camera(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func SetHeldItem(c *Client, p pk.Packet) error {
+func SetHeldItem(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var slot pk.Short
 
 	if err := p.Scan(&slot); err != nil {
@@ -1003,7 +962,7 @@ func SetHeldItem(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func DisplayScoreboard(c *Client, p pk.Packet) error {
+func DisplayScoreboard(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var position pk.Byte
 	var name pk.String
 
@@ -1014,7 +973,7 @@ func DisplayScoreboard(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func EntityMetadata(c *Client, p pk.Packet) error {
+func EntityMetadata(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		err      error
 		EntityID pk.VarInt
@@ -1142,7 +1101,7 @@ func EntityMetadata(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func AttachEntity(c *Client, p pk.Packet) error {
+func AttachEntity(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		entityID  pk.Int
 		vehicleID pk.Int
@@ -1156,7 +1115,7 @@ func AttachEntity(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func EntityVelocity(c *Client, p pk.Packet) error {
+func EntityVelocity(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		entityID                        pk.VarInt
 		velocityX, velocityY, velocityZ pk.Short
@@ -1173,20 +1132,19 @@ func EntityVelocity(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func EntityEquipment(c *Client, p pk.Packet) error {
+func EntityEquipment(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	/*var entityID pk.Int
 	var slot pk.Short
 	var item pk.Slot
 
 	if err := p.Scan(&entityID, &slot, &item); err != nil {
 		return err
-	}
+	}*/
 
-	fmt.Println("EntityEquipment", entityID, slot, item)*/
 	return nil
 }
 
-func SetExperience(c *Client, p pk.Packet) error {
+func SetExperience(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		experienceBar   pk.Float
 		levelInt        pk.VarInt
@@ -1201,7 +1159,7 @@ func SetExperience(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func UpdateHealth(c *Client, p pk.Packet) error {
+func UpdateHealth(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		health         pk.Float
 		food           pk.VarInt
@@ -1220,7 +1178,7 @@ func UpdateHealth(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func ScoreboardObjective(c *Client, p pk.Packet) error {
+func ScoreboardObjective(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		name           pk.String
 		mode           pk.Byte
@@ -1236,7 +1194,7 @@ func ScoreboardObjective(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func SetPassengers(c *Client, p pk.Packet) error {
+func SetPassengers(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	/*var entityID pk.Int
 	var passengerCount pk.VarInt
 	var passengers pk.Ary[]pk.VarInt
@@ -1248,7 +1206,7 @@ func SetPassengers(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func Teams(c *Client, p pk.Packet) error {
+func Teams(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	/*var name pk.String
 	var mode pk.Byte
 	var teamName pk.String
@@ -1269,7 +1227,7 @@ func Teams(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func UpdateScore(c *Client, p pk.Packet) error {
+func UpdateScore(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var name pk.String
 	var action pk.Byte
 	var objectiveName pk.String
@@ -1282,7 +1240,7 @@ func UpdateScore(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func SpawnPosition(c *Client, p pk.Packet) error {
+func SpawnPosition(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var location pk.Position
 
 	if err := p.Scan(&location); err != nil {
@@ -1292,7 +1250,7 @@ func SpawnPosition(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func TimeUpdate(c *Client, p pk.Packet) error {
+func TimeUpdate(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		WorldAge  pk.Long
 		TimeOfDay pk.Long
@@ -1304,7 +1262,7 @@ func TimeUpdate(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func Title(c *Client, p pk.Packet) error {
+func Title(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		action    pk.Byte
 		fadeIn    pk.Int
@@ -1322,7 +1280,7 @@ func Title(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func SoundEffect(c *Client, p pk.Packet) error {
+func SoundEffect(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		soundID        pk.VarInt
 		soundCategory  pk.VarInt
@@ -1338,7 +1296,7 @@ func SoundEffect(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func PlayerListHeaderAndFooter(c *Client, p pk.Packet) error {
+func PlayerListHeaderAndFooter(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		header pk.String
 		footer pk.String
@@ -1351,7 +1309,7 @@ func PlayerListHeaderAndFooter(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func CollectItem(c *Client, p pk.Packet) error {
+func CollectItem(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		collectedEntityID pk.Int
 		collectorEntityID pk.Int
@@ -1365,7 +1323,7 @@ func CollectItem(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func EntityTeleport(c *Client, p pk.Packet) error {
+func EntityTeleport(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var entityID pk.VarInt
 	var x pk.Double
 	var y pk.Double
@@ -1381,7 +1339,7 @@ func EntityTeleport(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func Advancements(c *Client, p pk.Packet) error {
+func Advancements(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var action pk.Byte
 	var data pk.String
 
@@ -1392,20 +1350,19 @@ func Advancements(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func EntityProperties(c *Client, p pk.Packet) error {
+func EntityProperties(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	/*var entityID pk.Int
 	var count pk.VarInt
 	var properties pk.Ary[]pk.String
 
 	if err := p.Scan(&entityID, &properties); err != nil {
 		return err
-	}
+	}*/
 
-	fmt.Println("EntityProperties", entityID, count, properties)*/
 	return nil
 }
 
-func EntityEffect(c *Client, p pk.Packet) error {
+func EntityEffect(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		entityID   pk.VarInt
 		effectID   pk.VarInt
@@ -1453,7 +1410,7 @@ func EntityEffect(c *Client, p pk.Packet) error {
 	return nil
 }
 
-func LookAt(client *Client, packet pk.Packet) error {
+func LookAt(client *Client, packet pk.Packet, cancel context.CancelFunc) error {
 	var (
 		targetEnum   pk.VarInt
 		X, Y, Z      pk.Double

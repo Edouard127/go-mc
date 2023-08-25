@@ -1,11 +1,12 @@
 package provider
 
 import (
+	"container/heap"
+	"context"
 	pk "github.com/Edouard127/go-mc/net/packet"
 )
 
 type Events[T any] struct {
-	generic  *handlerHeap[T]           // for every packet
 	handlers map[int32]*handlerHeap[T] // for specific packet id only
 	tickers  *tickerHeap[T]
 }
@@ -24,43 +25,30 @@ func (e *Events[T]) AddListener(listeners ...PacketHandler[T]) {
 		} else {
 			s.Push(l)
 		}
-	}
-}
-
-// AddGeneric adds listeners like AddListener, but the packet ID is ignored.
-// Generic listener is always called before specific packet listener.
-func (e *Events[T]) AddGeneric(listeners ...PacketHandler[T]) {
-	for _, l := range listeners {
-		if e.generic == nil {
-			e.generic = &handlerHeap[T]{l}
-		} else {
-			e.generic.Push(l)
-		}
+		heap.Fix(s, s.Len()-1)
 	}
 }
 
 func (e *Events[T]) HandlePacket(cl *T, p pk.Packet) error {
-	if e.generic != nil {
-		for _, handler := range *e.generic {
-			if err := handler.F(cl, p); err != nil {
-				return err
-			}
-		}
-	}
-
 	if h := e.handlers[p.ID]; h != nil {
+		ctx, cancel := context.WithCancel(context.TODO())
 		for _, handler := range *h {
-			if err := handler.F(cl, p); err != nil {
+			if err := handler.F(cl, p, cancel); err != nil {
 				return err
 			}
+			// if the context is canceled, stop calling the next handler
+			if ctx.Err() != nil {
+				break
+			}
 		}
+		cancel()
 	}
 	return nil
 }
 
 type TickHandler[T any] struct {
 	Priority int
-	F        func(*T) error
+	F        func(*T, context.CancelFunc) error
 }
 
 func (e *Events[T]) AddTicker(tickers ...TickHandler[T]) {
@@ -71,6 +59,7 @@ func (e *Events[T]) AddTicker(tickers ...TickHandler[T]) {
 			e.tickers.Push(t)
 		}
 	}
+	heap.Fix(e.tickers, e.tickers.Len()-1)
 }
 
 func (e *Events[T]) Tick(cl *T) error {
@@ -78,18 +67,25 @@ func (e *Events[T]) Tick(cl *T) error {
 		return nil
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	for _, t := range *e.tickers {
-		if err := t.F(cl); err != nil {
+		if err := t.F(cl, cancel); err != nil {
 			return err
 		}
+		// if the context is canceled, stop calling the next handler
+		if ctx.Err() != nil {
+			break
+		}
 	}
+	cancel()
 	return nil
 }
 
 type PacketHandler[T any] struct {
 	ID       int32
 	Priority int
-	F        func(*T, pk.Packet) error
+	F        func(*T, pk.Packet, context.CancelFunc) error
 }
 
 // handlerHeap is PriorityQueue<PacketHandlerFunc>
