@@ -65,7 +65,7 @@ func (s *Server) acceptListPing(conn *net.Conn) {
 		return
 	}
 
-	p.ID = packetid.CPacketPingResponse
+	p.ID = packetid.CPacketPing
 	if err := conn.WritePacket(p); err != nil {
 		return
 	}
