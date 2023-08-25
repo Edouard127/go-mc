@@ -1,12 +1,9 @@
 package provider
 
 import (
-	"context"
-	"fmt"
 	"github.com/Edouard127/go-mc/auth/data"
 	"github.com/Edouard127/go-mc/auth/microsoft"
 	"github.com/Edouard127/go-mc/data/packetid"
-	pk "github.com/Edouard127/go-mc/net/packet"
 	"log"
 	"testing"
 )
@@ -70,12 +67,6 @@ func TestExampleClient_JoinServer_online(t *testing.T) {
 	if err := c.HandleGame(); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func highjack(cl *Client, packet pk.Packet, cancel context.CancelFunc) error {
-	fmt.Println("Highjacking the chunk data packet")
-	cancel()
-	return nil
 }
 
 func TestExampleClient_JoinServer_offline(t *testing.T) {
