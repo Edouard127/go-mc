@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/Edouard127/go-mc/auth/data"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 	"os"
@@ -27,11 +26,12 @@ var loginParams = map[string]string{
 	"locale":        "en",
 }
 
-func createRequest(at string, method string, body io.Reader) *http.Request {
+func createRequest(at string, method string, body io.Reader, headers map[string]string) *http.Request {
 	req, err := http.NewRequest(method, at, body)
 	if err != nil {
 		panic(err)
 	}
+	setHeaders(req, headers)
 	return req
 }
 
@@ -41,30 +41,9 @@ func setHeaders(req *http.Request, headers map[string]string) {
 	}
 }
 
-func get(at string, headers map[string]string) (*http.Response, error) {
-	req := createRequest(at, http.MethodGet, nil)
-	setHeaders(req, headers)
-	return client.Do(req)
-}
-
-func postQuery(at string, data map[string]string, headers map[string]string) (*http.Response, error) {
-	req := createRequest(at, http.MethodPost, strings.NewReader(urlValues(data)))
-	setHeaders(req, headers)
-	return client.Do(req)
-}
-
-func postForm(at string, data map[string]any, headers map[string]string) (*http.Response, error) {
-	b, _ := json.Marshal(data)
-	req := createRequest(at, http.MethodPost, bytes.NewBuffer(b))
-	setHeaders(req, headers)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	return client.Do(req)
-}
-
 // LoginWithCredentials logs in with an email and a password.
 // Not working
-func LoginWithCredentials(username, password string) (data.XboxLiveAuth, error) {
+/*func LoginWithCredentials(username, password string) (data.XboxLiveAuth, error) {
 	resp, err := get(MicrosoftAuthorizationEndpoint+"?"+urlValues(loginParams), nil)
 	if err != nil {
 		return data.XboxLiveAuth{}, err
@@ -103,13 +82,13 @@ func LoginWithCredentials(username, password string) (data.XboxLiveAuth, error) 
 	fmt.Println(temp)
 
 	return xboxLiveLogin(temp.AccessToken)
-}
+}*/
 
 func LoginWithDeviceCode() (data.XboxLiveAuth, error) {
-	resp, err := postQuery(MicrosoftDeviceCodeEndpoint, map[string]string{
+	resp, err := client.Do(createRequest(MicrosoftDeviceCodeEndpoint, http.MethodPost, query(map[string]string{
 		"client_id": MicrosoftClientID,
 		"scope":     MicrosoftScope,
-	}, nil)
+	}), nil))
 	if err != nil {
 		return data.XboxLiveAuth{}, err
 	}
@@ -121,12 +100,12 @@ func LoginWithDeviceCode() (data.XboxLiveAuth, error) {
 	var deviceCodeResp data.DeviceCodeResponse
 
 	for {
-		resp, err = postQuery(MicrosoftTokenEndpoint, map[string]string{
+		resp, err = client.Do(createRequest(MicrosoftTokenEndpoint, http.MethodPost, query(map[string]string{
 			"client_id":   MicrosoftClientID,
 			"scope":       MicrosoftScope,
 			"grant_type":  "urn:ietf:params:oauth:grant-type:device_code",
 			"device_code": deviceCodeReq.DeviceCode,
-		}, nil)
+		}), nil))
 		if err != nil {
 			return data.XboxLiveAuth{}, err
 		}
@@ -156,7 +135,7 @@ func LoginWithDeviceCode() (data.XboxLiveAuth, error) {
 }
 
 func xboxLiveLogin(accessToken string) (data.XboxLiveAuth, error) {
-	resp, err := postForm(XboxLiveAuthorizationEndpoint, map[string]any{
+	resp, err := client.Do(createRequest(XboxLiveAuthorizationEndpoint, http.MethodPost, form(map[string]any{
 		"Properties": map[string]any{
 			"AuthMethod": "RPS",
 			"SiteName":   XboxLiveAuthHost,
@@ -164,7 +143,10 @@ func xboxLiveLogin(accessToken string) (data.XboxLiveAuth, error) {
 		},
 		"RelyingParty": XboxLiveAuthRelay,
 		"TokenType":    "JWT",
-	}, nil)
+	}), map[string]string{
+		"Accept":       "application/json",
+		"Content-Type": "application/json",
+	}))
 	if err != nil {
 		return data.XboxLiveAuth{}, err
 	}
@@ -176,14 +158,17 @@ func xboxLiveLogin(accessToken string) (data.XboxLiveAuth, error) {
 }
 
 func xboxSecurityLogin(xboxResp data.XboxLiveAuth) (data.XboxLiveAuth, error) {
-	resp, err := postForm(XboxXSTSAuthorizationEndpoint, map[string]any{
+	resp, err := client.Do(createRequest(XboxXSTSAuthorizationEndpoint, http.MethodPost, form(map[string]any{
 		"Properties": map[string]any{
 			"SandboxId":  "RETAIL",
 			"UserTokens": []string{xboxResp.Token},
 		},
 		"RelyingParty": MinecraftAuthRelay,
 		"TokenType":    "JWT",
-	}, nil)
+	}), map[string]string{
+		"Accept":       "application/json",
+		"Content-Type": "application/json",
+	}))
 	if err != nil {
 		return data.XboxLiveAuth{}, err
 	}
@@ -197,9 +182,9 @@ func xboxSecurityLogin(xboxResp data.XboxLiveAuth) (data.XboxLiveAuth, error) {
 // MinecraftLogin logs in with a data.XboxLiveAuth and returns a Minecraft account.
 // If save is true, the account will be saved to the accounts.json file.
 func MinecraftLogin(xboxSecure data.XboxLiveAuth, save bool) (data.Auth, error) {
-	resp, err := postForm(MinecraftAuthorizationEndpoint, map[string]any{
+	resp, err := client.Do(createRequest(MinecraftAuthorizationEndpoint, http.MethodPost, form(map[string]any{
 		"identityToken": "XBL3.0 x=" + xboxSecure.DisplayClaims.Xui[0].Uhs + ";" + xboxSecure.Token,
-	}, nil)
+	}), nil))
 	if err != nil {
 		return data.Auth{}, err
 	}
@@ -221,19 +206,16 @@ func MinecraftLogin(xboxSecure data.XboxLiveAuth, save bool) (data.Auth, error) 
 // Can be used for login as well. If the account has no profile, it will
 // be fetched.
 func MinecraftRefresh(auth data.Auth) (data.Auth, error) {
-	var err error
-	auth, err = CertificateRefresh(auth)
-
 	if auth.Microsoft.ExpiresAt > time.Now().Unix() {
 		return auth, nil
 	}
 
-	resp, err := postForm(LiveTokenRefresh, map[string]any{
+	resp, err := client.Do(createRequest(LiveTokenRefresh, http.MethodPost, query(map[string]string{
 		"client_id":     MicrosoftClientID,
 		"refresh_token": auth.Microsoft.RefreshToken,
 		"grant_type":    "refresh_token",
 		"redirect_uri":  MicrosoftNativeClient,
-	}, nil)
+	}), nil))
 	if err != nil {
 		return data.Auth{}, err
 	}
@@ -256,9 +238,9 @@ func MinecraftRefresh(auth data.Auth) (data.Auth, error) {
 
 // MinecraftProfile fetches the profile of a Minecraft account.
 func MinecraftProfile(auth data.Auth) (data.Profile, error) {
-	resp, err := get(MinecraftProfileEndpoint, map[string]string{
+	resp, err := client.Do(createRequest(MinecraftProfileEndpoint, http.MethodGet, nil, map[string]string{
 		"Authorization": "Bearer " + auth.Microsoft.AccessToken,
-	})
+	}))
 	if err != nil {
 		return data.Profile{}, err
 	}
@@ -272,16 +254,15 @@ func MinecraftProfile(auth data.Auth) (data.Profile, error) {
 // MinecraftCertificate fetches the certificate of a Minecraft account.
 // This is required for joining servers and sending messages on strict servers.
 func MinecraftCertificate(auth data.Auth) (data.KeyPair, error) {
-	resp, err := postForm(MinecraftCertificateEndpoint, nil, map[string]string{
+	resp, err := client.Do(createRequest(MinecraftCertificateEndpoint, http.MethodPost, nil, map[string]string{
 		"Authorization": "Bearer " + auth.Microsoft.AccessToken,
-	})
+	}))
 	if err != nil {
 		return data.KeyPair{}, err
 	}
 
 	var keypair data.KeyPair
 	err = json.NewDecoder(resp.Body).Decode(&keypair)
-	keypair.UUID = auth.Profile.UUID
 
 	return keypair, err
 }
@@ -355,15 +336,6 @@ func ReadMinecraftAccounts() ([]data.Auth, error) {
 		return accounts, fmt.Errorf("no accounts found")
 	}
 
-	var err error
-
-	for i := range accounts {
-		accounts[i], err = MinecraftRefresh(accounts[i])
-		if err != nil {
-			fmt.Println("Error refreshing account: ", err)
-		}
-	}
-
 	return accounts, nil
 }
 
@@ -388,6 +360,15 @@ func getTokens(url string) (data.Microsoft, error) {
 	msauth.AccessToken = data.Match(`access_token=([^&]+)`, url)
 	msauth.RefreshToken = data.Match(`refresh_token=([^&]+)`, url)
 	return msauth, nil
+}
+
+func query(m map[string]string) io.Reader {
+	return strings.NewReader(urlValues(m))
+}
+
+func form(m map[string]any) io.Reader {
+	d, _ := json.Marshal(m)
+	return bytes.NewReader(d)
 }
 
 func urlValues(m map[string]string) string {

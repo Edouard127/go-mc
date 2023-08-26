@@ -23,7 +23,6 @@ type KeyPair struct {
 	PublicKeySignatureV2 string    `json:"publicKeySignatureV2"`
 	ExpiresAt            time.Time `json:"expiresAt"`
 	RefreshedAfter       time.Time `json:"refreshedAfter"`
-	UUID                 string    `json:"-"` // This is not returned by the API but required for the client
 }
 
 func (k KeyPair) WriteTo(w io.Writer) (int64, error) {
