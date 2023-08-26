@@ -524,7 +524,6 @@ func ChunkData(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	}
 
 	c.World.Columns[ChunkPos] = &Chunk
-	fmt.Println("ChunkData")
 
 	return nil
 }

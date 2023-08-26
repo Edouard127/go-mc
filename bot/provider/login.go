@@ -190,7 +190,6 @@ func genEncryptionKeyResponse(shareSecret, publicKey, verifyToken []byte) (erp p
 	return pk.Marshal(
 		packetid.SPacketEncryptionResponse,
 		pk.ByteArray(cryptPK),
-		pk.Boolean(true),
 		pk.ByteArray(verifyT),
 	), nil
 }

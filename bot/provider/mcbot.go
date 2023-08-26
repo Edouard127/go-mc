@@ -40,14 +40,8 @@ func (cl *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error 
 	var port int64
 
 	if err != nil {
-		_, records, err := net.LookupSRV("minecraft", "tcp", host)
-		if err == nil && len(records) > 0 {
-			addr = net.JoinHostPort(addr, strconv.Itoa(int(records[0].Port)))
-			return cl.join(ctx, d, addr)
-		} else {
-			addr = net.JoinHostPort(addr, strconv.Itoa(DefaultPort))
-			return cl.join(ctx, d, addr)
-		}
+		port = DefaultPort
+		host = addr
 	} else {
 		port, err = strconv.ParseInt(portStr, 0, 32)
 		if err != nil {
@@ -70,6 +64,7 @@ func (cl *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error 
 	)); err != nil {
 		return fmt.Errorf("handshake: %w", err)
 	}
+
 	// Login Start
 	if err := cl.Conn.WritePacket(pk.Marshal(
 		packetid.SPacketLoginStart,
@@ -83,7 +78,12 @@ func (cl *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error 
 	var p pk.Packet
 	for {
 		//Receive Packet
-		cl.Conn.ReadPacket(&p)
+		err = cl.Conn.ReadPacket(&p)
+		if err != nil {
+			return fmt.Errorf("read packet: %w", err)
+		}
+
+		fmt.Println(p.ID)
 
 		//Handle Packet
 		switch p.ID {
@@ -92,7 +92,7 @@ func (cl *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error 
 			if err := p.Scan(&reason); err != nil {
 				break
 			}
-			return fmt.Errorf("login disconnect: %s, %s", reason, reason.Translate)
+			return fmt.Errorf("login disconnect: %s", reason)
 
 		case packetid.CPacketEncryptionRequest:
 			if err := handleEncryptionRequest(cl, p); err != nil {

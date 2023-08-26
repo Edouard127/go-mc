@@ -93,13 +93,11 @@ func (d *Dialer) DialMCContext(ctx context.Context, addr string) (*Conn, error) 
 				ras = append(ras, addr)
 			}
 		}
-		// Whatever the SRV records is found,
-		addr = net.JoinHostPort(addr, strconv.Itoa(DefaultPort))
 	}
 	ras = append(ras, addr)
 
 	var firstErr error
-	for i, addr := range ras {
+	for i := range ras {
 		select {
 		case <-ctx.Done():
 			return nil, context.Canceled
@@ -121,7 +119,7 @@ func (d *Dialer) DialMCContext(ctx context.Context, addr string) (*Conn, error) 
 				defer cancel()
 			}
 		}
-		conn, err := (*net.Dialer)(d).DialContext(dialCtx, "tcp", addr)
+		conn, err := (*net.Dialer)(d).DialContext(dialCtx, "tcp", ras[i])
 		if err != nil {
 			if firstErr == nil {
 				firstErr = err
