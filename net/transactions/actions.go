@@ -3,7 +3,6 @@ package transactions
 import (
 	"github.com/Edouard127/go-mc/bot/screen"
 	"github.com/Edouard127/go-mc/data/slots"
-	pk "github.com/Edouard127/go-mc/net/packet"
 )
 
 func LeftClick(item *slots.Slot) *Transaction {
@@ -47,7 +46,7 @@ func Swap(item1 *slots.Slot, item2 *slots.Slot) *Transaction {
 
 func SwapWithHotbar(item *slots.Slot, hotbarIndex int) *Transaction {
 	return NewTransactionBuilder().
-		AddAction(NewSlotAction(item.GetIndex(), screen.LeftClick, 0, item, &slots.Slot{Index: pk.Short(hotbarIndex)})).
+		AddAction(NewSlotAction(item.GetIndex(), screen.LeftClick, 0, item, &slots.Slot{Index: hotbarIndex})).
 		AddAction(NewSlotAction(hotbarIndex, screen.LeftClick, 0, item, &slots.Slot{Index: item.Index})).
 		Build()
 }

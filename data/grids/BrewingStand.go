@@ -5,5 +5,5 @@ type BrewingStand struct {
 }
 
 func NewBrewingStand(inventory *GenericInventory) *BrewingStand {
-	return &BrewingStand{InitGenericContainer("minecraft:brewing_stand", 10, 5, inventory)}
+	return &BrewingStand{InitGenericContainer("minecraft:brewing_stand", 11, 5, inventory)}
 }

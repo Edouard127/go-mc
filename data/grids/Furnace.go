@@ -5,5 +5,5 @@ type Furnace struct {
 }
 
 func NewFurnace(inventory *GenericInventory) *Furnace {
-	return &Furnace{InitGenericContainer("minecraft:furnace", 13, 3, inventory)}
+	return &Furnace{InitGenericContainer("minecraft:furnace", 13, 4, inventory)}
 }

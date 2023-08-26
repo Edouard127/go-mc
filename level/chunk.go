@@ -348,7 +348,16 @@ func (c *Chunk) WriteTo(w io.Writer) (int64, error) {
 
 func (c *Chunk) ReadFrom(r io.Reader) (int64, error) {
 	var sectionData pk.ByteArray
-	n, err := pk.Tuple{pk.NBT(&c.HeightMaps), &sectionData, pk.Array(&c.BlockEntity), &c.Light}.ReadFrom(r)
+	n, err := pk.Tuple{
+		pk.NBT(&c.HeightMaps),
+		&sectionData,
+		pk.Opt{
+			If: func() bool { return len(sectionData) > 0 },
+			Value: pk.Tuple{
+				pk.Array(&c.BlockEntity), pk.NBT(&c.Light),
+			},
+		},
+	}.ReadFrom(r)
 	if err != nil {
 		return n, err
 	}

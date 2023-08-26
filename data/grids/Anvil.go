@@ -5,5 +5,5 @@ type Anvil struct {
 }
 
 func NewAnvil(inventory *GenericInventory) *Anvil {
-	return &Anvil{InitGenericContainer("minecraft:anvil", 7, 3, inventory)}
+	return &Anvil{InitGenericContainer("minecraft:anvil", 8, 3, inventory)}
 }

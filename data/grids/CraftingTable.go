@@ -5,5 +5,5 @@ type CraftingTable struct {
 }
 
 func NewCraftingTable(inventory *GenericInventory) *CraftingTable {
-	return &CraftingTable{InitGenericContainer("minecraft:crafting", 11, 10, inventory)}
+	return &CraftingTable{InitGenericContainer("minecraft:crafting", 12, 10, inventory)}
 }

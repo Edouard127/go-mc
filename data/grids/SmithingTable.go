@@ -5,5 +5,5 @@ type SmithingTable struct {
 }
 
 func NewSmithingTable(inventory *GenericInventory) *SmithingTable {
-	return &SmithingTable{InitGenericContainer("minecraft:smithing", 20, 4, inventory)}
+	return &SmithingTable{InitGenericContainer("minecraft:smithing", 21, 4, inventory)}
 }

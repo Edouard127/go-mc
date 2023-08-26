@@ -1,20 +1,25 @@
 package slots
 
 import (
+	"github.com/Edouard127/go-mc/data/item"
 	"github.com/Edouard127/go-mc/nbt"
 	pk "github.com/Edouard127/go-mc/net/packet"
 	"io"
 )
 
 type Slot struct {
-	Index pk.Short // The index is relative to the position in the current container, this field should not be used
-	ID    pk.VarInt
-	Count pk.Byte
+	Index int // The index is relative to the position in the current container, this field should not be used
+	ID    item.ID
+	Count int8
 	NBT   nbt.RawMessage
 }
 
+func (s *Slot) Item() item.Item {
+	return item.ByID[s.ID]
+}
+
 func (s *Slot) GetIndex() int {
-	return int(s.Index)
+	return s.Index
 }
 
 func (s *Slot) WriteTo(w io.Writer) (n int64, err error) {

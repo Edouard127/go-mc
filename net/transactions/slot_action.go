@@ -34,7 +34,7 @@ func (s *SlotAction) WriteTo(w io.Writer) (n int64, err error) {
 		return n + n0, err
 	}
 	for _, v := range s.Changed {
-		n1, err := v.Index.WriteTo(w)
+		n1, err := pk.Short(v.Index).WriteTo(w)
 		if err != nil {
 			return n + n1, err
 		}

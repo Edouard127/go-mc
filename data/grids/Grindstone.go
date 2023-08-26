@@ -5,5 +5,5 @@ type Grindstone struct {
 }
 
 func NewGrindstone(inventory *GenericInventory) *Grindstone {
-	return &Grindstone{InitGenericContainer("minecraft:grindstone", 14, 3, inventory)}
+	return &Grindstone{InitGenericContainer("minecraft:grindstone", 15, 3, inventory)}
 }

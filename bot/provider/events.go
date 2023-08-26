@@ -270,6 +270,8 @@ func ChatMessage(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 		return fmt.Errorf("unable to read ChatMessage packet: %w", err)
 	}
 
+	fmt.Println(message)
+
 	return nil
 }
 
@@ -291,24 +293,19 @@ func MultiBlockChange(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 
 func SetContainerContent(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
-		id          pk.UnsignedByte
-		StateID     pk.VarInt
-		SlotData    []Slot
-		CarriedItem Slot
+		id    pk.UnsignedByte
+		state pk.VarInt
+		data  []Slot
+		item  Slot
 	)
 
-	if err := p.Scan(
-		&id,
-		&StateID,
-		pk.Array(&SlotData),
-		&CarriedItem,
-	); err != nil {
+	if err := p.Scan(&id, &state, pk.Array(&data), &item); err != nil {
 		return fmt.Errorf("failed to scan SetContainerContent: %w", err)
 	}
 
 	var container screen.Container
 
-	c.Player.Manager.StateID = int32(StateID)
+	c.Player.Manager.StateID = int32(state)
 
 	if id == 0 {
 		container = c.Player.Inventory
@@ -316,7 +313,7 @@ func SetContainerContent(c *Client, p pk.Packet, cancel context.CancelFunc) erro
 		container = c.Player.Manager.Screens[int(id)]
 	}
 
-	for i, data := range SlotData {
+	for i, data := range data {
 		err := container.SetSlot(i, data)
 		if err != nil {
 			return err
@@ -362,32 +359,26 @@ func SetContainerProperty(c *Client, p pk.Packet, cancel context.CancelFunc) err
 
 func SetContainerSlot(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
-		ContainerID pk.Byte
-		StateID     pk.VarInt
-		SlotID      pk.Short
-		SlotData    Slot
+		containerId pk.Byte
+		stateId     pk.VarInt
+		slotId      pk.Short
+		data        Slot
 	)
-	if err := p.Scan(&ContainerID, &StateID, &SlotID, &SlotData); err != nil {
+	if err := p.Scan(&containerId, &stateId, &slotId, &data); err != nil {
 		return fmt.Errorf("failed to scan SetSlot: %w", err)
 	}
 
-	var err error
+	c.Player.Manager.StateID = int32(stateId)
 
-	c.Player.Manager.StateID = int32(StateID)
-	switch ContainerID {
-	case -1:
-		c.Player.Manager.Cursor = &SlotData
-	case -2:
-		err = c.Player.Manager.Inventory.SetSlot(int(SlotID), SlotData)
-	default:
-		if container, ok := c.Player.Manager.Screens[int(ContainerID)]; !ok {
-			return fmt.Errorf("failed to find container with id %d", ContainerID)
-		} else {
-			err = container.SetSlot(int(SlotID), SlotData)
-		}
+	var container screen.Container
+
+	if containerId == 0 {
+		container = c.Player.Inventory
+	} else {
+		container = c.Player.Manager.Screens[int(containerId)]
 	}
 
-	return err
+	return container.SetSlot(int(slotId), data)
 }
 
 func SetCooldown(c *Client, p pk.Packet, cancel context.CancelFunc) error {
@@ -956,7 +947,7 @@ func SetHeldItem(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 		return fmt.Errorf("unable to read SetHeldItem packet: %w", err)
 	}
 
-	c.Player.Manager.HeldItem = c.Player.Manager.Inventory.GetHotbarSlot(int(slot))
+	c.Player.Manager.HeldItem = c.Player.Manager.Inventory.GetItem(int(slot))
 
 	return nil
 }

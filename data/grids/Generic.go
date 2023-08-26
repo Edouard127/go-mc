@@ -1,7 +1,6 @@
 package grids
 
 import (
-	"fmt"
 	"github.com/Edouard127/go-mc/data/slots"
 )
 
@@ -33,7 +32,7 @@ func (g *Generic) GetSlot(i int) *slots.Slot {
 	if i < g.Size {
 		return &g.Data[i]
 	} else {
-		return &g.Inventory.Slots[g.Size:][i]
+		return &g.Inventory.Slots[g.Size : g.Size+35][i]
 	}
 }
 
@@ -41,8 +40,7 @@ func (g *Generic) SetSlot(i int, s slots.Slot) error {
 	if i < g.Size {
 		g.Data[i] = s
 	} else {
-		fmt.Println("SetSlot", i, s)
-		g.Inventory.Slots[g.Size:][i] = s
+		g.Inventory.Slots[g.Size : g.Size+35][i] = s
 	}
 
 	return nil

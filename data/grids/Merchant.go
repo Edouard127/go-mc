@@ -5,5 +5,5 @@ type Merchant struct {
 }
 
 func NewMerchant(inventory *GenericInventory) *Merchant {
-	return &Merchant{InitGenericContainer("minecraft:merchant", 18, 3, inventory)}
+	return &Merchant{InitGenericContainer("minecraft:merchant", 19, 3, inventory)}
 }

@@ -5,5 +5,5 @@ type EnchantmentTable struct {
 }
 
 func NewEnchantmentTable(inventory *GenericInventory) *EnchantmentTable {
-	return &EnchantmentTable{InitGenericContainer("minecraft:enchantment", 12, 2, inventory)}
+	return &EnchantmentTable{InitGenericContainer("minecraft:enchantment", 13, 2, inventory)}
 }

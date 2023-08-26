@@ -5,5 +5,5 @@ type Smoker struct {
 }
 
 func NewSmoker(inventory *GenericInventory) *Smoker {
-	return &Smoker{InitGenericContainer("minecraft:smoker", 21, 3, inventory)}
+	return &Smoker{InitGenericContainer("minecraft:smoker", 22, 3, inventory)}
 }

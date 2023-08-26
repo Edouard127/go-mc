@@ -5,5 +5,5 @@ type Loom struct {
 }
 
 func NewLoom(inventory *GenericInventory) *Loom {
-	return &Loom{InitGenericContainer("minecraft:loom", 17, 4, inventory)}
+	return &Loom{InitGenericContainer("minecraft:loom", 18, 4, inventory)}
 }

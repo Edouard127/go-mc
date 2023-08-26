@@ -5,5 +5,5 @@ type CartographyTable struct {
 }
 
 func NewCartographyTable(inventory *GenericInventory) *CartographyTable {
-	return &CartographyTable{InitGenericContainer("minecraft:cartography", 22, 3, inventory)}
+	return &CartographyTable{InitGenericContainer("minecraft:cartography", 23, 3, inventory)}
 }

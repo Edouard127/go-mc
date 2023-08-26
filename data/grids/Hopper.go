@@ -5,5 +5,5 @@ type Hopper struct { // Also minecart with hopper
 }
 
 func NewHopper(inventory *GenericInventory) *Hopper {
-	return &Hopper{InitGenericContainer("minecraft:hopper", 15, 5, inventory)}
+	return &Hopper{InitGenericContainer("minecraft:hopper", 16, 5, inventory)}
 }

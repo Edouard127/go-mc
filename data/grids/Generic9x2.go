@@ -5,5 +5,5 @@ type Generic9x2 struct {
 }
 
 func NewGeneric9x2(inventory *GenericInventory) *Generic9x2 {
-	return &Generic9x2{InitGenericContainer("minecraft:generic_9x2", 1, 18, inventory)}
+	return &Generic9x2{InitGenericContainer("minecraft:generic_9x2", 2, 18, inventory)}
 }
