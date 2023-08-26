@@ -83,8 +83,6 @@ func (cl *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error 
 			return fmt.Errorf("read packet: %w", err)
 		}
 
-		fmt.Println(p.ID)
-
 		//Handle Packet
 		switch p.ID {
 		case packetid.CPacketLoginDisconnect:
