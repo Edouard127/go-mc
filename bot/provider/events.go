@@ -36,7 +36,7 @@ func Attach(c *Client) *Client {
 	)
 
 	c.Events.AddTicker(
-		TickHandler[Client]{Priority: 50, F: ApplyPhysics},
+		TickHandler[Client]{Priority: 50, F: Step},
 		TickHandler[Client]{Priority: 50, F: RunTransactions},
 	)
 
@@ -308,7 +308,7 @@ func SetContainerContent(c *Client, p pk.Packet, cancel context.CancelFunc) erro
 	c.Player.Manager.StateID = int32(state)
 
 	if id == 0 {
-		container = c.Player.Inventory
+		container = c.Player.Manager.Inventory
 	} else {
 		container = c.Player.Manager.Screens[int(id)]
 	}
@@ -373,7 +373,7 @@ func SetContainerSlot(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var container screen.Container
 
 	if containerId == 0 {
-		container = c.Player.Inventory
+		container = c.Player.Manager.Inventory
 	} else {
 		container = c.Player.Manager.Screens[int(containerId)]
 	}
@@ -554,24 +554,24 @@ func Particle(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 
 func JoinGame(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	if err := p.Scan(
-		(*pk.Int)(&c.Player.ID),
-		(*pk.Boolean)(&c.Player.Hardcore),
-		(*pk.UnsignedByte)(&c.Player.Gamemode),
-		(*pk.Byte)(&c.Player.PrevGamemode),
-		pk.Array((*[]pk.Identifier)(unsafe.Pointer(&c.Player.DimensionNames))),
+		(*pk.Int)(&c.Player.EntityPlayer.ID),
+		(*pk.Boolean)(&c.Player.PlayerInfo.Hardcore),
+		(*pk.UnsignedByte)(&c.Player.PlayerInfo.Gamemode),
+		(*pk.Byte)(&c.Player.PlayerInfo.PrevGamemode),
+		pk.Array((*[]pk.Identifier)(unsafe.Pointer(&c.Player.WorldInfo.DimensionNames))),
 		pk.NBT(&c.Player.WorldInfo.DimensionCodec),
 		(*pk.Identifier)(&c.Player.WorldInfo.DimensionType),
-		(*pk.Identifier)(&c.Player.DimensionName),
-		(*pk.Long)(&c.Player.HashedSeed),
-		(*pk.VarInt)(&c.Player.MaxPlayers),
-		(*pk.VarInt)(&c.Player.ViewDistance),
-		(*pk.VarInt)(&c.Player.SimulationDistance),
-		(*pk.Boolean)(&c.Player.ReducedDebugInfo),
-		(*pk.Boolean)(&c.Player.EnableRespawnScreen),
-		(*pk.Boolean)(&c.Player.IsDebug),
-		(*pk.Boolean)(&c.Player.IsFlat),
+		(*pk.Identifier)(&c.Player.WorldInfo.DimensionName),
+		(*pk.Long)(&c.Player.WorldInfo.HashedSeed),
+		(*pk.VarInt)(&c.Player.WorldInfo.MaxPlayers),
+		(*pk.VarInt)(&c.Player.WorldInfo.ViewDistance),
+		(*pk.VarInt)(&c.Player.WorldInfo.SimulationDistance),
+		(*pk.Boolean)(&c.Player.WorldInfo.ReducedDebugInfo),
+		(*pk.Boolean)(&c.Player.WorldInfo.EnableRespawnScreen),
+		(*pk.Boolean)(&c.Player.WorldInfo.IsDebug),
+		(*pk.Boolean)(&c.Player.WorldInfo.IsFlat),
 		pk.Opt{
-			If:    (*pk.Boolean)(&c.Player.HasDeathLocation),
+			If:    (*pk.Boolean)(&c.Player.WorldInfo.HasDeathLocation),
 			Value: (*pk.Position)(&c.Player.WorldInfo.DeathPosition),
 		},
 	); err != nil {
@@ -600,7 +600,7 @@ func JoinGame(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 		return fmt.Errorf("unable to write ClientSettings packet: %w", err)
 	}
 
-	c.World.Add(c.Player)
+	c.World.Add(c.Player.EntityPlayer)
 
 	return nil
 }
@@ -782,14 +782,14 @@ func PlayerPosition(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	rotation := maths.Vec2d{X: float64(Pitch), Y: float64(Yaw)}
 
 	if Flags&0x01 != 0 {
-		c.Player.Position = c.Player.Position.Add(position)
-		c.Player.Rotation = c.Player.Rotation.Add(rotation)
+		c.Player.EntityPlayer.Position = c.Player.EntityPlayer.Position.Add(position)
+		c.Player.EntityPlayer.Rotation = c.Player.EntityPlayer.Rotation.Add(rotation)
 	} else {
-		c.Player.Position = position
-		c.Player.Rotation = rotation
+		c.Player.EntityPlayer.Position = position
+		c.Player.EntityPlayer.Rotation = rotation
 	}
 
-	c.Player.OnGround = Flags&0x02 == 0
+	c.Player.EntityPlayer.OnGround = Flags&0x02 == 0
 
 	if TeleportID != 0 {
 		if err := c.Conn.WritePacket(
@@ -884,13 +884,13 @@ func ResourcePackSend(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 func Respawn(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var copyMeta bool
 	if err := p.Scan(
-		(*pk.String)(&c.Player.DimensionType),
-		(*pk.Identifier)(&c.Player.DimensionName),
-		(*pk.Long)(&c.Player.HashedSeed),
-		(*pk.UnsignedByte)(&c.Player.Gamemode),
-		(*pk.Byte)(&c.Player.PrevGamemode),
-		(*pk.Boolean)(&c.Player.IsDebug),
-		(*pk.Boolean)(&c.Player.IsFlat),
+		(*pk.String)(&c.Player.WorldInfo.DimensionType),
+		(*pk.Identifier)(&c.Player.WorldInfo.DimensionName),
+		(*pk.Long)(&c.Player.WorldInfo.HashedSeed),
+		(*pk.UnsignedByte)(&c.Player.PlayerInfo.Gamemode),
+		(*pk.Byte)(&c.Player.PlayerInfo.PrevGamemode),
+		(*pk.Boolean)(&c.Player.WorldInfo.IsDebug),
+		(*pk.Boolean)(&c.Player.WorldInfo.IsFlat),
 		(*pk.Boolean)(&copyMeta),
 	); err != nil {
 		return fmt.Errorf("unable to read Respawn packet: %w", err)
@@ -1145,7 +1145,10 @@ func SetExperience(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 		return fmt.Errorf("unable to read SetExperience packet: %w", err)
 	}
 
-	c.Player.SetExp(float32(experienceBar), int32(levelInt), int32(totalExperience))
+	c.Player.ExpBar = float64(experienceBar)
+	c.Player.Level = int32(levelInt)
+	c.Player.TotalExp = int32(totalExperience)
+
 	return nil
 }
 
@@ -1160,7 +1163,7 @@ func UpdateHealth(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 		return fmt.Errorf("unable to read UpdateHealth packet: %w", err)
 	}
 
-	if respawn := c.Player.SetHealth(float32(health)); respawn {
+	if respawn := c.Player.EntityPlayer.SetHealth(float32(health)); respawn {
 		if err := c.Player.Respawn(c); err != nil {
 			return nil
 		}
@@ -1388,14 +1391,14 @@ func EntityEffect(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	}
 
 	if _, ok := effects.ByID[int32(effectID)]; ok {
-		effectStatus := &effects.EffectStatus{
+		effectStatus := effects.EffectStatus{
 			ID:            int32(effectID),
 			Amplifier:     byte(amplifier),
 			Duration:      int32(duration),
 			ShowParticles: flags&0x01 == 0x01,
 			ShowIcon:      flags&0x04 == 0x04,
 		}
-		c.Player.ActivePotionEffects[effectStatus.ID] = effectStatus
+		c.Player.EntityPlayer.ActivePotionEffects[effectStatus.ID] = effectStatus
 	}
 	return nil
 }

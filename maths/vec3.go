@@ -19,32 +19,32 @@ func (v Vec3[T]) Add(vec3 Vec3[T]) Vec3[T] {
 	return Vec3[T]{X: v.X + vec3.X, Y: v.Y + vec3.Y, Z: v.Z + vec3.Z}
 }
 
-func (v Vec3[T]) AddScalar(scalar T) Vec3[T] {
-	return Vec3[T]{X: v.X + scalar, Y: v.Y + scalar, Z: v.Z + scalar}
+func (v Vec3[T]) AddScalar(x, y, z T) Vec3[T] {
+	return Vec3[T]{X: v.X + x, Y: v.Y + y, Z: v.Z + z}
 }
 
 func (v Vec3[T]) Sub(vec3 Vec3[T]) Vec3[T] {
 	return Vec3[T]{X: v.X - vec3.X, Y: v.Y - vec3.Y, Z: v.Z - vec3.Z}
 }
 
-func (v Vec3[T]) SubScalar(scalar T) Vec3[T] {
-	return Vec3[T]{X: v.X - scalar, Y: v.Y - scalar, Z: v.Z - scalar}
+func (v Vec3[T]) SubScalar(x, y, z T) Vec3[T] {
+	return Vec3[T]{X: v.X - x, Y: v.Y - y, Z: v.Z - z}
 }
 
 func (v Vec3[T]) Mul(vec3 Vec3[T]) Vec3[T] {
 	return Vec3[T]{X: v.X * vec3.X, Y: v.Y * vec3.Y, Z: v.Z * vec3.Z}
 }
 
-func (v Vec3[T]) MulScalar(scalar T) Vec3[T] {
-	return Vec3[T]{X: v.X * scalar, Y: v.Y * scalar, Z: v.Z * scalar}
+func (v Vec3[T]) MulScalar(x, y, z T) Vec3[T] {
+	return Vec3[T]{X: v.X * x, Y: v.Y * y, Z: v.Z * z}
 }
 
 func (v Vec3[T]) Div(vec3 Vec3[T]) Vec3[T] {
 	return Vec3[T]{X: v.X / vec3.X, Y: v.Y / vec3.Y, Z: v.Z / vec3.Z}
 }
 
-func (v Vec3[T]) DivScalar(scalar T) Vec3[T] {
-	return Vec3[T]{X: v.X / scalar, Y: v.Y / scalar, Z: v.Z / scalar}
+func (v Vec3[T]) DivScalar(x, y, z T) Vec3[T] {
+	return Vec3[T]{X: v.X / x, Y: v.Y / y, Z: v.Z / z}
 }
 
 func (v Vec3[T]) DistanceTo(vec3 Vec3[T]) T {
@@ -52,12 +52,12 @@ func (v Vec3[T]) DistanceTo(vec3 Vec3[T]) T {
 	return T(math.Sqrt(float64(xDiff*xDiff + yDiff*yDiff + zDiff*zDiff)))
 }
 
-func (v Vec3[T]) Offset(x, y, z T) Vec3[T] {
-	return Vec3[T]{X: v.X + x, Y: v.Y + y, Z: v.Z + z}
+func (v Vec3[T]) Scale(scale T) Vec3[T] {
+	return v.MulScalar(scale, scale, scale)
 }
 
-func (v Vec3[T]) OffsetMul(x, y, z T) Vec3[T] {
-	return Vec3[T]{X: v.X * x, Y: v.Y * y, Z: v.Z * z}
+func (v Vec3[T]) Reverse() Vec3[T] {
+	return v.Scale(-1)
 }
 
 func (v Vec3[T]) Floor() Vec3[T] {
@@ -68,13 +68,46 @@ func (v Vec3[T]) Length() T {
 	return T(math.Sqrt(float64(v.X*v.X + v.Y*v.Y + v.Z*v.Z)))
 }
 
-func (v Vec3[T]) Normalize() Vec3[T] {
-	length := v.Length()
-	return Vec3[T]{X: v.X / length, Y: v.Y / length, Z: v.Z / length}
+func (v Vec3[T]) LengthSquared() T {
+	return v.X*v.X + v.Y*v.Y + v.Z*v.Z
+}
+
+func (v Vec3[T]) HorizontalDistance() T {
+	return T(math.Sqrt(float64(v.X*v.X + v.Z*v.Z)))
+}
+
+func (v Vec3[T]) HorizontalDistanceSquared() T {
+	return v.X*v.X + v.Z*v.Z
+}
+
+func (v Vec3[T]) Lerp(vec3 Vec3[T], t T) Vec3[T] {
+	return Vec3[T]{X: Lerp[T](v.X, vec3.X, t), Y: Lerp[T](v.Y, vec3.Y, t), Z: Lerp[T](v.Z, vec3.Z, t)}
+}
+
+func (v Vec3[T]) XRotation(rotation T) Vec3[T] {
+	f := T(math.Cos(float64(rotation)))
+	f1 := T(math.Sin(float64(rotation)))
+	return Vec3[T]{X: v.X, Y: v.Y*f + v.Z*f1, Z: v.Z*f - v.Y*f1}
+}
+
+func (v Vec3[T]) YRotation(rotation T) Vec3[T] {
+	f := T(math.Cos(float64(rotation)))
+	f1 := T(math.Sin(float64(rotation)))
+	return Vec3[T]{X: v.X*f + v.Z*f1, Y: v.Y, Z: v.Z*f - v.X*f1}
+}
+
+func (v Vec3[T]) ZRotation(rotation T) Vec3[T] {
+	f := T(math.Cos(float64(rotation)))
+	f1 := T(math.Sin(float64(rotation)))
+	return Vec3[T]{X: v.X*f + v.Y*f1, Y: v.Y*f - v.X*f1, Z: v.Z}
 }
 
 func (v Vec3[T]) Spread() (T, T, T) {
 	return v.X, v.Y, v.Z
+}
+
+func (v Vec3[T]) ToAABB() AxisAlignedBB[T] {
+	return AxisAlignedBB[T]{MinX: v.X, MinY: v.Y, MinZ: v.Z, MaxX: v.X, MaxY: v.Y, MaxZ: v.Z}
 }
 
 func (v Vec3[T]) ToChunkPos() Vec2i {

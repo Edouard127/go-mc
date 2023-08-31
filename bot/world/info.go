@@ -74,8 +74,8 @@ func (r *Registry[E]) Find(name string) *E {
 type PlayerInfo struct {
 	EID          int32 // The player's UnaliveEntity ID (EID).
 	Hardcore     bool  // Is hardcore
-	Gamemode     byte  // Gamemode. 0: Survival, 1: Creative, 2: Adventure, 3: Spectator.
-	PrevGamemode int8  // Previous Gamemode
+	Gamemode     int   // Gamemode. 0: Survival, 1: Creative, 2: Adventure, 3: Spectator.
+	PrevGamemode int   // Previous Gamemode
 }
 
 // ServInfo contains information about the server implementation.

@@ -29,11 +29,12 @@ func (cl *Client) Close() error {
 // By default, the authentication is offline-mode.
 // If you wish to use online-mode, refer to microsoft.LoginFromCache and microsoft.MinecraftLogin
 func NewClient() *Client {
+	w := world.NewWorld()
 	return Attach(&Client{
 		Auth:       data.Auth{Profile: data.DefaultProfile}, // Offline-mode by default
-		World:      world.NewWorld(),
+		World:      w,
 		PlayerList: core.NewPlayerList(),
-		Player:     NewPlayer(basic.DefaultSettings),
+		Player:     NewPlayer(basic.DefaultSettings, w),
 		Events:     Events[Client]{handlers: make(map[int32]*handlerHeap[Client]), tickers: new(tickerHeap[Client])},
 	})
 }

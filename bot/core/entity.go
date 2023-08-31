@@ -12,10 +12,13 @@ type UnaliveEntity struct {
 	UUID          uuid.UUID
 	lastPosition  maths.Vec3d
 	Position      maths.Vec3d
+	EyePosition   maths.Vec3d
 	Rotation      maths.Vec2d
 	Motion        maths.Vec3d
 	BoundingBox   maths.AxisAlignedBB[float64]
 	Width, Height float64
+	Vehicle       Entity
+	Passengers    []Entity
 	dataManager   map[int32]interface{}
 }
 
@@ -38,6 +41,9 @@ type Entity interface {
 	SetRotation(yaw, pitch float64)
 	SetMotion(x, y, z float64)
 	SetSize(width, height float64)
+	Equals(other entity.TypeEntity) bool
+	IsPassenger() bool
+	GetPassengers() []Entity
 }
 
 func (e *UnaliveEntity) GetName() string {
@@ -100,6 +106,7 @@ func (e *UnaliveEntity) IsPlayer() bool {
 func (e *UnaliveEntity) SetPosition(x, y, z float64) {
 	e.lastPosition = e.Position
 	e.Position = maths.Vec3d{X: x, Y: y, Z: z}
+	e.EyePosition = maths.Vec3d{X: x, Y: y + e.Height*0.85, Z: z}
 }
 
 func (e *UnaliveEntity) SetRotation(yaw, pitch float64) {
@@ -138,6 +145,18 @@ func (e *UnaliveEntity) SetSize(width, height float64) {
 			MaxZ: aabb.MaxZ + e.Width,
 		}
 	}
+}
+
+func (e *UnaliveEntity) Equals(other entity.TypeEntity) bool {
+	return e.Type == other
+}
+
+func (e *UnaliveEntity) IsPassenger() bool {
+	return e.Vehicle != nil
+}
+
+func (e *UnaliveEntity) IsVehicle() bool {
+	return len(e.Passengers) > 0
 }
 
 func NewEntity(id int32, uuid uuid.UUID, t int32, x, y, z float64, yaw, pitch float64) *UnaliveEntity {

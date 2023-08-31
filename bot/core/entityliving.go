@@ -21,7 +21,7 @@ type EntityLiving struct {
 	Absorption              float32
 	ActiveItem              *item.Item
 	ActiveItemStackUseCount int32
-	ActivePotionEffects     map[int32]*effects.EffectStatus
+	ActivePotionEffects     map[int32]effects.EffectStatus
 	dead                    bool
 	OnGround                bool
 	MoveStrafing            float32
@@ -65,7 +65,7 @@ func (e *EntityLiving) IsPotionActive(effect effects.Effect) bool {
 	return ok
 }
 
-func (e *EntityLiving) GetPotionEffect(effect effects.Effect) *effects.EffectStatus {
+func (e *EntityLiving) GetPotionEffect(effect effects.Effect) effects.EffectStatus {
 	return e.ActivePotionEffects[effect.ID]
 }
 
@@ -76,6 +76,6 @@ func (e *EntityLiving) IsLivingEntity() bool {
 func NewEntityLiving(id int32, uuid uuid.UUID, t int32, x, y, z float64, yaw, pitch float64) *EntityLiving {
 	return &EntityLiving{
 		UnaliveEntity:       NewEntity(id, uuid, t, x, y, z, yaw, pitch),
-		ActivePotionEffects: make(map[int32]*effects.EffectStatus),
+		ActivePotionEffects: make(map[int32]effects.EffectStatus),
 	}
 }
