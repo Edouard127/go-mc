@@ -204,7 +204,7 @@ func (w *World) SearchEntity(f func(entity core.Entity) bool) core.Entity {
 
 func (w *World) ClosestEntity(pos maths.Vec3d) core.Entity {
 	var closestEntity core.Entity
-	var closestDistance float64
+	var closestDistance = math.MaxFloat64
 	w.entitySearch(1, 1, func(entity core.Entity) bool {
 		distance := pos.DistanceTo(entity.GetPosition())
 		if closestEntity == nil || distance < closestDistance {
