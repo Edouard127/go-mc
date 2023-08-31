@@ -173,7 +173,7 @@ func Step(cl *Client, cancel context.CancelFunc) error {
 			} else {
 				cl.Player.JumpRidingScale = 0.8 + 2.0/float64(cl.Player.JumpRidingTicks-9)*0.1
 			}
-			cl.Conn.WritePacket(pk.Marshal(packetid.SPacketPlayerCommand, pk.VarInt(riding.GetID()), pk.VarInt(enums.StartJumpWithHorse), pk.VarInt(cl.Player.JumpRidingScale*100))
+			cl.Conn.WritePacket(pk.Marshal(packetid.SPacketPlayerCommand, pk.VarInt(riding.GetID()), pk.VarInt(enums.StartJumpWithHorse), pk.VarInt(cl.Player.JumpRidingScale*100)))
 		} else if !isJumping && cl.Player.Controller.Jump {
 			cl.Player.JumpRidingTicks = 0
 			cl.Player.JumpRidingScale = 0
@@ -194,7 +194,7 @@ func Step(cl *Client, cancel context.CancelFunc) error {
 		cl.Conn.WritePacket(pk.Marshal(packetid.SPacketPlayerAbilities, cl.Player.Abilities))
 	}
 
-
+	return nil
 }
 
 func (pl *Player) move(mover enums.MoverType, pos0 maths.Vec3d) {
