@@ -1,6 +1,6 @@
 package enums
 
-type GameType int
+type GameType uint8
 
 const (
 	Survival GameType = iota
@@ -11,8 +11,4 @@ const (
 
 func (g GameType) String() string {
 	return [...]string{"Survival", "Creative", "Adventure", "Spectator"}[g]
-}
-
-func (g GameType) ID() int {
-	return int(g)
 }
