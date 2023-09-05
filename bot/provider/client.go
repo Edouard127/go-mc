@@ -9,6 +9,12 @@ import (
 )
 
 // Client is used to access Minecraft server
+//
+//	+--------------------------------+-------------------------------+
+//	|                        Client framework                        |
+//	+--------------------------------+-------------------------------+
+//	|       World       |       PlayerList       | 	    Player       |
+//	+-------------------+------------+-------------------------------+
 type Client struct {
 	Conn *net.Conn
 	Auth data.Auth
@@ -26,15 +32,14 @@ func (cl *Client) Close() error {
 }
 
 // NewClient creates a new Client
-// By default, the authentication is offline-mode.
 // If you wish to use online-mode, refer to microsoft.LoginFromCache and microsoft.MinecraftLogin
-func NewClient() *Client {
-	w := world.NewWorld()
+func NewClient(auth data.Auth) *Client {
+	clientWorld := world.NewWorld()
 	return Attach(&Client{
-		Auth:       data.Auth{Profile: data.DefaultProfile}, // Offline-mode by default
-		World:      w,
+		Auth:       auth,
+		World:      clientWorld,
 		PlayerList: core.NewPlayerList(),
-		Player:     NewPlayer(basic.DefaultSettings, w),
+		Player:     NewPlayer(basic.DefaultSettings, clientWorld, auth),
 		Events:     Events[Client]{handlers: make(map[int32]*handlerHeap[Client]), tickers: new(tickerHeap[Client])},
 	})
 }

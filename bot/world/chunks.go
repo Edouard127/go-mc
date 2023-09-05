@@ -244,16 +244,18 @@ func (w *World) entitySearch(nth, max int, predicate func(core.Entity) bool) []c
 	w.entityMutex.Lock()
 	defer w.entityMutex.Unlock()
 	var entities []core.Entity
-	for i := range w.Entities {
+	for i := int32(0); i < int32(max); i++ {
 		if predicate(w.Entities[i]) {
 			nth--
 			if nth <= 0 {
 				if max > 1 {
 					nth++
+					max--
 					entities = append(entities, w.Entities[i])
 					continue
 				}
-				return []core.Entity{w.Entities[i]}
+				entities = append(entities, w.Entities[i])
+				break
 			}
 		}
 	}

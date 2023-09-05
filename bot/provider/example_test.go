@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"github.com/Edouard127/go-mc/auth/data"
 	"github.com/Edouard127/go-mc/auth/microsoft"
 	"github.com/Edouard127/go-mc/data/packetid"
 	"log"
@@ -18,9 +19,7 @@ func TestExamplePingAndList(t *testing.T) {
 }
 
 func TestExampleClient_JoinServer_online(t *testing.T) {
-	c := NewClient()
-
-	c.Auth = microsoft.LoginFromCache(nil)
+	c := NewClient(microsoft.LoginFromCache(nil))
 
 	//Login
 	if err := c.JoinServer("2b2t.org"); err != nil {
@@ -67,7 +66,7 @@ func TestExampleClient_JoinServer_online(t *testing.T) {
 }
 
 func TestExampleClient_JoinServer_offline(t *testing.T) {
-	c := NewClient()
+	c := NewClient(data.DefaultAuth)
 
 	//Login
 	if err := c.JoinServer("127.50.50.1"); err != nil {

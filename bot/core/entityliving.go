@@ -12,9 +12,9 @@ var EyePos = 1.62
 
 type EntityLiving struct {
 	*UnaliveEntity
-	health                  float32
-	minHealth               float32
-	maxHealth               float32
+	Health                  float32
+	MinHealth               float32
+	MaxHealth               float32
 	Food                    int32
 	MaxFood                 int32
 	Saturation              float32
@@ -22,7 +22,6 @@ type EntityLiving struct {
 	ActiveItem              *item.Item
 	ActiveItemStackUseCount int32
 	ActivePotionEffects     map[int32]effects.EffectStatus
-	dead                    bool
 	OnGround                bool
 	MoveStrafing            float32
 	MoveForward             float32
@@ -39,17 +38,14 @@ func (e *EntityLiving) GetDisplayName() string {
 
 func (e *EntityLiving) GetHealth(absorption bool) float32 {
 	if absorption {
-		return e.health + e.Absorption
+		return e.Health + e.Absorption
 	}
-	return e.health
+	return e.Health
 }
 
 func (e *EntityLiving) SetHealth(health float32) bool {
-	e.health = health
-	if e.IsDead() {
-		return true
-	}
-	return false
+	e.Health = health
+	return e.IsDead()
 }
 
 func (e *EntityLiving) GetEyePos() maths.Vec3d {
@@ -57,7 +53,7 @@ func (e *EntityLiving) GetEyePos() maths.Vec3d {
 }
 
 func (e *EntityLiving) IsDead() bool {
-	return e.health <= e.minHealth
+	return e.Health <= e.MinHealth
 }
 
 func (e *EntityLiving) IsPotionActive(effect effects.Effect) bool {

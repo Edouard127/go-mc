@@ -8,6 +8,7 @@ import (
 )
 
 var DefaultProfile = Profile{"Steve", "5627dd98-e6be-3c21-b8a8-e92344183641"}
+var DefaultAuth = Auth{DefaultProfile, Microsoft{}, KeyPair{}} // Offline-mode by default
 
 type Profile struct {
 	Name string `json:"name"`

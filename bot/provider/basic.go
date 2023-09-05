@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/binary"
+	"github.com/Edouard127/go-mc/auth/data"
 	"github.com/Edouard127/go-mc/bot/basic"
 	"github.com/Edouard127/go-mc/bot/core"
 	"github.com/Edouard127/go-mc/bot/screen"
@@ -50,13 +51,20 @@ type Player struct {
 	UsingItem            bool
 }
 
-func NewPlayer(settings basic.Settings, w *world.World) *Player {
+// NewPlayer creates a new Player
+// The player should not have access to the Client struct
+// but the player needs access to the world and the current
+// authentication information
+//
+// The player should not be created before the client is
+// created.
+func NewPlayer(settings basic.Settings, clientWorld *world.World, info data.Auth) *Player {
 	return &Player{
 		Settings:     settings,
-		World:        w,
+		World:        clientWorld,
 		PlayerInfo:   world.PlayerInfo{},
 		WorldInfo:    world.WorldInfo{},
-		EntityPlayer: core.NewEntityPlayer("", 0, uuid.UUID{}, 116, 0, 0, 0, 0, 0), // temporary
+		EntityPlayer: core.NewEntityPlayer(info.Name, 0, uuid.MustParse(info.UUID), 116, 0, 0, 0, 0, 0),
 		Controller:   &core.Controller{},
 		Manager:      screen.NewManager(),
 		Transactions: transactions.NewTransactions(),
