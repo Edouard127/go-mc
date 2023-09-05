@@ -197,7 +197,7 @@ func Step(cl *Client, cancel context.CancelFunc) error {
 		cl.Player.JumpRidingScale = 0
 	}
 
-	if cl.Player.EntityPlayer.OnGround && cl.Player.Abilities.Flying && cl.Player.PlayerInfo.Gamemode != enums.Spectator.ID() {
+	if cl.Player.EntityPlayer.OnGround && cl.Player.Abilities.Flying && cl.Player.PlayerInfo.Gamemode != uint8(enums.Spectator) {
 		cl.Player.Abilities.Flying = false
 		cl.Conn.WritePacket(pk.Marshal(packetid.SPacketPlayerAbilities, cl.Player.Abilities))
 	}

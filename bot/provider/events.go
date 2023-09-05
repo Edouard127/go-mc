@@ -71,13 +71,9 @@ func SpawnEntity(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	}
 
 	if entity.TypeEntityByID[int32(t)].IsLiving() {
-		c.World.Add(
-			core.NewEntityLiving(int32(id), uuid.UUID(euuid), int32(t), float64(x), float64(y), float64(z), float64(yaw), float64(pitch)),
-		)
+		c.World.Add(core.NewEntityLiving(int32(id), uuid.UUID(euuid), int32(t), float64(x), float64(y), float64(z), float64(yaw), float64(pitch)))
 	} else {
-		c.World.Add(
-			core.NewEntity(int32(id), uuid.UUID(euuid), int32(t), float64(x), float64(y), float64(z), float64(yaw), float64(pitch)),
-		)
+		c.World.Add(core.NewEntity(int32(id), uuid.UUID(euuid), int32(t), float64(x), float64(y), float64(z), float64(yaw), float64(pitch)))
 	}
 
 	return nil
@@ -571,9 +567,13 @@ func JoinGame(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 		(*pk.Boolean)(&c.Player.WorldInfo.IsDebug),
 		(*pk.Boolean)(&c.Player.WorldInfo.IsFlat),
 		pk.Opt{
-			If:    (*pk.Boolean)(&c.Player.WorldInfo.HasDeathLocation),
-			Value: (*pk.Position)(&c.Player.WorldInfo.DeathPosition),
+			If: (*pk.Boolean)(&c.Player.WorldInfo.HasDeathLocation),
+			Value: pk.Tuple{
+				(*pk.Identifier)(&c.Player.WorldInfo.DimensionName),
+				(*pk.Position)(&c.Player.WorldInfo.DeathPosition),
+			},
 		},
+		(*pk.VarInt)(&c.Player.WorldInfo.PortalCooldown),
 	); err != nil {
 		return fmt.Errorf("unable to read JoinGame packet: %w", err)
 	}
