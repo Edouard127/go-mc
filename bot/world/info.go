@@ -22,6 +22,7 @@ type WorldInfo struct {
 	HasDeathLocation    bool        // If true, then the next two fields are present.
 	DeathDimensionName  string      // The name of the dimension the player died in.
 	DeathPosition       maths.Vec3d // The position the player died at.
+	PortalCooldown      int32       // The number of ticks until the player can use a portal again.
 }
 
 type Dimension struct {
@@ -48,9 +49,9 @@ type Dimension struct {
 
 type DimensionCodec struct {
 	// What is Below? (wiki.vg)
-	ChatType      Registry[nbt.RawMessage] `nbt:"minecraft:chat_type"`
 	DimensionType Registry[Dimension]      `nbt:"minecraft:dimension_type"`
 	WorldGenBiome Registry[nbt.RawMessage] `nbt:"minecraft:worldgen/biome"`
+	ChatType      Registry[nbt.RawMessage] `nbt:"minecraft:chat_type"`
 }
 
 type Registry[E any] struct {
@@ -74,8 +75,8 @@ func (r *Registry[E]) Find(name string) *E {
 type PlayerInfo struct {
 	EID          int32 // The player's UnaliveEntity ID (EID).
 	Hardcore     bool  // Is hardcore
-	Gamemode     int   // Gamemode. 0: Survival, 1: Creative, 2: Adventure, 3: Spectator.
-	PrevGamemode int   // Previous Gamemode
+	Gamemode     uint8 // Gamemode. 0: Survival, 1: Creative, 2: Adventure, 3: Spectator.
+	PrevGamemode int8  // Previous Gamemode
 }
 
 // ServInfo contains information about the server implementation.
