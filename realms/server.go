@@ -6,25 +6,43 @@ import (
 )
 
 type Server struct {
-	ID                   int
-	RemoteSubscriptionID string
-	Owner                string
-	OwnerUUID            string
-	Name                 string
-	MOTD                 string
-	State                string
-	DaysLeft             int
-	Expired              bool
-	ExpiredTrial         bool
-	WorldType            string
-	Players              []string
-	MaxPlayers           int
-	MiniGameName         *string
-	MiniGameID           *int
-	MinigameImage        *string
-	ActiveSlot           int
+	ID                   int      `json:"id"`
+	RemoteSubscriptionID string   `json:"remoteSubscriptionId"`
+	Owner                string   `json:"owner"`
+	OwnerUUID            string   `json:"ownerUUID"`
+	Name                 string   `json:"name"`
+	MOTD                 string   `json:"motd"`
+	State                string   `json:"state"`
+	DaysLeft             int      `json:"daysLeft"`
+	Expired              bool     `json:"expired"`
+	ExpiredTrial         bool     `json:"expiredTrial"`
+	WorldType            string   `json:"worldType"`
+	Players              []string `json:"players"`
+	MaxPlayers           int      `json:"maxPlayers"`
+	MiniGameName         *string  `json:"minigameName,omitempty"`
+	MiniGameID           *int     `json:"minigameId,omitempty"`
+	MinigameImage        *string  `json:"minigameImage,omitempty"`
+	ActiveSlot           int      `json:"activeSlot"`
 	//Slots                interface{}
-	Member bool
+	Member bool `json:"member"`
+}
+
+type Backup struct {
+	ID               int   `json:"backupId"`
+	LastModifiedDate int64 `json:"lastModifiedDate"`
+	Size             int64 `json:"size"`
+	Metadata         struct {
+		Difficulty   string `json:"game_difficulty"`
+		Name         string `json:"name"`
+		Version      string `json:"version"`
+		EnabledPacks struct {
+			RessourcePacks []string `json:"resourcePacks"`
+			BehaviorPacks  []string `json:"behaviorPacks"`
+		}
+		Description string `json:"description"`
+		Mode        string `json:"game_mode"`
+		Type        string `json:"world_type"`
+	} `json:"metadata"`
 }
 
 // Worlds return a list of servers that the user is invited to or owns.
@@ -96,24 +114,27 @@ func (r *Realms) Address(s Server) (string, error) {
 }
 
 // Backups returns a list of backups for the world.
-func (r *Realms) Backups(s Server) ([]int, error) {
-	var bs []int
+func (r *Realms) Backups(s Server) ([]Backup, error) {
+	var bs []Backup
 	err := r.get(fmt.Sprintf("/worlds/%d/backups", s.ID), &bs)
 
 	return bs, err
 }
 
-//func (r *Realms) Download() (link, resURL, resHash string) {
-//	var resp struct {
-//		DownloadLink     string
-//		ResourcePackURL  *string
-//		ResourcePackHash *string
-//		*Error
-//	}
-// TODO: What's the $WORLD(1-4) means?
-//	err := r.get(fmt.Sprintf("/worlds/$ID/slot/$WORLD(1-4)/download", s.ID), &resp)
-//
-//}
+func (r *Realms) Download() (link, resURL, resHash string) {
+	var resp struct {
+		DownloadLink     string `json:"downloadLink"`
+		ResourcePackURL  string `json:"resourcePackUrl,omitempty"`
+		ResourcePackHash string `json:"resourcePackHash,omitempty"`
+		*Error
+	}
+	// TODO: What is the ID?
+	if r.get("/worlds/$ID/slot/1/download", &resp) != nil {
+		return "", "", ""
+	}
+
+	return resp.DownloadLink, resp.ResourcePackURL, resp.ResourcePackHash
+}
 
 // Ops returns a list of operators for this server.
 // You must own this server to view this.

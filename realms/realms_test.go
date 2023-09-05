@@ -2,35 +2,33 @@ package realms
 
 import (
 	"fmt"
-	"time"
+	"github.com/Edouard127/go-mc/auth/microsoft"
+	"testing"
 )
 
-func ExampleRealms() {
-	var r *Realms
+const Version = "1.20.1"
 
-	r = New(
-		"1.14.4",
-		"Name",
-		"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-		"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-	)
-	fmt.Println(r.Available())
-	fmt.Println(r.Compatible())
+func TestNewRealms(t *testing.T) {
+	account := microsoft.LoginFromCache(nil)
 
-	servers, err := r.Worlds()
+	realms := NewRealms(Version, account.Name, account.AccessToken, account.UUID)
+
+	fmt.Printf("Realms available: %t, compatible: %s\n", unwrap(realms.Available()), unwrap(realms.Compatible()))
+
+	for _, v := range unwrap(realms.Worlds()) {
+		fmt.Printf("World %s: %d\n", v.Name, v.ID)
+	}
+}
+
+func unwrap[T any](v T, err error) T {
 	if err != nil {
 		panic(err)
 	}
+	return v
+}
 
-	for _, v := range servers {
-		fmt.Println(v.Name, v.ID)
-	}
-
-	time.Sleep(time.Second * 5)
-	if err := r.TOS(); err != nil {
+func noerr(err error) {
+	if err != nil {
 		panic(err)
 	}
-
-	time.Sleep(time.Second * 5)
-	fmt.Println(r.Address(servers[0]))
 }

@@ -24,10 +24,10 @@ func (e *Error) Error() string {
 
 // Domain is the URL of Realms API server
 // Panic if it cannot be parsed by url.Parse().
-var Domain = "https://pc.realms.minecraft.net"
+const Domain = "https://pc.realms.minecraft.net"
 
-// New create a new Realms c with version, username, accessToken and UUID without dashes.
-func New(version, user, astk, uuid string) *Realms {
+// NewRealms create a new Realms with version, username, accessToken and UUID without dashes.
+func NewRealms(version, user, astk, uuid string) *Realms {
 	r := &Realms{
 		c: http.Client{},
 	}
