@@ -2,12 +2,12 @@ package basic
 
 // Settings of client
 type Settings struct {
-	Locale             string //地区
-	ViewDistance       int    //视距
-	ChatMode           int    //聊天模式
-	ChatColors         bool   //聊天颜色
-	DisplayedSkinParts uint8  //皮肤显示
-	MainHand           int    //主手
+	Locale             string
+	ViewDistance       int
+	ChatMode           int
+	ChatColors         bool
+	DisplayedSkinParts uint8
+	MainHand           int
 
 	// Enables filtering of text on signs and written book titles.
 	// Currently, always false (i.e. the filtering is disabled)
@@ -32,8 +32,8 @@ const (
 
 // DefaultSettings are the default settings of client
 var DefaultSettings = Settings{
-	Locale:             "en_us", // ^_^
-	ViewDistance:       15,
+	Locale:             "en_us",
+	ViewDistance:       32,
 	ChatMode:           0,
 	DisplayedSkinParts: Jacket | LeftSleeve | RightSleeve | LeftPantsLeg | RightPantsLeg | Hat,
 	MainHand:           1,
