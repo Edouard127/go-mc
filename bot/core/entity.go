@@ -43,6 +43,7 @@ type Entity interface {
 	SetSize(width, height float64)
 	Equals(other entity.TypeEntity) bool
 	IsPassenger() bool
+	IsVehicle() bool
 	GetPassengers() []Entity
 }
 
@@ -157,6 +158,10 @@ func (e *UnaliveEntity) IsPassenger() bool {
 
 func (e *UnaliveEntity) IsVehicle() bool {
 	return len(e.Passengers) > 0
+}
+
+func (e *UnaliveEntity) GetPassengers() []Entity {
+	return e.Passengers
 }
 
 func NewEntity(id int32, uuid uuid.UUID, t int32, x, y, z float64, yaw, pitch float64) *UnaliveEntity {
