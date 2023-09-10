@@ -9,7 +9,7 @@ type Abilities struct {
 	Invulnerable bool
 	Flying       bool
 	AllowFlying  bool
-	InstantBuild bool
+	InstantBreak bool
 	CanBuild     bool
 	FlyingSpeed  float64
 	WalkingSpeed float64
@@ -32,7 +32,7 @@ func (a *Abilities) ReadFrom(r io.Reader) (int64, error) {
 	a.Invulnerable = flags&0x01 != 0
 	a.Flying = flags&0x02 != 0
 	a.AllowFlying = flags&0x04 != 0
-	a.InstantBuild = flags&0x08 != 0
+	a.InstantBreak = flags&0x08 != 0
 
 	return nn, nil
 }
