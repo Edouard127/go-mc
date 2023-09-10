@@ -34,7 +34,7 @@ const (
 // Mode 3
 const (
 	MiddleClick Button = iota + 2
-	_                  // Just so my IDE doesn't scream at me because of the comment
+	_
 )
 
 // Mode 4
@@ -56,5 +56,5 @@ const (
 // Mode 6
 const (
 	DoubleClick Button = iota
-	_                  // Just so my IDE doesn't scream at me because of the comment
+	_
 )

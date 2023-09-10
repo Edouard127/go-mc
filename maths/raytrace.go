@@ -12,7 +12,8 @@ func RayTraceBlocks(start, end Vec3d) []Vec3d {
 		return result
 	}
 	for i := 0; i < int(distance); i++ {
-		result = append(result, start.Add(diff.MulScalar(float64(i)/distance)))
+		idk := float64(i) / distance
+		result = append(result, start.Add(diff.MulScalar(idk, idk, idk)))
 	}
 	return result
 }

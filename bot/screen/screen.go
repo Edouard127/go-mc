@@ -3,68 +3,51 @@ package screen
 import (
 	"github.com/Edouard127/go-mc/data/grids"
 	"github.com/Edouard127/go-mc/data/item"
-	"github.com/Edouard127/go-mc/data/slots"
 )
 
 type Manager struct {
-	Cursor        item.Item
+	CurrentScreen grids.Container
 	HeldItem      item.Item
-	CurrentScreen *Container
-	Screens       map[int]Container
 	Inventory     *grids.GenericInventory
-	// The last state received from the server
-	StateID int32
+	StateID       int32 // The last state received from the server
 }
 
 func NewManager() *Manager {
-	inventory := new(grids.GenericInventory)
-	return &Manager{
-		Screens:   fillContainers(inventory),
-		Inventory: inventory,
-	}
+	return &Manager{Inventory: Containers[0].(*grids.GenericInventory)}
 }
 
 func (m *Manager) OpenScreen(id int32) {
-	c := m.Screens[int(id)]
-	m.CurrentScreen = &c
+	m.CurrentScreen = Containers[int(id)]
 }
 
 func (m *Manager) CloseScreen() {
 	m.CurrentScreen = nil
-	m.Cursor = item.Item{}
 }
 
-func fillContainers(inventory *grids.GenericInventory) map[int]Container {
-	return map[int]Container{
-		1:  grids.NewGeneric9x1(inventory),
-		2:  grids.NewGeneric9x2(inventory),
-		3:  grids.NewGeneric9x3(inventory),
-		4:  grids.NewGeneric9x4(inventory),
-		5:  grids.NewGeneric9x5(inventory),
-		6:  grids.NewGeneric9x6(inventory),
-		7:  grids.NewGeneric3x3(inventory),
-		8:  grids.NewAnvil(inventory),
-		9:  grids.NewBeacon(inventory),
-		10: grids.NewBlastFurnace(inventory),
-		11: grids.NewBrewingStand(inventory),
-		12: grids.NewCraftingTable(inventory),
-		13: grids.NewEnchantmentTable(inventory),
-		14: grids.NewFurnace(inventory),
-		15: grids.NewGrindstone(inventory),
-		16: grids.NewHopper(inventory),
-		17: grids.InitGenericContainer("nil", 0, 0, inventory), // TODO: This is the only one that is not a container, I don't know why mojang did this.
-		18: grids.NewLoom(inventory),
-		19: grids.NewMerchant(inventory),
-		20: grids.NewShulkerBox(inventory),
-		21: grids.NewSmithingTable(inventory),
-		22: grids.NewSmoker(inventory),
-		23: grids.NewCartographyTable(inventory),
-		24: grids.NewStonecutter(inventory),
-	}
-}
-
-type Container interface {
-	GetSlot(int) *slots.Slot
-	SetSlot(int, slots.Slot) error
-	OnClose() error
+var Containers = map[int]grids.Container{
+	0:  new(grids.GenericInventory),
+	1:  grids.NewGeneric9x1(),
+	2:  grids.NewGeneric9x2(),
+	3:  grids.NewGeneric9x3(),
+	4:  grids.NewGeneric9x4(),
+	5:  grids.NewGeneric9x5(),
+	6:  grids.NewGeneric9x6(),
+	7:  grids.NewGeneric3x3(),
+	8:  grids.NewAnvil(),
+	9:  grids.NewBeacon(),
+	10: grids.NewBlastFurnace(),
+	11: grids.NewBrewingStand(),
+	12: grids.NewCraftingTable(),
+	13: grids.NewEnchantmentTable(),
+	14: grids.NewFurnace(),
+	15: grids.NewGrindstone(),
+	16: grids.NewHopper(),
+	17: grids.InitGenericContainer("nil", 0, 0), // TODO: This is the only one that is not a container, I don't know why mojang did this.
+	18: grids.NewLoom(),
+	19: grids.NewMerchant(),
+	20: grids.NewShulkerBox(),
+	21: grids.NewSmithingTable(),
+	22: grids.NewSmoker(),
+	23: grids.NewCartographyTable(),
+	24: grids.NewStonecutter(),
 }

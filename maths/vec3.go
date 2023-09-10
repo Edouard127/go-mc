@@ -11,7 +11,7 @@ type Vec3i = Vec3[int]
 type Vec3f = Vec3[float32]
 type Vec3d = Vec3[float64]
 
-type Vec3[T constraints.Integer | constraints.Float] struct {
+type Vec3[T constraints.Signed | constraints.Float] struct {
 	X, Y, Z T
 }
 

@@ -293,24 +293,17 @@ func SetContainerContent(c *Client, p pk.Packet, cancel context.CancelFunc) erro
 		state pk.VarInt
 		data  []Slot
 		item  Slot
+		err   error
 	)
 
 	if err := p.Scan(&id, &state, pk.Array(&data), &item); err != nil {
 		return fmt.Errorf("failed to scan SetContainerContent: %w", err)
 	}
 
-	var container screen.Container
+	container := screen.Containers[int(id)]
 
-	c.Player.Manager.StateID = int32(state)
-
-	if id == 0 {
-		container = c.Player.Manager.Inventory
-	} else {
-		container = c.Player.Manager.Screens[int(id)]
-	}
-
-	for i, data := range data {
-		err := container.SetSlot(i, data)
+	for i := range data {
+		err = container.SetSlot(i, &data[i])
 		if err != nil {
 			return err
 		}
@@ -366,15 +359,7 @@ func SetContainerSlot(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 
 	c.Player.Manager.StateID = int32(stateId)
 
-	var container screen.Container
-
-	if containerId == 0 {
-		container = c.Player.Manager.Inventory
-	} else {
-		container = c.Player.Manager.Screens[int(containerId)]
-	}
-
-	return container.SetSlot(int(slotId), data)
+	return screen.Containers[int(containerId)].SetSlot(int(slotId), &data)
 }
 
 func SetCooldown(c *Client, p pk.Packet, cancel context.CancelFunc) error {

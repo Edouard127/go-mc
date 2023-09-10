@@ -13,6 +13,7 @@ import (
 	"github.com/Edouard127/go-mc/data/entity"
 	"github.com/Edouard127/go-mc/data/enums"
 	"github.com/Edouard127/go-mc/data/packetid"
+	"github.com/Edouard127/go-mc/internal/util"
 	"github.com/Edouard127/go-mc/level/block"
 	"github.com/Edouard127/go-mc/maths"
 	pk "github.com/Edouard127/go-mc/net/packet"
@@ -29,7 +30,7 @@ type Player struct {
 	PlayerInfo   world.PlayerInfo
 	WorldInfo    world.WorldInfo
 	EntityPlayer *core.EntityPlayer
-	Transactions *transactions.Transactions
+	Transactions *util.Queue[[]*transactions.SlotAction]
 	Abilities    *Abilities
 
 	// Player info
@@ -67,7 +68,7 @@ func NewPlayer(settings basic.Settings, clientWorld *world.World, info data.Auth
 		EntityPlayer: core.NewEntityPlayer(info.Name, 0, uuid.MustParse(info.UUID), 116, 0, 0, 0, 0, 0),
 		Controller:   &core.Controller{},
 		Manager:      screen.NewManager(),
-		Transactions: transactions.NewTransactions(),
+		Transactions: util.NewQueue[[]*transactions.SlotAction](),
 		Abilities:    NewAbilities(),
 		IsSpawn:      false,
 	}
@@ -106,13 +107,12 @@ func (pl *Player) Chat(c *Client, msg string) error {
 }
 
 func RunTransactions(c *Client, cancel context.CancelFunc) error {
-	if t := c.Player.Transactions.Next(); t == nil {
-		return nil
-	} else {
-		for _, v := range t.Packets {
-			if err := c.Conn.WritePacket(*v); err != nil {
-				return err
-			}
+	var next []*transactions.SlotAction
+	for c.Player.Transactions.Len() > 0 {
+		next = c.Player.Transactions.Pop()
+
+		for i := range next {
+			c.Conn.WritePacket(pk.Marshal(packetid.SPacketClickWindow, pk.UnsignedByte(c.Player.Manager.CurrentScreen.GetType()), pk.VarInt(c.Player.Manager.StateID), next[i]))
 		}
 	}
 
