@@ -1,5 +1,12 @@
 package grids
 
+import (
+	"github.com/Edouard127/go-mc/data/packetid"
+	"github.com/Edouard127/go-mc/data/slots"
+	"github.com/Edouard127/go-mc/net"
+	pk "github.com/Edouard127/go-mc/net/packet"
+)
+
 type Generic3x3 struct {
 	*Generic
 }
@@ -62,6 +69,26 @@ type Anvil struct {
 
 func NewAnvil() *Anvil {
 	return &Anvil{InitGenericContainer("minecraft:anvil", 8, 3)}
+}
+
+func (a *Anvil) SetFirstItem(slot *slots.Slot) error {
+	return a.SetSlot(0, slot)
+}
+
+func (a *Anvil) SetSecondItem(slot *slots.Slot) error {
+	return a.SetSlot(1, slot)
+}
+
+func (a *Anvil) GetOutputItem() *slots.Slot {
+	return a.GetSlot(2)
+}
+
+func (a *Anvil) SetOutputName(conn *net.Conn, name string) error {
+	return conn.WritePacket(pk.Marshal(packetid.SPacketRenameItem, pk.String(name[:min(len(name), 50)])))
+}
+
+func (a *Anvil) getRepairCost() int {
+	return 0
 }
 
 type Beacon struct {
@@ -182,4 +209,32 @@ type Stonecutter struct {
 
 func NewStonecutter() *Stonecutter {
 	return &Stonecutter{InitGenericContainer("minecraft:stonecutter", 23, 2)}
+}
+
+var Containers = map[int]Container{
+	0:  new(GenericInventory),
+	1:  NewGeneric9x1(),
+	2:  NewGeneric9x2(),
+	3:  NewGeneric9x3(),
+	4:  NewGeneric9x4(),
+	5:  NewGeneric9x5(),
+	6:  NewGeneric9x6(),
+	7:  NewGeneric3x3(),
+	8:  NewAnvil(),
+	9:  NewBeacon(),
+	10: NewBlastFurnace(),
+	11: NewBrewingStand(),
+	12: NewCraftingTable(),
+	13: NewEnchantmentTable(),
+	14: NewFurnace(),
+	15: NewGrindstone(),
+	16: NewHopper(),
+	17: InitGenericContainer("nil", 0, 0), // TODO: This is the only one that is not a container, I don't know why mojang did this.
+	18: NewLoom(),
+	19: NewMerchant(),
+	20: NewShulkerBox(),
+	21: NewSmithingTable(),
+	22: NewSmoker(),
+	23: NewCartographyTable(),
+	24: NewStonecutter(),
 }

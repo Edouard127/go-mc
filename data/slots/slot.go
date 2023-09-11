@@ -2,7 +2,6 @@ package slots
 
 import (
 	"github.com/Edouard127/go-mc/data/item"
-	"github.com/Edouard127/go-mc/nbt"
 	pk "github.com/Edouard127/go-mc/net/packet"
 	"io"
 )
@@ -11,7 +10,7 @@ type Slot struct {
 	Index int // The index is relative to the position in the current container, this field should not be used
 	ID    item.ID
 	Count int8
-	NBT   nbt.RawMessage
+	NBT   SlotTags
 }
 
 func (s *Slot) Item() item.Item {
@@ -26,15 +25,8 @@ func (s *Slot) WriteTo(w io.Writer) (n int64, err error) {
 	var present pk.Boolean = s.ID != 0 && s.Count != 0
 	return pk.Tuple{
 		present, pk.Opt{
-			If: present,
-			Value: pk.Tuple{
-				&s.ID, &s.Count,
-				pk.Opt{
-					If:    s.NBT.Data == nil,
-					Value: pk.Boolean(false),
-					Else:  pk.NBT(&s.NBT),
-				},
-			},
+			If:    present,
+			Value: pk.Tuple{&s.ID, &s.Count, pk.NBT(&s.NBT)},
 		},
 	}.WriteTo(w)
 }
@@ -77,4 +69,18 @@ func (c ChangedSlots) WriteTo(w io.Writer) (n int64, err error) {
 		n += n1 + n2
 	}
 	return
+}
+
+type SlotTags struct {
+	Damage      int32     `nbt:"Damage"`
+	Unbreakable bool      `nbt:"Unbreakable"`
+	CanDestroy  []item.ID `nbt:"CanDestroy"`
+}
+
+func (s *SlotTags) WriteTo(w io.Writer) (n int64, err error) {
+	return pk.NBT(s).WriteTo(w)
+}
+
+func (s *SlotTags) ReadFrom(r io.Reader) (n int64, err error) {
+	return pk.NBT(s).ReadFrom(r)
 }
