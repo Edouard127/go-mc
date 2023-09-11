@@ -6,8 +6,6 @@ import (
 	"github.com/Edouard127/go-mc/data/slots"
 )
 
-// TODO: Offset when window is opened that is not the inv
-
 type GenericInventory struct {
 	Slots [46]*slots.Slot
 }
