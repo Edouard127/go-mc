@@ -6,21 +6,39 @@ import (
 	"github.com/Edouard127/go-mc/data/slots"
 )
 
+// TODO: Offset when window is opened that is not the inv
+
 type GenericInventory struct {
 	Slots [46]*slots.Slot
 }
 
 func (g *GenericInventory) OnClose() error { return nil }
 
-func (g *GenericInventory) GetSlot(i int) *slots.Slot { return g.Slots[i] }
+func (g *GenericInventory) GetSlot(i int) *slots.Slot { return g.getSlot(i, false) }
 func (g *GenericInventory) SetSlot(i int, s *slots.Slot) error {
 	if i < 0 || i >= g.GetSize() {
 		return fmt.Errorf("slot index %d out of bounds. maximum index is %d", i, len(g.Slots)-1)
 	}
 
-	g.Slots[i] = s
-	return nil
+	return g.setSlot(i, s, false)
 }
+func (g *GenericInventory) getSlot(i int, secondary bool) *slots.Slot {
+	if secondary {
+		return g.Slots[9:45][i]
+	}
+
+	return g.Slots[i]
+}
+
+func (g *GenericInventory) setSlot(i int, s *slots.Slot, secondary bool) error {
+	if secondary {
+		g.Slots[9:45][i] = s
+		return nil
+	}
+
+	return g.SetSlot(i, s)
+}
+
 func (g *GenericInventory) GetItem(i int) item.Item { return g.Slots[i].Item() }
 func (g *GenericInventory) GetType() int            { return 0 }
 func (g *GenericInventory) GetSize() int            { return len(g.Slots) }

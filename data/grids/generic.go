@@ -44,7 +44,7 @@ func (g *Generic) GetSlot(i int) *slots.Slot {
 	}
 
 	if i >= g.Size {
-		return Containers[0].GetSlot(i - g.Size)
+		return Containers[0].(*GenericInventory).getSlot(i-g.Size, true)
 	}
 
 	return g.Data[i]
@@ -55,7 +55,7 @@ func (g *Generic) SetSlot(i int, s *slots.Slot) error {
 		return fmt.Errorf("slot index %d out of bounds. maximum index is %d", i, len(g.Data)-1)
 	}
 	if i >= g.Size {
-		return Containers[0].SetSlot(i-g.Size, s)
+		return Containers[0].(*GenericInventory).setSlot(i-g.Size, s, true)
 	}
 	g.Data[i] = s
 	return nil
