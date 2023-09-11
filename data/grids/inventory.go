@@ -36,7 +36,8 @@ func (g *GenericInventory) setSlot(i int, s *slots.Slot, secondary bool) error {
 		return nil
 	}
 
-	return g.SetSlot(i, s)
+	g.Slots[i] = s
+	return nil
 }
 
 func (g *GenericInventory) GetItem(i int) item.Item { return g.Slots[i].Item() }
