@@ -3,7 +3,7 @@
 package item
 
 // ID describes the numeric ID of an item.
-type ID uint32
+type ID int32
 
 // Item describes information about a type of item.
 type Item struct {

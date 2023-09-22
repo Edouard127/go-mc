@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/Edouard127/go-mc/bot/core"
-	"github.com/Edouard127/go-mc/bot/screen"
 	"github.com/Edouard127/go-mc/bot/world"
 	"github.com/Edouard127/go-mc/data/effects"
 	"github.com/Edouard127/go-mc/data/entity"
+	"github.com/Edouard127/go-mc/data/grids"
 	"github.com/Edouard127/go-mc/level"
 	"github.com/Edouard127/go-mc/maths"
+	"github.com/Edouard127/go-mc/save"
+	"github.com/Edouard127/go-mc/save/region"
 	"time"
 	"unsafe"
 
@@ -31,8 +33,8 @@ func Attach(c *Client) *Client {
 		PacketHandler[Client]{Priority: 50, ID: packetid.CPacketDisconnect, F: Disconnect},
 		PacketHandler[Client]{Priority: 50, ID: packetid.CPacketSetHealth, F: UpdateHealth},
 		PacketHandler[Client]{Priority: 50, ID: packetid.CPacketUpdateTime, F: TimeUpdate},
-		PacketHandler[Client]{Priority: 50, ID: packetid.CPacketPlayerInfoUpdate, F: PlayerInfo},
-		PacketHandler[Client]{Priority: 50, ID: packetid.CPacketPlayerInfoRemove, F: PlayerInfo},
+		PacketHandler[Client]{Priority: 50, ID: packetid.CPacketPlayerInfoUpdate, F: PlayerInfoUpdate},
+		PacketHandler[Client]{Priority: 50, ID: packetid.CPacketPlayerInfoRemove, F: PlayerInfoUpdate},
 	)
 
 	c.Events.AddTicker(
@@ -300,7 +302,7 @@ func SetContainerContent(c *Client, p pk.Packet, cancel context.CancelFunc) erro
 		return fmt.Errorf("failed to scan SetContainerContent: %w", err)
 	}
 
-	container := screen.Containers[int(id)]
+	container := grids.Containers[int(id)]
 
 	for i := range data {
 		err = container.SetSlot(i, &data[i])
@@ -357,9 +359,32 @@ func SetContainerSlot(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 		return fmt.Errorf("failed to scan SetSlot: %w", err)
 	}
 
+	var chunk save.Chunk
+	for i := range c.Player.World.Columns {
+		r, err := region.Create(fmt.Sprintf("r.%d.%d.mca", i[0], i[1]))
+		if err != nil {
+			return err
+		}
+
+		err = level.ChunkToSave(c.Player.World.Columns[i], &chunk)
+		if err != nil {
+			return err
+		}
+		data, err := chunk.Data(2)
+		if err != nil {
+			return err
+		}
+		r.WriteSector(int(i[0]), int(i[1]), data)
+	}
+
 	c.Player.Manager.StateID = int32(stateId)
 
-	return screen.Containers[int(containerId)].SetSlot(int(slotId), &data)
+	if containerId == -1 && slotId == -1 {
+		c.Player.Manager.HeldItem = data.Item()
+		return nil
+	}
+
+	return grids.Containers[int(containerId)].SetSlot(int(slotId), &data)
 }
 
 func SetCooldown(c *Client, p pk.Packet, cancel context.CancelFunc) error {
@@ -744,10 +769,23 @@ func CombatEvent(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	return nil
 }
 
-func PlayerInfo(c *Client, p pk.Packet, cancel context.CancelFunc) error {
-	if err := p.Scan(c.PlayerList); err != nil {
-		return fmt.Errorf("unable to read PlayerInfo packet: %w", err)
+func PlayerInfoRemove(c *Client, p pk.Packet, cancel context.CancelFunc) error {
+	var players []pk.UUID
+
+	if err := p.Scan(pk.Array(&players)); err != nil {
+		return fmt.Errorf("unable to read PlayerInfoRemove packet: %w", err)
 	}
+
+	c.PlayerList.RemovePlayers(players)
+	return nil
+}
+
+// Since Mojang has done an horrible job at designing this, I will simply ignore it
+// until I need it, fuck off
+func PlayerInfoUpdate(c *Client, p pk.Packet, cancel context.CancelFunc) error {
+	/*if err := p.Scan(c.PlayerList); err != nil {
+		return fmt.Errorf("unable to read PlayerInfoUpdate packet: %w", err)
+	}*/
 	return nil
 }
 

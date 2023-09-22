@@ -22,7 +22,7 @@ func TestExampleClient_JoinServer_online(t *testing.T) {
 	c := NewClient(microsoft.LoginFromCache(nil))
 
 	//Login
-	if err := c.JoinServer("2b2t.org"); err != nil {
+	if err := c.JoinServer("topmc.purpleprison.org:25565"); err != nil {
 		log.Fatal(err)
 	}
 	log.Println("Login success")

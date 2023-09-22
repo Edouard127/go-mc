@@ -7,14 +7,14 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
-	"net"
-	"strconv"
-
 	"github.com/Edouard127/go-mc/chat"
 	"github.com/Edouard127/go-mc/data/packetid"
 	mcnet "github.com/Edouard127/go-mc/net"
 	pk "github.com/Edouard127/go-mc/net/packet"
+	"github.com/google/uuid"
+	"net"
+	"strconv"
+	"time"
 )
 
 // ProtocolVersion is the protocol version number of minecraft net protocol
@@ -47,6 +47,10 @@ func (cl *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error 
 		if err != nil {
 			return fmt.Errorf("parse port: %w", err)
 		}
+	}
+
+	if cl.Auth.Microsoft.ExpiresAt < time.Now().Unix() {
+		return fmt.Errorf("microsoft auth token expired")
 	}
 
 	// Dial connection
@@ -105,8 +109,8 @@ func (cl *Client) join(ctx context.Context, d *mcnet.Dialer, addr string) error 
 			if err := p.Scan(&euuid, &name); err != nil {
 				return fmt.Errorf("login success: %w", err)
 			}
-			cl.Player.UUID = uuid.UUID(euuid)
-			cl.Player.Username = string(name)
+			cl.Player.EntityPlayer.UUID = uuid.UUID(euuid)
+			cl.Player.EntityPlayer.Username = string(name)
 			/*cl.Conn.WritePacket(pk.Marshal(
 				packetid.SPacketPlayerSession,
 				pk.String(cl.Auth.SessionID()),

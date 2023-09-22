@@ -37,7 +37,7 @@ func (s *Slot) ReadFrom(r io.Reader) (n int64, err error) {
 		&present, pk.Opt{
 			If: &present,
 			Value: pk.Tuple{
-				&s.ID, &s.Count, pk.NBT(&s.NBT),
+				(*pk.VarInt)(&s.ID), (*pk.Byte)(&s.Count), pk.NBT(&s.NBT),
 			},
 		},
 	}.ReadFrom(r)
