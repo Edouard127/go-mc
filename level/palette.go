@@ -1,6 +1,7 @@
 package level
 
 import (
+	"github.com/Edouard127/go-mc/level/biome"
 	"io"
 	"math/bits"
 	"strconv"
@@ -13,7 +14,7 @@ type State interface {
 	~int
 }
 type BlocksState = block.StateID
-type BiomesState int
+type BiomesState = biome.Type
 
 type PaletteContainer[T State] struct {
 	bits    int

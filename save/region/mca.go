@@ -8,15 +8,23 @@ import (
 	"time"
 )
 
+var (
+	ErrNoSector             = errors.New("sector does not exist")
+	ErrNoData               = errors.New("data is missing")
+	ErrSectorNegativeLength = errors.New("declared length of data is negative")
+	ErrTooLarge             = errors.New("data too large")
+)
+
 // Region contain 32*32 chunks in one .mca file
+// Not MT-Safe!
 type Region struct {
 	f          io.ReadWriteSeeker
-	offsets    [32][32]int
-	timestamps [32][32]int
+	offsets    [32][32]int32
+	Timestamps [32][32]int32
 
 	// sectors record if a sector is in used.
 	// contrary to mojang's, because false is the default value in Go.
-	sectors map[int]bool
+	sectors map[int32]bool
 }
 
 // In calculate chunk's coordinates relative to region
@@ -37,7 +45,7 @@ func At(cx, cz int) (int, int) {
 // Open a .mca file and read the head.
 // Close the Region after used.
 func Open(name string) (r *Region, err error) {
-	f, err := os.OpenFile(name, os.O_RDWR, 0666)
+	f, err := os.OpenFile(name, os.O_RDWR, 0o666)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +60,7 @@ func Open(name string) (r *Region, err error) {
 func Load(f io.ReadWriteSeeker) (r *Region, err error) {
 	r = &Region{
 		f:       f,
-		sectors: make(map[int]bool),
+		sectors: make(map[int32]bool),
 	}
 
 	// read the offsets
@@ -63,7 +71,7 @@ func Load(f io.ReadWriteSeeker) (r *Region, err error) {
 	r.sectors[0] = true
 
 	// read the timestamps
-	err = binary.Read(r.f, binary.BigEndian, &r.timestamps)
+	err = binary.Read(r.f, binary.BigEndian, &r.Timestamps)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +81,7 @@ func Load(f io.ReadWriteSeeker) (r *Region, err error) {
 	for _, v := range r.offsets {
 		for _, v := range v {
 			if o, s := sectorLoc(v); o != 0 {
-				for i := int(0); i < s; i++ {
+				for i := int32(0); i < s; i++ {
 					r.sectors[o+i] = true
 				}
 			}
@@ -85,17 +93,17 @@ func Load(f io.ReadWriteSeeker) (r *Region, err error) {
 
 // Create open .mca file with os.O_CREATE|os. O_EXCL, and init the region
 func Create(name string) (*Region, error) {
-	f, err := os.OpenFile(name, os.O_CREATE|os.O_RDWR|os.O_EXCL, 0666)
+	f, err := os.OpenFile(name, os.O_CREATE|os.O_RDWR|os.O_EXCL, 0o666)
 	if err != nil {
 		return nil, err
 	}
 	return CreateWriter(f)
 }
 
-// CreateWriter init the region
+// CreateWriter create Region by an io.ReadWriteSeeker
 func CreateWriter(f io.ReadWriteSeeker) (r *Region, err error) {
 	r = new(Region)
-	r.sectors = make(map[int]bool)
+	r.sectors = make(map[int32]bool)
 	r.f = f
 
 	// write the offsets
@@ -107,7 +115,7 @@ func CreateWriter(f io.ReadWriteSeeker) (r *Region, err error) {
 	r.sectors[0] = true
 
 	// write the timestamps
-	err = binary.Write(r.f, binary.BigEndian, &r.timestamps)
+	err = binary.Write(r.f, binary.BigEndian, &r.Timestamps)
 	if err != nil {
 		_ = r.Close()
 		return nil, err
@@ -128,7 +136,7 @@ func (r *Region) Close() error {
 	return nil
 }
 
-func sectorLoc(offset int) (sec, num int) {
+func sectorLoc(offset int32) (sec, num int32) {
 	return (offset >> 8) & 0xFFFFFF, offset & 0xFF
 }
 
@@ -136,7 +144,7 @@ func sectorLoc(offset int) (sec, num int) {
 func (r *Region) ReadSector(x, z int) (data []byte, err error) {
 	sec, num := sectorLoc(r.offsets[z][x])
 	if sec == 0 {
-		return nil, errors.New("sector not exist")
+		return nil, ErrNoSector
 	}
 	_, err = r.f.Seek(4096*int64(sec), 0)
 	if err != nil {
@@ -144,19 +152,19 @@ func (r *Region) ReadSector(x, z int) (data []byte, err error) {
 	}
 	reader := io.LimitReader(r.f, 4096*int64(num))
 
-	var length int
+	var length int32
 	err = binary.Read(reader, binary.BigEndian, &length)
 	if err != nil {
 		return
 	}
 	if length == 0 {
-		return nil, errors.New("data is missing")
+		return nil, ErrNoData
 	}
 	if length < 0 {
-		return nil, errors.New("declared length of data is negative")
+		return nil, ErrSectorNegativeLength
 	}
 	if length > 4096*num {
-		return nil, errors.New("data too large")
+		return nil, ErrTooLarge
 	}
 	data = make([]byte, length)
 	_, err = io.ReadFull(reader, data)
@@ -166,12 +174,13 @@ func (r *Region) ReadSector(x, z int) (data []byte, err error) {
 
 // WriteSector write Chunk data into region file
 func (r *Region) WriteSector(x, z int, data []byte) error {
-	need := int((len(data) + 4 + 4096 - 1) / 4096)
+	x, z = In(x, z)
+	need := int32((len(data) + 4 + 4096 - 1) / 4096)
 	n, now := sectorLoc(r.offsets[z][x])
 
 	// maximum chunk size is 1MB
 	if need >= 256 {
-		return errors.New("data too large")
+		return ErrTooLarge
 	}
 
 	if n != 0 && now == need {
@@ -180,7 +189,7 @@ func (r *Region) WriteSector(x, z int, data []byte) error {
 		// we need to allocate new sectors
 
 		// mark the sectors previously used for this chunk as free
-		for i := int(0); i < now; i++ {
+		for i := int32(0); i < now; i++ {
 			r.sectors[n+i] = false
 		}
 
@@ -189,30 +198,31 @@ func (r *Region) WriteSector(x, z int, data []byte) error {
 
 		// mark the sectors previously used for this chunk as used
 		now = need
-		for i := int(0); i < need; i++ {
+		for i := int32(0); i < need; i++ {
 			r.sectors[n+i] = true
 		}
 
 		r.offsets[z][x] = (n << 8) | (need & 0xFF)
 
 		// update file head
-		err := r.setHead(x, z, uint(r.offsets[z][x]), uint(time.Now().Unix()))
+		err := r.setHead(x, z, uint32(r.offsets[z][x]), uint32(time.Now().Unix()))
 		if err != nil {
 			return err
 		}
+		r.Timestamps[x][z] = int32(time.Now().Unix())
 	}
 
 	_, err := r.f.Seek(4096*int64(n), 0)
 	if err != nil {
 		return err
 	}
-	//data length
-	err = binary.Write(r.f, binary.BigEndian, int(len(data)))
+	// data length
+	err = binary.Write(r.f, binary.BigEndian, int32(len(data)))
 	if err != nil {
 		return err
 	}
 
-	//data
+	// data
 	_, err = r.f.Write(data)
 	if err != nil {
 		return err
@@ -226,9 +236,9 @@ func (r *Region) ExistSector(x, z int) bool {
 	return r.offsets[z][x] != 0
 }
 
-// PadToFullSector writes zeros to the end of the file to make size a multiple of 4096
-// Legacy versions of Minecraft require this
-// Need to be called right before Close
+// PadToFullSector writes zeros to the end of the file to make size a multiple of 4096.
+// Legacy versions of Minecraft require this.
+// Need to be called right before Close.
 func (r *Region) PadToFullSector() error {
 	size, err := r.f.Seek(0, io.SeekEnd)
 	if err != nil {
@@ -243,8 +253,8 @@ func (r *Region) PadToFullSector() error {
 	return nil
 }
 
-func (r *Region) findSpace(need int) (n int) {
-	for i := int(0); i < need; i++ {
+func (r *Region) findSpace(need int32) (n int32) {
+	for i := int32(0); i < need; i++ {
 		if r.sectors[n+i] {
 			n += i + 1
 			i = -1
@@ -253,16 +263,16 @@ func (r *Region) findSpace(need int) (n int) {
 	return
 }
 
-func (r *Region) setHead(x, z int, offset, timestamp uint) (err error) {
+func (r *Region) setHead(x, z int, offset, timestamp uint32) (err error) {
 	var buf [4]byte
 
-	binary.BigEndian.PutUint32(buf[:], uint32(offset))
+	binary.BigEndian.PutUint32(buf[:], offset)
 	_, err = r.writeAt(buf[:], 4*(int64(z)*32+int64(x)))
 	if err != nil {
 		return
 	}
 
-	binary.BigEndian.PutUint32(buf[:], uint32(timestamp))
+	binary.BigEndian.PutUint32(buf[:], timestamp)
 	_, err = r.writeAt(buf[:], 4096+4*(int64(z)*32+int64(x)))
 	if err != nil {
 		return

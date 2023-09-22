@@ -3,15 +3,14 @@ package level
 import (
 	"bytes"
 	"fmt"
-	"github.com/Edouard127/go-mc/maths"
-	"io"
-	"math/bits"
-	"strings"
-
 	"github.com/Edouard127/go-mc/level/block"
+	"github.com/Edouard127/go-mc/maths"
 	"github.com/Edouard127/go-mc/nbt"
 	pk "github.com/Edouard127/go-mc/net/packet"
 	"github.com/Edouard127/go-mc/save"
+	"io"
+	"math/bits"
+	"strconv"
 )
 
 type ChunkPos [2]int32
@@ -185,72 +184,94 @@ func ChunkFromSave(c *save.Chunk) (*Chunk, error) {
 			return nil, fmt.Errorf("section Y value %d out of bounds", v.Y)
 		}
 		var err error
-		BlockCount, States, err := readStatesPalette(v.BlockStates.Palette, v.BlockStates.Data)
+		sections[i].States, err = readStatesPalette(v.BlockStates.Palette, v.BlockStates.Data)
 		if err != nil {
 			return nil, err
 		}
-		Biomes, err := readBiomesPalette(v.Biomes.Palette, v.Biomes.Data)
+		sections[i].BlockCount = countNoneAirBlocks(&sections[i])
+		sections[i].Biomes, err = readBiomesPalette(v.Biomes.Palette, v.Biomes.Data)
 		if err != nil {
 			return nil, err
 		}
-		sections[i] = Section{
-			BlockCount: BlockCount,
-			States:     States,
-			Biomes:     Biomes,
-			SkyLight:   v.SkyLight,
-			BlockLight: v.BlockLight,
-		}
+		sections[i].SkyLight = v.SkyLight
+		sections[i].BlockLight = v.BlockLight
 	}
 
-	motionBlocking := c.Heightmaps.MotionBlocking
-	motionBlockingNoLeaves := c.Heightmaps.MotionBlockingNoLeaves
-	oceanFloor := c.Heightmaps.OceanFloor
-	worldSurface := c.Heightmaps.WorldSurface
+	blockEntities := make([]BlockEntity, len(c.BlockEntities))
+	for i, v := range c.BlockEntities {
+		var tmp struct {
+			ID string `nbt:"id"`
+			X  int32  `nbt:"x"`
+			Y  int32  `nbt:"y"`
+			Z  int32  `nbt:"z"`
+		}
+		if err := v.Unmarshal(&tmp); err != nil {
+			return nil, err
+		}
+		blockEntities[i].Data = v
+		if x, z := int(tmp.X-c.XPos<<4), int(tmp.Z-c.ZPos<<4); !blockEntities[i].PackXZ(x, z) {
+			return nil, fmt.Errorf("Packing a XZ(" + strconv.Itoa(x) + ", " + strconv.Itoa(z) + ") out of bound")
+		}
+		blockEntities[i].Y = int16(tmp.Y)
+		blockEntities[i].Type = 1
+	}
 
-	bitsForHeight := bits.Len( /* chunk height in blocks */ uint(secs) * 16)
+	bitsForHeight := bits.Len( /* chunk height in blocks */ uint(secs)*16 + 1)
 	return &Chunk{
 		Sections: sections,
 		HeightMaps: HeightMaps{
-			MotionBlocking:         NewBitStorage(bitsForHeight, 16*16, motionBlocking),
-			MotionBlockingNoLeaves: NewBitStorage(bitsForHeight, 16*16, motionBlockingNoLeaves),
-			OceanFloor:             NewBitStorage(bitsForHeight, 16*16, oceanFloor),
-			WorldSurface:           NewBitStorage(bitsForHeight, 16*16, worldSurface),
+			WorldSurface:           NewBitStorage(bitsForHeight, 16*16, c.Heightmaps["WORLD_SURFACE_WG"]),
+			WorldSurfaceWG:         NewBitStorage(bitsForHeight, 16*16, c.Heightmaps["WORLD_SURFACE"]),
+			OceanFloorWG:           NewBitStorage(bitsForHeight, 16*16, c.Heightmaps["OCEAN_FLOOR_WG"]),
+			OceanFloor:             NewBitStorage(bitsForHeight, 16*16, c.Heightmaps["OCEAN_FLOOR"]),
+			MotionBlocking:         NewBitStorage(bitsForHeight, 16*16, c.Heightmaps["MOTION_BLOCKING"]),
+			MotionBlockingNoLeaves: NewBitStorage(bitsForHeight, 16*16, c.Heightmaps["MOTION_BLOCKING_NO_LEAVES"]),
 		},
-		Status: ChunkStatus(c.Status),
+		BlockEntity: blockEntities,
+		Status:      ChunkStatus(c.Status),
 	}, nil
 }
 
-func readStatesPalette(palette []save.BlockState, data []uint64) (blockCount int16, paletteData *PaletteContainer[BlocksState], err error) {
+func readStatesPalette(palette []save.BlockState, data []uint64) (paletteData *PaletteContainer[BlocksState], err error) {
 	statePalette := make([]BlocksState, len(palette))
 	for i, v := range palette {
 		b, ok := block.FromID[v.Name]
 		if !ok {
-			return 0, nil, fmt.Errorf("unknown block id: %v", v.Name)
+			return nil, fmt.Errorf("unknown block id: %v", v.Name)
 		}
 		if v.Properties.Data != nil {
 			if err := v.Properties.Unmarshal(&b); err != nil {
-				return 0, nil, fmt.Errorf("unmarshal block properties fail: %v", err)
+				return nil, fmt.Errorf("unmarshal block properties fail: %v", err)
 			}
 		}
-		if b.IsAir() {
-			blockCount++
+		s, ok := block.ToStateID[b]
+		if !ok {
+			return nil, fmt.Errorf("unknown block: %v", b)
 		}
-		statePalette[i] = b.State()
+		statePalette[i] = s
 	}
 	paletteData = NewStatesPaletteContainerWithData(16*16*16, data, statePalette)
 	return
 }
 
-func readBiomesPalette(palette []string, data []uint64) (*PaletteContainer[BiomesState], error) {
+func readBiomesPalette(palette []save.BiomeState, data []uint64) (*PaletteContainer[BiomesState], error) {
 	biomesRawPalette := make([]BiomesState, len(palette))
-	var ok bool
 	for i, v := range palette {
-		biomesRawPalette[i], ok = biomesIDs[strings.TrimPrefix(v, "minecraft:")]
-		if !ok {
-			return nil, fmt.Errorf("unknown biomes: %s", v)
+		err := biomesRawPalette[i].UnmarshalText([]byte(v))
+		if err != nil {
+			return nil, err
 		}
 	}
 	return NewBiomesPaletteContainerWithData(4*4*4, data, biomesRawPalette), nil
+}
+
+func countNoneAirBlocks(sec *Section) (blockCount int16) {
+	for i := 0; i < 16*16*16; i++ {
+		if sec.GetBlock(i) != block.Air.Default() {
+			blockCount++
+		}
+	}
+	return
 }
 
 // ChunkToSave convert level.Chunk to save.Chunk
@@ -266,19 +287,32 @@ func ChunkToSave(c *Chunk, dst *save.Chunk) (err error) {
 		if err != nil {
 			return
 		}
-		biomes.Palette, biomes.Data = writeBiomesPalette(v.Biomes)
+		biomes.Palette, biomes.Data, err = writeBiomesPalette(v.Biomes)
 		s.SkyLight = v.SkyLight
 		s.BlockLight = v.BlockLight
 	}
 	dst.Sections = sections
-	dst.Heightmaps.MotionBlocking = c.HeightMaps.MotionBlocking.Raw()
+	if dst.Heightmaps == nil {
+		dst.Heightmaps = make(map[string][]uint64)
+	}
+	fmt.Println(c.HeightMaps.WorldSurfaceWG.Raw())
+	dst.Heightmaps["WORLD_SURFACE_WG"] = c.HeightMaps.WorldSurfaceWG.Raw()
+	dst.Heightmaps["WORLD_SURFACE"] = c.HeightMaps.WorldSurface.Raw()
+	dst.Heightmaps["OCEAN_FLOOR_WG"] = c.HeightMaps.OceanFloorWG.Raw()
+	dst.Heightmaps["OCEAN_FLOOR"] = c.HeightMaps.OceanFloor.Raw()
+	dst.Heightmaps["MOTION_BLOCKING"] = c.HeightMaps.MotionBlocking.Raw()
+	dst.Heightmaps["MOTION_BLOCKING_NO_LEAVES"] = c.HeightMaps.MotionBlockingNoLeaves.Raw()
 	dst.Status = string(c.Status)
 	return
 }
 
 func writeStatesPalette(paletteData *PaletteContainer[BlocksState]) (palette []save.BlockState, data []uint64, err error) {
+	if paletteData == nil {
+		return
+	}
 	rawPalette := paletteData.palette.export()
 	palette = make([]save.BlockState, len(rawPalette))
+
 	var buffer bytes.Buffer
 	for i, v := range rawPalette {
 		b := block.StateList[v]
@@ -294,19 +328,30 @@ func writeStatesPalette(paletteData *PaletteContainer[BlocksState]) (palette []s
 			return
 		}
 	}
-	data = append(data, paletteData.data.Raw()...)
 
+	data = make([]uint64, len(paletteData.data.Raw()))
+	copy(data, paletteData.data.Raw())
 	return
 }
 
-func writeBiomesPalette(paletteData *PaletteContainer[BiomesState]) (palette []string, data []uint64) {
-	rawPalette := paletteData.palette.export()
-	palette = make([]string, len(rawPalette))
-	for i, v := range rawPalette {
-		palette[i] = biomesNames[v]
+func writeBiomesPalette(paletteData *PaletteContainer[BiomesState]) (palette []save.BiomeState, data []uint64, err error) {
+	if paletteData == nil {
+		return
 	}
-	data = append(data, paletteData.data.Raw()...)
+	rawPalette := paletteData.palette.export()
+	palette = make([]save.BiomeState, len(rawPalette))
 
+	var biomeID []byte
+	for i, v := range rawPalette {
+		biomeID, err = v.MarshalText()
+		if err != nil {
+			return
+		}
+		palette[i] = save.BiomeState(biomeID)
+	}
+
+	data = make([]uint64, len(paletteData.data.Raw()))
+	copy(data, paletteData.data.Raw())
 	return
 }
 
@@ -354,7 +399,7 @@ func (c *Chunk) ReadFrom(r io.Reader) (int64, error) {
 		pk.Opt{
 			If: func() bool { return len(sectionData) > 0 },
 			Value: pk.Tuple{
-				pk.Array(&c.BlockEntity), pk.NBT(&c.Light),
+				pk.Array(&c.BlockEntity), //&c.Light,
 			},
 		},
 	}.ReadFrom(r)
@@ -412,12 +457,12 @@ func (c *Chunk) PutData(data []byte) error {
 }
 
 type HeightMaps struct {
-	WorldSurfaceWG         *BitStorage // test = NOT_AIR
-	WorldSurface           *BitStorage // test = NOT_AIR
-	OceanFloorWG           *BitStorage // test = MATERIAL_MOTION_BLOCKING
-	OceanFloor             *BitStorage // test = MATERIAL_MOTION_BLOCKING
-	MotionBlocking         *BitStorage // test = BlocksMotion or isFluid
-	MotionBlockingNoLeaves *BitStorage // test = BlocksMotion or isFluid
+	WorldSurfaceWG         *BitStorage `nbt:"WORLD_SURFACE_WG,omitempty"`
+	WorldSurface           *BitStorage `nbt:"WORLD_SURFACE,omitempty"`
+	OceanFloorWG           *BitStorage `nbt:"OCEAN_FLOOR_WG,omitempty"`
+	OceanFloor             *BitStorage `nbt:"OCEAN_FLOOR,omitempty"`
+	MotionBlocking         *BitStorage `nbt:"MOTION_BLOCKING,omitempty"`
+	MotionBlockingNoLeaves *BitStorage `nbt:"MOTION_BLOCKING_NO_LEAVES,omitempty"`
 }
 
 type BlockEntity struct {
@@ -429,6 +474,14 @@ type BlockEntity struct {
 
 func (b BlockEntity) UnpackXZ() (X, Z int) {
 	return int((uint8(b.XZ) >> 4) & 0xF), int(uint8(b.XZ) & 0xF)
+}
+
+func (b *BlockEntity) PackXZ(X, Z int) bool {
+	if X > 0xF || Z > 0xF || X < 0 || Z < 0 {
+		return false
+	}
+	b.XZ = int8(X<<4 | Z)
+	return true
 }
 
 func (b BlockEntity) WriteTo(w io.Writer) (n int64, err error) {

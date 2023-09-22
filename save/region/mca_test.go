@@ -56,7 +56,7 @@ func TestReadRegion(t *testing.T) {
 
 func TestFindSpace(t *testing.T) {
 	r := &Region{
-		sectors: map[int]bool{
+		sectors: map[int32]bool{
 			0: true, 1: true,
 			2: false, 3: true,
 			4: false, 5: false, 6: true,
@@ -66,7 +66,7 @@ func TestFindSpace(t *testing.T) {
 		},
 	}
 
-	for _, test := range []struct{ need, index int }{
+	for _, test := range []struct{ need, index int32 }{
 		{0, 0},
 		{1, 2},
 		{2, 4},

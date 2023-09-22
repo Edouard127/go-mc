@@ -5,54 +5,51 @@ import (
 	"compress/gzip"
 	"compress/zlib"
 	"errors"
-	"io"
-
 	"github.com/Edouard127/go-mc/nbt"
+	"io"
 )
 
 // Chunk is 16* chunk
 type Chunk struct {
-	DataVersion   int32
-	XPos          int32            `nbt:"xPos"`
-	YPos          int32            `nbt:"yPos"`
-	ZPos          int32            `nbt:"zPos"`
-	BlockEntities []nbt.RawMessage `nbt:"block_entities"`
-	Structures    nbt.RawMessage   `nbt:"structures"`
-	Heightmaps    struct {
-		MotionBlocking         []uint64 `nbt:"MOTION_BLOCKING"`
-		MotionBlockingNoLeaves []uint64 `nbt:"MOTION_BLOCKING_NO_LEAVES"`
-		OceanFloor             []uint64 `nbt:"OCEAN_FLOOR"`
-		WorldSurface           []uint64 `nbt:"WORLD_SURFACE"`
-	}
-	Sections []Section `nbt:"sections"`
-
-	BlockTicks     nbt.RawMessage `nbt:"block_ticks"`
-	FluidTicks     nbt.RawMessage `nbt:"fluid_ticks"`
-	PostProcessing nbt.RawMessage
+	BlockEntities  []nbt.RawMessage `nbt:"block_entities"`
+	BlockTicks     nbt.RawMessage   `nbt:"block_ticks"`
+	CarvingMasks   map[string][]uint64
+	DataVersion    int32
+	Entities       []nbt.RawMessage    `nbt:"entities"`
+	FluidTicks     nbt.RawMessage      `nbt:"fluid_ticks"`
+	Heightmaps     map[string][]uint64 // keys: "WORLD_SURFACE_WG", "WORLD_SURFACE", "WORLD_SURFACE_IGNORE_SNOW", "OCEAN_FLOOR_WG", "OCEAN_FLOOR", "MOTION_BLOCKING", "MOTION_BLOCKING_NO_LEAVES"
 	InhabitedTime  int64
 	IsLightOn      byte `nbt:"isLightOn"`
 	LastUpdate     int64
+	Lights         []nbt.RawMessage
+	PostProcessing nbt.RawMessage
+	Sections       []Section `nbt:"sections"`
 	Status         string
+	Structures     nbt.RawMessage `nbt:"structures"`
+	XPos           int32          `nbt:"xPos"`
+	YPos           int32          `nbt:"yPos"`
+	ZPos           int32          `nbt:"zPos"`
 }
 
 type Section struct {
 	Y           int8
-	BlockStates struct {
-		Palette []BlockState `nbt:"palette"`
-		Data    []uint64     `nbt:"data"`
-	} `nbt:"block_states"`
-	Biomes struct {
-		Palette []string `nbt:"palette"`
-		Data    []uint64 `nbt:"data"`
-	} `nbt:"biomes"`
-	SkyLight   []byte
-	BlockLight []byte
+	BlockStates PaletteContainer[BlockState] `nbt:"block_states"`
+	Biomes      PaletteContainer[BiomeState] `nbt:"biomes"`
+	SkyLight    []byte
+	BlockLight  []byte
+}
+
+type PaletteContainer[T any] struct {
+	Palette []T      `nbt:"palette"`
+	Data    []uint64 `nbt:"data"`
 }
 
 type BlockState struct {
 	Name       string
 	Properties nbt.RawMessage
 }
+
+type BiomeState string
 
 // Load read column data from []byte
 func (c *Chunk) Load(data []byte) (err error) {
@@ -89,7 +86,13 @@ func (c *Chunk) Data(compressingType byte) ([]byte, error) {
 		w = gzip.NewWriter(&buff)
 	case 2:
 		w = zlib.NewWriter(&buff)
+	case 3:
+		w = &buff
 	}
 	err := nbt.NewEncoder(w).Encode(c, "")
+	closer, ok := w.(io.Closer)
+	if ok && err == nil {
+		err = closer.Close()
+	}
 	return buff.Bytes(), err
 }
