@@ -1,11 +1,15 @@
 package data
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"regexp"
 	"strings"
 )
+
+const MojangAPI = "https://api.minecraftservices.com"
 
 var DefaultProfile = Profile{"Steve", "5627dd98-e6be-3c21-b8a8-e92344183641"}
 var DefaultAuth = Auth{DefaultProfile, Microsoft{}, KeyPair{}} // Offline-mode by default
@@ -21,7 +25,108 @@ type Auth struct {
 	KeyPair
 }
 
-func (a Auth) SessionID() string {
+func (a *Auth) createRequest(method, path string, body io.Reader) *http.Request {
+	req, err := http.NewRequest(method, MojangAPI+path, body)
+	if err != nil {
+		panic(err)
+	}
+
+	if _, ok := body.(*strings.Reader); ok {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	if a.Microsoft.AccessToken != "" {
+		req.Header.Set("Authorization", "Bearer "+a.Microsoft.AccessToken)
+	}
+
+	return req
+}
+
+func (a *Auth) NameAvailable(name string) (bool, error) {
+	resp, err := http.DefaultClient.Do(a.createRequest("GET", "/minecraft/profile/name/"+name+"/available", nil))
+	if err != nil {
+		return false, err
+	}
+
+	if resp.StatusCode == 401 {
+		return false, fmt.Errorf("invalid access token")
+	}
+
+	var response struct {
+		Status string `json:"status"`
+	}
+
+	err = json.NewDecoder(resp.Body).Decode(&response)
+
+	return response.Status == "AVAILABLE", err
+}
+
+func (a *Auth) ChangeName(name string) error {
+	resp, err := http.DefaultClient.Do(a.createRequest("PUT", "/minecraft/profile/name/"+name, nil))
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode == 401 {
+		return fmt.Errorf("invalid access token")
+	}
+
+	return nil
+}
+
+func (a *Auth) ChangeSkin(variant, skinURL string) error {
+	resp, err := http.DefaultClient.Do(a.createRequest("POST", "/minecraft/profile/skins", strings.NewReader(fmt.Sprintf(`{"variant": "%s"', "url":"%s"}`, variant, skinURL))))
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode == 401 {
+		return fmt.Errorf("invalid access token")
+	}
+
+	return nil
+}
+
+func (a *Auth) ResetSkin() error {
+	resp, err := http.DefaultClient.Do(a.createRequest("DELETE", "/minecraft/profile/skins/active", nil))
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode == 401 {
+		return fmt.Errorf("invalid access token")
+	}
+
+	return nil
+}
+
+func (a *Auth) HideCape() error {
+	resp, err := http.DefaultClient.Do(a.createRequest("DELETE", "/minecraft/profile/capes/active", nil))
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode == 401 {
+		return fmt.Errorf("invalid access token")
+	}
+
+	return nil
+}
+
+func (a *Auth) ShowCape(capeid string) error {
+	resp, err := http.DefaultClient.Do(a.createRequest("POST", "/minecraft/profile/capes", strings.NewReader(fmt.Sprintf(`{"capeId":"%s"}`, capeid))))
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode == 401 {
+		return fmt.Errorf("invalid access token")
+	}
+
+	return nil
+}
+
+func (a *Auth) SessionID() string {
 	return fmt.Sprintf("token:%s:%s", a.Microsoft.AccessToken, a.Profile.UUID)
 }
 
