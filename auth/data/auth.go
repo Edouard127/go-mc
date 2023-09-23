@@ -67,11 +67,18 @@ func (a *Auth) ChangeName(name string) error {
 		return err
 	}
 
-	if resp.StatusCode == 401 {
+	switch resp.StatusCode {
+	case 401:
 		return fmt.Errorf("invalid access token")
+	case 403:
+		return fmt.Errorf("name is unavailable")
+	case 429:
+		return fmt.Errorf("too many requests")
+	case 500:
+		return fmt.Errorf("internal server error")
+	default:
+		return nil
 	}
-
-	return nil
 }
 
 func (a *Auth) ChangeSkin(variant, skinURL string) error {
