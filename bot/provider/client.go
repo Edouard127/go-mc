@@ -40,6 +40,6 @@ func NewClient(auth data.Auth) *Client {
 		World:      clientWorld,
 		PlayerList: core.NewPlayerList(),
 		Player:     NewPlayer(basic.DefaultSettings, clientWorld, auth),
-		Events:     Events[Client]{handlers: make(map[int32]*handlerHeap[Client]), tickers: new(tickerHeap[Client])},
+		Events:     Events[Client]{handlers: make(map[int32][]PacketHandler[Client]), tickers: []TickHandler[Client]{}},
 	})
 }
