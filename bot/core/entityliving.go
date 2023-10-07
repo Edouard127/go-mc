@@ -49,7 +49,9 @@ func (e *EntityLiving) SetHealth(health float32) bool {
 }
 
 func (e *EntityLiving) GetEyePos() maths.Vec3d {
-	return e.Position.Add(EyePosVec)
+	c := e.Position
+	c.Y += EyePos
+	return c
 }
 
 func (e *EntityLiving) IsDead() bool {

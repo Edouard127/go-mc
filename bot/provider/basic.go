@@ -123,6 +123,10 @@ func RunTransactions(c *Client, cancel context.CancelFunc) error {
 // I don't have to code all the physic by myself
 // thx minecrossoft 🙏
 func Step(cl *Client, cancel context.CancelFunc) error {
+	if !cl.World.SafeToAccess {
+		return nil
+	}
+
 	feetBlock, err := cl.Player.World.GetBlock(cl.Player.EntityPlayer.Position)
 	if err != nil {
 		return err
@@ -149,7 +153,7 @@ func Step(cl *Client, cancel context.CancelFunc) error {
 	}
 
 	if feetBlock == block.Water && cl.Player.Controller.Sneak && !cl.Player.Abilities.Flying {
-		cl.Player.EntityPlayer.Motion = cl.Player.EntityPlayer.Motion.AddScalar(0, -0.04, 0)
+		cl.Player.EntityPlayer.Motion.AddScalar(0, -0.04, 0)
 	}
 
 	if cl.Player.Abilities.Flying {
@@ -161,7 +165,7 @@ func Step(cl *Client, cancel context.CancelFunc) error {
 		}
 
 		if mul != 0 {
-			cl.Player.EntityPlayer.Motion = cl.Player.EntityPlayer.Motion.AddScalar(0, mul*cl.Player.Abilities.FlyingSpeed*3.0, 0)
+			cl.Player.EntityPlayer.Motion.AddScalar(0, mul*cl.Player.Abilities.FlyingSpeed*3.0, 0)
 		}
 	}
 
@@ -243,7 +247,7 @@ func (pl *Player) move(mover enums.MoverType, pos0 maths.Vec3d) {
 	// TODO: logic shit and whatever
 
 	// Now let's do the fun stuff :D
-	pl.EntityPlayer.Motion = pl.EntityPlayer.Motion.MulScalar(feet.SpeedFactor, 1, feet.SpeedFactor)
+	pl.EntityPlayer.Motion.MulScalar(feet.SpeedFactor, 1, feet.SpeedFactor)
 }
 
 func (pl *Player) jumpPower() float64 {

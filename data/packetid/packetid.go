@@ -90,7 +90,7 @@ const (
 	CPacketPlayerInfoRemove                 // https://wiki.vg/Protocol#Player_Info_Remove
 	CPacketPlayerInfoUpdate                 // https://wiki.vg/Protocol#Player_Info_Update
 	CPacketLookAt                           // https://wiki.vg/Protocol#Look_At
-	CPacketPlayerPosition                   // https://wiki.vg/Protocol#Synchronize_Player_Position
+	CPacketSynchronizePlayerPosition        // https://wiki.vg/Protocol#Synchronize_Player_Position
 	CPacketSetRecipeBook                    // https://wiki.vg/Protocol#Update_Recipe_Book
 	CPacketRemoveEntities                   // https://wiki.vg/Protocol#Remove_Entities
 	CPacketRemoveEntityEffect               // https://wiki.vg/Protocol#Remove_Entity_Effect

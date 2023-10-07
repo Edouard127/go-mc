@@ -35,7 +35,10 @@ func GetClosestFacing(eyePos, blockPos Vec3d) EnumFacing {
 	var closest EnumFacing
 	var minDiff float64
 	for _, side := range GetVisibleSides(eyePos, blockPos) {
-		diff := eyePos.DistanceTo(blockPos.Add(side.Vector().AddScalar(0.5, 0.5, 0.5)))
+		vector := side.Vector()
+		vector.AddScalar(0.5, 0.5, 0.5)
+		blockPos.Add(vector)
+		diff := eyePos.DistanceTo(blockPos)
 		if minDiff == 0 || diff < minDiff {
 			minDiff = diff
 			closest = side
@@ -46,16 +49,16 @@ func GetClosestFacing(eyePos, blockPos Vec3d) EnumFacing {
 
 func GetVisibleSides(eyePos, blockPos Vec3d) []EnumFacing {
 	var sides []EnumFacing
-	blockCenter := blockPos.AddScalar(0.5, 0.5, 0.5)
-	axis := checkAxis(eyePos.X-blockCenter.X, WEST)
+	blockPos.AddScalar(0.5, 0.5, 0.5)
+	axis := checkAxis(eyePos.X-blockPos.X, WEST)
 	if axis != -1 {
 		sides = append(sides, axis)
 	}
-	axis = checkAxis(eyePos.Y-blockCenter.Y, DOWN)
+	axis = checkAxis(eyePos.Y-blockPos.Y, DOWN)
 	if axis != -1 {
 		sides = append(sides, axis)
 	}
-	axis = checkAxis(eyePos.Z-blockCenter.Z, NORTH)
+	axis = checkAxis(eyePos.Z-blockPos.Z, NORTH)
 	if axis != -1 {
 		sides = append(sides, axis)
 	}

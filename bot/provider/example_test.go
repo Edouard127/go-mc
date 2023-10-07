@@ -53,7 +53,7 @@ func TestExampleClient_JoinServer_online(t *testing.T) {
 		PacketHandler[Client]{ID: packetid.CPacketEntityRotation, Priority: 50, F: EntityRotation},
 		PacketHandler[Client]{ID: packetid.CPacketVehicleMove, Priority: 50, F: VehicleMove},
 		PacketHandler[Client]{ID: packetid.CPacketLookAt, Priority: 50, F: LookAt},
-		PacketHandler[Client]{ID: packetid.CPacketPlayerPosition, Priority: 50, F: PlayerPosition},
+		PacketHandler[Client]{ID: packetid.CPacketSynchronizePlayerPosition, Priority: 50, F: SynchronizePlayerPosition},
 		PacketHandler[Client]{ID: packetid.CPacketEntityEffect, Priority: 50, F: EntityEffect},
 		PacketHandler[Client]{ID: packetid.CPacketSetEntityVelocity, Priority: 50, F: EntityVelocity},
 
@@ -100,7 +100,7 @@ func TestExampleClient_JoinServer_offline(t *testing.T) {
 		PacketHandler[Client]{ID: packetid.CPacketEntityRotation, Priority: 50, F: EntityRotation},
 		PacketHandler[Client]{ID: packetid.CPacketVehicleMove, Priority: 50, F: VehicleMove},
 		PacketHandler[Client]{ID: packetid.CPacketLookAt, Priority: 50, F: LookAt},
-		PacketHandler[Client]{ID: packetid.CPacketPlayerPosition, Priority: 50, F: PlayerPosition},
+		PacketHandler[Client]{ID: packetid.CPacketSynchronizePlayerPosition, Priority: 50, F: SynchronizePlayerPosition},
 		PacketHandler[Client]{ID: packetid.CPacketEntityEffect, Priority: 50, F: EntityEffect},
 		PacketHandler[Client]{ID: packetid.CPacketSetEntityVelocity, Priority: 50, F: EntityVelocity},
 

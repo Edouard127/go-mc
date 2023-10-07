@@ -630,7 +630,7 @@ func EntityPosition(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 		nX := e.GetPosition().X + (float64(dX) / 4096)
 		nY := e.GetPosition().Y + (float64(dY) / 4096)
 		nZ := e.GetPosition().Z + (float64(dZ) / 4096)
-		e.SetPosition(maths.Vec3d{X: nX, Y: nY, Z: nZ}.Spread())
+		e.SetPosition(nX, nY, nZ)
 	}
 
 	return nil
@@ -769,7 +769,35 @@ func PlayerInfoUpdate(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	return nil
 }
 
-func PlayerPosition(c *Client, p pk.Packet, cancel context.CancelFunc) error {
+func LookAt(client *Client, packet pk.Packet, cancel context.CancelFunc) error {
+	var (
+		targetEnum   pk.VarInt
+		X, Y, Z      pk.Double
+		isEntity     pk.Boolean
+		entityID     pk.VarInt
+		entityTarget pk.VarInt
+	)
+
+	if err := packet.Scan(
+		pk.Tuple{
+			&targetEnum,
+			&X, &Y, &Z,
+			pk.Opt{
+				If: &isEntity,
+				Value: pk.Tuple{
+					&entityID,
+					&entityTarget,
+				},
+			},
+		},
+	); err != nil {
+		return fmt.Errorf("unable to read LookAt packet: %w", err)
+	}
+
+	return nil
+}
+
+func SynchronizePlayerPosition(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		X, Y, Z    pk.Double
 		Yaw, Pitch pk.Float
@@ -778,60 +806,26 @@ func PlayerPosition(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	)
 
 	if err := p.Scan(&X, &Y, &Z, &Yaw, &Pitch, &Flags, &TeleportID); err != nil {
-		return fmt.Errorf("unable to read PlayerPosition packet: %w", err)
+		return fmt.Errorf("unable to read SynchronizePlayerPosition packet: %w", err)
 	}
 
 	position := maths.Vec3d{X: float64(X), Y: float64(Y), Z: float64(Z)}
 	rotation := maths.Vec2d{X: float64(Pitch), Y: float64(Yaw)}
 
 	if Flags&0x01 != 0 {
-		c.Player.EntityPlayer.Position = c.Player.EntityPlayer.Position.Add(position)
-		c.Player.EntityPlayer.Rotation = c.Player.EntityPlayer.Rotation.Add(rotation)
+		c.Player.EntityPlayer.Position.Add(position)
+		c.Player.EntityPlayer.Rotation.Add(rotation)
 	} else {
-		c.Player.EntityPlayer.Position = position
-		c.Player.EntityPlayer.Rotation = rotation
+		c.Player.EntityPlayer.Position.Set(position)
+		c.Player.EntityPlayer.Rotation.Set(rotation)
 	}
 
 	c.Player.EntityPlayer.OnGround = Flags&0x02 == 0
 
 	if TeleportID != 0 {
-		if err := c.Conn.WritePacket(
-			pk.Marshal(
-				packetid.SPacketTeleportConfirm,
-				TeleportID,
-			),
-		); err != nil {
+		if err := c.Conn.WritePacket(pk.Marshal(packetid.SPacketTeleportConfirm, TeleportID)); err != nil {
 			return fmt.Errorf("unable to write TeleportConfirm packet: %w", err)
 		}
-	}
-
-	return nil
-}
-
-func PlayerPositionAndLook(c *Client, p pk.Packet, cancel context.CancelFunc) error {
-	var (
-		x          pk.Double
-		y          pk.Double
-		z          pk.Double
-		yaw        pk.Float
-		pitch      pk.Float
-		flags      pk.Byte
-		teleportID pk.VarInt
-	)
-
-	if err := p.Scan(&x, &y, &z, &yaw, &pitch, &flags, &teleportID); err != nil {
-		return fmt.Errorf("unable to read PlayerPositionAndLook packet: %w", err)
-	}
-
-	return nil
-}
-
-func UseBed(c *Client, p pk.Packet, cancel context.CancelFunc) error {
-	var entityID pk.Int
-	var location pk.Position
-
-	if err := p.Scan(&entityID, &location); err != nil {
-		return fmt.Errorf("unable to read UseBed packet: %w", err)
 	}
 
 	return nil
@@ -1406,33 +1400,5 @@ func EntityEffect(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 		}
 		c.Player.EntityPlayer.ActivePotionEffects[effectStatus.ID] = effectStatus
 	}
-	return nil
-}
-
-func LookAt(client *Client, packet pk.Packet, cancel context.CancelFunc) error {
-	var (
-		targetEnum   pk.VarInt
-		X, Y, Z      pk.Double
-		isEntity     pk.Boolean
-		entityID     pk.VarInt
-		entityTarget pk.VarInt
-	)
-
-	if err := packet.Scan(
-		pk.Tuple{
-			&targetEnum,
-			&X, &Y, &Z,
-			pk.Opt{
-				If: &isEntity,
-				Value: pk.Tuple{
-					&entityID,
-					&entityTarget,
-				},
-			},
-		},
-	); err != nil {
-		return fmt.Errorf("unable to read LookAt packet: %w", err)
-	}
-
 	return nil
 }
