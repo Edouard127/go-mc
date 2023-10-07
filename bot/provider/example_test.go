@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"fmt"
 	"github.com/Edouard127/go-mc/auth/data"
 	"github.com/Edouard127/go-mc/auth/microsoft"
 	"github.com/Edouard127/go-mc/data/packetid"
@@ -9,13 +10,19 @@ import (
 )
 
 func TestExamplePingAndList(t *testing.T) {
-	resp, delay, err := PingAndList("")
+	resp, delay, err := PingAndList("2b2t.org")
 	if err != nil {
 		log.Fatalf("ping and list server fail: %v", err)
 	}
 
-	log.Println("Status:", resp)
-	log.Println("Delay:", delay)
+	fmt.Printf("Server %s (%s) is running %d with %d/%d players online. Latency: %v\n",
+		resp.Description.Text,
+		resp.Version.Name,
+		resp.Version.Protocol,
+		resp.Players.Online,
+		resp.Players.Max,
+		delay,
+	)
 }
 
 func TestExampleClient_JoinServer_online(t *testing.T) {
