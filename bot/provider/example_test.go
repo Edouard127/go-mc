@@ -36,6 +36,7 @@ func TestExampleClient_JoinServer_online(t *testing.T) {
 
 		/* Physic */
 		PacketHandler[Client]{ID: packetid.CPacketChunkData, Priority: 50, F: ChunkData},
+		PacketHandler[Client]{ID: packetid.CPacketInitializeBorder, Priority: 50, F: InitializeBorder},
 		PacketHandler[Client]{ID: packetid.CPacketUnloadChunk, Priority: 50, F: UnloadChunk},
 		PacketHandler[Client]{ID: packetid.CPacketExplosion, Priority: 50, F: Explosion},
 

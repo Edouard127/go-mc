@@ -1,6 +1,7 @@
 package world
 
 import (
+	"context"
 	"fmt"
 	"github.com/Edouard127/go-mc/bot/core"
 	. "github.com/Edouard127/go-mc/level"
@@ -8,11 +9,13 @@ import (
 	"github.com/Edouard127/go-mc/maths"
 	"math"
 	"sync"
+	"time"
 )
 
 type World struct {
-	Columns  map[ChunkPos]*Chunk
-	Entities map[int32]core.Entity
+	Columns      map[ChunkPos]*Chunk
+	Entities     map[int32]core.Entity
+	SafeToAccess bool
 
 	worldSync   sync.Mutex
 	entityMutex sync.Mutex
@@ -25,9 +28,32 @@ func NewWorld() *World {
 	}
 }
 
+func (w *World) safeLock() {
+	if w.SafeToAccess {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+	for {
+		if w.SafeToAccess {
+			return
+		}
+		select {
+		case <-ctx.Done():
+			panic("world not safe to access")
+		default:
+			time.Sleep(time.Millisecond * 10)
+		}
+	}
+}
+
 func (w *World) GetBlock(pos maths.Vec3d) (*block.Block, error) {
 	w.worldSync.Lock()
 	defer w.worldSync.Unlock()
+	w.safeLock() // As long as the world is empty, we can't get any blocks
+	if len(w.Columns) == 0 {
+		return block.Air, fmt.Errorf("no chunks loaded")
+	}
 	chunk, ok := w.Columns[ChunkPos{int32(pos.X) >> 4, int32(pos.Z) >> 4}]
 	if ok {
 		return chunk.GetBlock(pos)

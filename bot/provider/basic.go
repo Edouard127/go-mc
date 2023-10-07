@@ -123,8 +123,6 @@ func RunTransactions(c *Client, cancel context.CancelFunc) error {
 // I don't have to code all the physic by myself
 // thx minecrossoft 🙏
 func Step(cl *Client, cancel context.CancelFunc) error {
-	cancel()
-	return nil
 	feetBlock, err := cl.Player.World.GetBlock(cl.Player.EntityPlayer.Position)
 	if err != nil {
 		return err

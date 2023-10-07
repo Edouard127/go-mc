@@ -10,8 +10,6 @@ import (
 	"github.com/Edouard127/go-mc/data/grids"
 	"github.com/Edouard127/go-mc/level"
 	"github.com/Edouard127/go-mc/maths"
-	"github.com/Edouard127/go-mc/save"
-	"github.com/Edouard127/go-mc/save/region"
 	"time"
 	"unsafe"
 
@@ -357,24 +355,6 @@ func SetContainerSlot(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	)
 	if err := p.Scan(&containerId, &stateId, &slotId, &data); err != nil {
 		return fmt.Errorf("failed to scan SetSlot: %w", err)
-	}
-
-	var chunk save.Chunk
-	for i := range c.Player.World.Columns {
-		r, err := region.Create(fmt.Sprintf("r.%d.%d.mca", i[0], i[1]))
-		if err != nil {
-			return err
-		}
-
-		err = level.ChunkToSave(c.Player.World.Columns[i], &chunk)
-		if err != nil {
-			return err
-		}
-		data, err := chunk.Data(2)
-		if err != nil {
-			return err
-		}
-		r.WriteSector(int(i[0]), int(i[1]), data)
 	}
 
 	c.Player.Manager.StateID = int32(stateId)
@@ -933,7 +913,7 @@ func SelectAdvancementTab(c *Client, p pk.Packet, cancel context.CancelFunc) err
 	return nil
 }
 
-func WorldBorder(c *Client, p pk.Packet, cancel context.CancelFunc) error {
+func InitializeBorder(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
 		action         pk.Byte
 		radius         pk.Double
@@ -949,6 +929,9 @@ func WorldBorder(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	if err := p.Scan(&action, &radius, &oldRadius, &speed, &x, &z, &portalBoundary, &warningTime, &warningBlocks); err != nil {
 		return fmt.Errorf("unable to read WorldBorder packet: %w", err)
 	}
+
+	// When we receive this packet, we know that the client has fully loaded the world.
+	c.World.SafeToAccess = true
 
 	return nil
 }
