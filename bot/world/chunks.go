@@ -11,9 +11,9 @@ import (
 )
 
 type World struct {
-	Columns      map[ChunkPos]*Chunk
-	Entities     map[int32]core.Entity
-	SafeToAccess bool
+	Columns  map[ChunkPos]*Chunk
+	Entities map[int32]core.Entity
+	Loaded   bool
 
 	worldSync   sync.Mutex
 	entityMutex sync.Mutex
@@ -29,14 +29,13 @@ func NewWorld() *World {
 func (w *World) GetBlock(pos maths.Vec3d) (*block.Block, error) {
 	// As long as the world is empty, we can't get any blocks
 	// The world will not prevent you from getting a chunk that doesn't exist
-	// You need to check if the world is safe to access before getting a block
 	w.worldSync.Lock()
 	defer w.worldSync.Unlock()
 	chunk, ok := w.Columns[ChunkPos{int32(pos.X) >> 4, int32(pos.Z) >> 4}]
 	if ok {
 		return chunk.GetBlock(pos)
 	}
-	return block.Air, fmt.Errorf("chunk not found")
+	return block.Air, nil // If we return an error, even if it's due to the world not being loaded, the bot will crash
 }
 
 func (w *World) MustGetBlock(pos maths.Vec3d) *block.Block {
@@ -248,7 +247,7 @@ func (w *World) entitySearch(nth, max int, predicate func(core.Entity) bool) []c
 	w.entityMutex.Lock()
 	defer w.entityMutex.Unlock()
 	var entities []core.Entity
-	for i := int32(0); i < int32(max); i++ {
+	for i := range w.Entities {
 		if w.Entities[i] == nil {
 			break
 		}
