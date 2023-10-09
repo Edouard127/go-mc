@@ -23,6 +23,7 @@ type EntityLiving struct {
 	ActiveItemStackUseCount int32
 	ActivePotionEffects     map[int32]effects.EffectStatus
 	OnGround                bool
+	LastOnGround            bool
 	MoveStrafing            float32
 	MoveForward             float32
 	MoveVertical            float32

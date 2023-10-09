@@ -244,11 +244,7 @@ func readStatesPalette(palette []save.BlockState, data []uint64) (paletteData *P
 				return nil, fmt.Errorf("unmarshal block properties fail: %v", err)
 			}
 		}
-		s, ok := block.ToStateID[b]
-		if !ok {
-			return nil, fmt.Errorf("unknown block: %v", b)
-		}
-		statePalette[i] = s
+		statePalette[i] = b.State()
 	}
 	paletteData = NewStatesPaletteContainerWithData(16*16*16, data, statePalette)
 	return

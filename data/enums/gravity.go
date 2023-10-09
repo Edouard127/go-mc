@@ -1,12 +1,8 @@
 package enums
 
-import (
-	"github.com/Edouard127/go-mc/level"
-	"github.com/Edouard127/go-mc/level/block"
-)
-
 const (
 	Gravity              = 0.08
+	SlowFallGravity      = 0.01
 	AirDrag              = 0.98
 	YawSpeed             = 3.0
 	PitchSpeed           = 3.0
@@ -19,8 +15,10 @@ const (
 	HoneyBlockMultiplier = 0.4
 	LadderMaxSpeed       = 0.15
 	LadderAcceleration   = 0.2
-	WaterInertia         = 0.8
-	LavaInertia          = 0.5
+	WaterDrag            = 0.8
+	WaterSprintDrag      = 0.9
+	WaterDolphinDrag     = 0.96
+	LavaDrag             = 0.5
 	WaterGravity         = 0.02
 	LavaGravity          = 0.02
 	LiquidAcceleration   = 0.02
@@ -28,10 +26,9 @@ const (
 	AirBornAcceleration  = 0.02
 	DefaultSlipperiness  = 0.6
 	OutOfLiquidImpulse   = 0.3
-	SlowFalling          = 0.125
 )
 
-func Slipperiness(b level.BlocksState) float64 {
+/*func Slipperiness(b level.BlocksState) float64 {
 	if t, ok := slipperiness[b]; ok {
 		return t
 	} else {
@@ -46,4 +43,4 @@ var slipperiness = map[level.BlocksState]float64{
 	block.ToStateID[block.Ice]:        0.98,
 	block.ToStateID[block.PackedIce]:  0.98,
 	block.ToStateID[block.FrostedIce]: 0.98,
-}
+}*/

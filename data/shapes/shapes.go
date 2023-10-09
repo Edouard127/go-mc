@@ -11257,6 +11257,7 @@ var BlockShapes = map[string]Shape{
 
 func GetShape(name string, data int) [6]float64 {
 	block := BlockShapes[name]
+	return block.Shapes[data][]
 	if state, ok := block.Shapes[0]; ok {
 		return state[0]
 	} else {

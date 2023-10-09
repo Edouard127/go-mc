@@ -15,10 +15,20 @@ type Vec3[T constraints.Signed | constraints.Float] struct {
 	X, Y, Z T
 }
 
+func (v *Vec3[T]) Nil() bool {
+	return v.X == 0 && v.Y == 0 && v.Z == 0
+}
+
 func (v *Vec3[T]) Set(vec3 Vec3[T]) {
 	v.X = vec3.X
 	v.Y = vec3.Y
 	v.Z = vec3.Z
+}
+
+func (v *Vec3[T]) SetScalar(x, y, z T) {
+	v.X = x
+	v.Y = y
+	v.Z = z
 }
 
 func (v *Vec3[T]) Add(vec3 Vec3[T]) {
@@ -69,6 +79,15 @@ func (v *Vec3[T]) DivScalar(x, y, z T) {
 	v.Z /= z
 }
 
+func (v *Vec3[T]) Normalize() {
+	d0 := T(math.Sqrt(float64(v.X*v.X + v.Y*v.Y + v.Z*v.Z)))
+	if d0 > 0 {
+		v.X /= d0
+		v.Y /= d0
+		v.Z /= d0
+	}
+}
+
 func (v *Vec3[T]) DistanceTo(vec3 Vec3[T]) T {
 	xDiff, yDiff, zDiff := v.X-vec3.X, v.Y-vec3.Y, v.Z-vec3.Z
 	return T(math.Sqrt(float64(xDiff*xDiff + yDiff*yDiff + zDiff*zDiff)))
@@ -112,10 +131,6 @@ func (v *Vec3[T]) Lerp(vec3 Vec3[T], t T) {
 
 func (v *Vec3[T]) Spread() (T, T, T) {
 	return v.X, v.Y, v.Z
-}
-
-func (v *Vec3[T]) ToAABB() AxisAlignedBB[T] {
-	return AxisAlignedBB[T]{MinX: v.X, MinY: v.Y, MinZ: v.Z, MaxX: v.X, MaxY: v.Y, MaxZ: v.Z}
 }
 
 func (v *Vec3[T]) ToChunkPos() Vec2i {

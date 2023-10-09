@@ -1,15 +1,11 @@
 package maths
 
-import (
-	"golang.org/x/exp/constraints"
-)
-
-type AxisAlignedBB[T constraints.Integer | constraints.Float] struct {
+type AxisAlignedBB struct {
 	MinX, MinY, MinZ,
-	MaxX, MaxY, MaxZ T
+	MaxX, MaxY, MaxZ float64
 }
 
-func (a AxisAlignedBB[T]) Contract(x, y, z T) AxisAlignedBB[T] {
+func (a *AxisAlignedBB) Contract(x, y, z float64) {
 	d0 := a.MinX
 	d1 := a.MinY
 	d2 := a.MinZ
@@ -34,10 +30,15 @@ func (a AxisAlignedBB[T]) Contract(x, y, z T) AxisAlignedBB[T] {
 	if z > 0.0 {
 		d5 -= z
 	}
-	return AxisAlignedBB[T]{MinX: d0, MinY: d1, MinZ: d2, MaxX: d3, MaxY: d4, MaxZ: d5}
+	a.MinX = d0
+	a.MinY = d1
+	a.MinZ = d2
+	a.MaxX = d3
+	a.MaxY = d4
+	a.MaxZ = d5
 }
 
-func (a AxisAlignedBB[T]) Expand(x, y, z T) AxisAlignedBB[T] {
+func (a *AxisAlignedBB) Expand(x, y, z float64) {
 	d0 := a.MinX
 	d1 := a.MinY
 	d2 := a.MinZ
@@ -62,59 +63,74 @@ func (a AxisAlignedBB[T]) Expand(x, y, z T) AxisAlignedBB[T] {
 	if z > 0.0 {
 		d5 += z
 	}
-	return AxisAlignedBB[T]{MinX: d0, MinY: d1, MinZ: d2, MaxX: d3, MaxY: d4, MaxZ: d5}
+	a.MinX = d0
+	a.MinY = d1
+	a.MinZ = d2
+	a.MaxX = d3
+	a.MaxY = d4
+	a.MaxZ = d5
 }
 
-func (a AxisAlignedBB[T]) Inflate(x, y, z T) AxisAlignedBB[T] {
-	d0 := a.MinX - x
-	d1 := a.MinY - y
-	d2 := a.MinZ - z
-	d3 := a.MaxX + x
-	d4 := a.MaxY + y
-	d5 := a.MaxZ + z
-	return AxisAlignedBB[T]{MinX: d0, MinY: d1, MinZ: d2, MaxX: d3, MaxY: d4, MaxZ: d5}
+func (a *AxisAlignedBB) Unexpand(x, y, z float64) {
+	a.Expand(-x, -y, -z)
 }
 
-func (a AxisAlignedBB[T]) Intersect(other AxisAlignedBB[T]) AxisAlignedBB[T] {
-	d0 := max(a.MinX, other.MinX)
-	d1 := max(a.MinY, other.MinY)
-	d2 := max(a.MinZ, other.MinZ)
-	d3 := min(a.MaxX, other.MaxX)
-	d4 := min(a.MaxY, other.MaxY)
-	d5 := min(a.MaxZ, other.MaxZ)
-	return AxisAlignedBB[T]{MinX: d0, MinY: d1, MinZ: d2, MaxX: d3, MaxY: d4, MaxZ: d5}
+func (a *AxisAlignedBB) Inflate(x, y, z float64) {
+	a.MinX -= x
+	a.MinY -= y
+	a.MinZ -= z
+	a.MaxX += x
+	a.MaxY += y
+	a.MaxZ += z
 }
 
-func (a AxisAlignedBB[T]) MinMax(other AxisAlignedBB[T]) AxisAlignedBB[T] {
-	d0 := min(a.MinX, other.MinX)
-	d1 := min(a.MinY, other.MinY)
-	d2 := min(a.MinZ, other.MinZ)
-	d3 := max(a.MaxX, other.MaxX)
-	d4 := max(a.MaxY, other.MaxY)
-	d5 := max(a.MaxZ, other.MaxZ)
-	return AxisAlignedBB[T]{MinX: d0, MinY: d1, MinZ: d2, MaxX: d3, MaxY: d4, MaxZ: d5}
+func (a *AxisAlignedBB) Intersect(other AxisAlignedBB) {
+	a.MinX = max(a.MinX, other.MinX)
+	a.MinY = max(a.MinY, other.MinY)
+	a.MinZ = max(a.MinZ, other.MinZ)
+	a.MaxX = min(a.MaxX, other.MaxX)
+	a.MaxY = min(a.MaxY, other.MaxY)
+	a.MaxZ = min(a.MaxZ, other.MaxZ)
 }
 
-func (a AxisAlignedBB[T]) Move(x, y, z T) AxisAlignedBB[T] {
-	return AxisAlignedBB[T]{MinX: a.MinX + x, MinY: a.MinY + y, MinZ: a.MinZ + z, MaxX: a.MaxX + x, MaxY: a.MaxY + y, MaxZ: a.MaxZ + z}
+func (a *AxisAlignedBB) MinMax(other AxisAlignedBB) {
+	a.MinX = min(a.MinX, other.MinX)
+	a.MinY = min(a.MinY, other.MinY)
+	a.MinZ = min(a.MinZ, other.MinZ)
+	a.MaxX = max(a.MaxX, other.MaxX)
+	a.MaxY = max(a.MaxY, other.MaxY)
+	a.MaxZ = max(a.MaxZ, other.MaxZ)
 }
 
-func (a AxisAlignedBB[T]) IntersectsWith(other AxisAlignedBB[T]) bool {
+func (a *AxisAlignedBB) Move(x, y, z float64) {
+	a.MinX += x
+	a.MinY += y
+	a.MinZ += z
+	a.MaxX += x
+	a.MaxY += y
+	a.MaxZ += z
+}
+
+func (a *AxisAlignedBB) IntersectsWith(other AxisAlignedBB) bool {
 	return a.MinX < other.MaxX && a.MaxX > other.MinX && a.MinY < other.MaxY && a.MaxY > other.MinY && a.MinZ < other.MaxZ && a.MaxZ > other.MinZ
 }
 
-func (a AxisAlignedBB[T]) CollidesHorizontal(other AxisAlignedBB[T]) bool {
-	return a.MinX <= other.MaxX && a.MaxX >= other.MinX && a.MinZ <= other.MaxZ && a.MaxZ >= other.MinZ
+func (a *AxisAlignedBB) Bottom() Vec3d {
+	return Vec3d{a.MinX + (a.MaxX-a.MinX)*0.5, a.MinY, a.MinZ + (a.MaxZ-a.MinZ)*0.5}
 }
 
-func (a AxisAlignedBB[T]) CollidesVertical(other AxisAlignedBB[T]) bool {
-	return a.MinY <= other.MaxY && a.MaxY >= other.MinY
+func (a *AxisAlignedBB) Center() Vec3d {
+	return Vec3d{a.MinX + (a.MaxX-a.MinX)*0.5, a.MinY + (a.MaxY-a.MinY)*0.5, a.MinZ + (a.MaxZ-a.MinZ)*0.5}
 }
 
-func (a AxisAlignedBB[T]) Contains(x, y, z T) bool {
+func (a *AxisAlignedBB) Top() Vec3d {
+	return Vec3d{a.MinX + (a.MaxX-a.MinX)*0.5, a.MaxY, a.MinZ + (a.MaxZ-a.MinZ)*0.5}
+}
+
+func (a *AxisAlignedBB) Contains(x, y, z float64) bool {
 	return x >= a.MinX && x < a.MaxX && y >= a.MinY && y < a.MaxY && z >= a.MinZ && z < a.MaxZ
 }
 
-func (a AxisAlignedBB[T]) Deflate(x, y, z T) AxisAlignedBB[T] {
-	return a.Inflate(-x, -y, -z)
+func (a *AxisAlignedBB) Deflate(x, y, z float64) {
+	a.Inflate(-x, -y, -z)
 }

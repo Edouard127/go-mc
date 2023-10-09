@@ -12,7 +12,7 @@ type Vec2f = Vec2[float32]
 type Vec2d = Vec2[float64]
 
 type Vec2[T constraints.Integer | constraints.Float] struct {
-	X, Y T // Pitch, Yaw
+	X, Y T // Yaw, Pitch
 }
 
 func (v *Vec2[T]) Set(v2 Vec2[T]) {

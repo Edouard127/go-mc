@@ -4,67 +4,48 @@ import (
 	"bytes"
 	"compress/gzip"
 	_ "embed"
-	"fmt"
-	"github.com/Edouard127/go-mc/data/shapes"
 	"github.com/Edouard127/go-mc/level/block/states"
 	"github.com/Edouard127/go-mc/maths"
 	"github.com/Edouard127/go-mc/nbt"
 	"math/bits"
+	"sync/atomic"
 )
 
-var counter int
+var counter atomic.Int32
 
 type Block struct {
 	*BlockProperty
 	*StateHolder
-	Name string
+	Name        string
+	BoundingBox maths.AxisAlignedBB
 }
 
 func NewBlock(name string, property *BlockProperty) *Block {
-	counter++
-	return (&Block{
+	return &Block{
 		BlockProperty: property,
-		StateHolder:   NewStateHolder(make(map[states.Property[any]]uint32), StateID(counter-1)),
+		StateHolder:   NewStateHolder(make(map[states.Property]int), StateID(counter.Add(1)-1)),
 		Name:          name,
-	}).Register()
+		BoundingBox:   maths.AxisAlignedBB{MaxX: 1, MaxY: 1, MaxZ: 1}, // We will assume all blocks are full for now
+	}
 }
 
-func (b *Block) Register(anyp ...any) *Block {
-	if len(anyp) > 0 {
-		for i := range anyp {
-			p := anyp[i].(states.Property[any])
-			values := p.GetValues()
-			for k := range values {
-				sub := make(map[states.Property[any]]uint32)
-				for j := range anyp {
-					// Bug, doesn't make a list of possible combinations, but a list of values[k]
-					sub[anyp[j].(states.Property[any])] = parseState(values[k])
+func (b *Block) Register(properties ...states.Property) *Block {
+	if len(properties) > 0 {
+		for i := range properties {
+			property := properties[i]
+			mn, mx := property.Values()
+			for j := mn; j <= mx; j++ {
+				sub := make(map[states.Property]int)
+				for k := range properties {
+					sub[properties[k]] = j
 				}
-				b.PutNeighbors(StateID(counter), sub)
-				counter++
+				b.PutNeighbors(StateID(counter.Add(1)-1), sub)
 			}
-			b.SetValue(p, parseState(values[0]))
+			b.SetValue(properties[i], mn)
 		}
 	}
 
 	return b
-}
-
-func parseState(v any) uint32 {
-	switch v.(type) {
-	case bool:
-		if v.(bool) {
-			return 1
-		} else {
-			return 0
-		}
-	case int:
-		return uint32(v.(int))
-	case states.PropertiesEnum:
-		return uint32(v.(states.PropertiesEnum).Value())
-	default:
-		panic(fmt.Errorf("invalid type %T for state value", v))
-	}
 }
 
 func (b *Block) Is(other *Block) bool {
@@ -75,17 +56,21 @@ func (b *Block) IsAir() bool {
 	return b.BlockProperty.IsAir
 }
 
+func (b *Block) IsSolid() bool {
+	return b.BlockProperty.HasCollision
+}
+
 func (b *Block) IsLiquid() bool {
 	return b.Is(Water) || b.Is(Lava)
 }
 
-func (b *Block) GetCollisionBox() maths.AxisAlignedBB[float64] {
+/*func (b *Block) GetCollisionBox() maths.AxisAlignedBB {
 	aabb := shapes.GetShape(b.Name, int(b.State()))
-	return maths.AxisAlignedBB[float64]{
+	return maths.AxisAlignedBB{
 		MinX: aabb[0], MinY: aabb[1], MinZ: aabb[2],
 		MaxX: aabb[3], MaxY: aabb[4], MaxZ: aabb[5],
 	}
-}
+}*/
 
 // This file stores all possible block states into a TAG_List with gzip compressed.
 //
@@ -96,7 +81,7 @@ var blockStates []byte
 // Because it's not complete and NOT RELIABLE, please use ToStateID and StateList
 var (
 	ToStateID map[*Block]StateID
-	StateList []*Block
+	StateList = make([]*Block, 0, 21448)
 )
 
 // BitsPerBlock indicates how many bits are needed to represent all possible
@@ -104,6 +89,11 @@ var (
 var BitsPerBlock int
 
 type StateID int
+
+func (s StateID) Block() *Block {
+	return StateList[s]
+}
+
 type State struct {
 	Name       string
 	Properties nbt.RawMessage

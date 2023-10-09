@@ -51,7 +51,7 @@ func (e *Events[T]) AddTicker(tickers ...TickHandler[T]) {
 		e.tickers = []TickHandler[T]{}
 	}
 	e.tickers = append(e.tickers, tickers...)
-
+	sortTick[T](e.tickers)
 }
 
 func (e *Events[T]) Tick(cl *T) error {
@@ -69,7 +69,6 @@ func (e *Events[T]) Tick(cl *T) error {
 			break
 		}
 	}
-	sortTick[T](e.tickers)
 	cancel()
 	return nil
 }

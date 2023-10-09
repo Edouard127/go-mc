@@ -9,8 +9,6 @@ import (
 	"github.com/Edouard127/go-mc/data/entity"
 	"github.com/Edouard127/go-mc/data/grids"
 	"github.com/Edouard127/go-mc/level"
-	"github.com/Edouard127/go-mc/maths"
-	"time"
 	"unsafe"
 
 	"github.com/google/uuid"
@@ -41,18 +39,6 @@ func Attach(c *Client) *Client {
 	)
 
 	return c
-}
-
-type PlayerMessage struct {
-	SignedMessage     chat.Message
-	Unsigned          bool
-	UnsignedMessage   chat.Message
-	Position          int32
-	Sender            uuid.UUID
-	SenderDisplayName chat.Message
-	HasSenderTeam     bool
-	SenderTeamName    chat.Message
-	TimeStamp         time.Time
 }
 
 func SpawnEntity(c *Client, p pk.Packet, cancel context.CancelFunc) error {
@@ -799,33 +785,31 @@ func LookAt(client *Client, packet pk.Packet, cancel context.CancelFunc) error {
 
 func SynchronizePlayerPosition(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
-		X, Y, Z    pk.Double
-		Yaw, Pitch pk.Float
-		Flags      pk.Byte
-		TeleportID pk.VarInt
+		x, y, z    pk.Double
+		yaw, pitch pk.Float
+		flags      pk.Byte
+		teleportID pk.VarInt
 	)
 
-	if err := p.Scan(&X, &Y, &Z, &Yaw, &Pitch, &Flags, &TeleportID); err != nil {
+	if err := p.Scan(&x, &y, &z, &yaw, &pitch, &flags, &teleportID); err != nil {
 		return fmt.Errorf("unable to read SynchronizePlayerPosition packet: %w", err)
 	}
 
-	position := maths.Vec3d{X: float64(X), Y: float64(Y), Z: float64(Z)}
-	rotation := maths.Vec2d{X: float64(Pitch), Y: float64(Yaw)}
-
-	if Flags&0x01 != 0 {
-		c.Player.EntityPlayer.Position.Add(position)
-		c.Player.EntityPlayer.Rotation.Add(rotation)
+	if flags&0x01 != 0 {
+		c.Player.EntityPlayer.SetRelativePosition(float64(x), float64(y), float64(z))
+		c.Player.EntityPlayer.SetRelativeRotation(float64(yaw), float64(pitch))
 	} else {
-		c.Player.EntityPlayer.Position.Set(position)
-		c.Player.EntityPlayer.Rotation.Set(rotation)
+		c.Player.EntityPlayer.SetPosition(float64(x), float64(y), float64(z))
+		c.Player.EntityPlayer.SetRotation(float64(yaw), float64(pitch))
 	}
 
-	c.Player.EntityPlayer.OnGround = Flags&0x02 == 0
+	var err error
+	if err = c.Conn.WritePacket(pk.Marshal(packetid.SPacketTeleportConfirm, teleportID)); err != nil {
+		return fmt.Errorf("unable to write TeleportConfirm packet: %w", err)
+	}
 
-	if TeleportID != 0 {
-		if err := c.Conn.WritePacket(pk.Marshal(packetid.SPacketTeleportConfirm, TeleportID)); err != nil {
-			return fmt.Errorf("unable to write TeleportConfirm packet: %w", err)
-		}
+	if err = c.Conn.WritePacket(pk.Marshal(packetid.SPacketPlayerPositionRotation, x, y, z, yaw, pitch, pk.Boolean(false))); err != nil {
+		return fmt.Errorf("unable to write PlayerPositionRotation packet: %w", err)
 	}
 
 	return nil
@@ -923,9 +907,6 @@ func InitializeBorder(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	if err := p.Scan(&action, &radius, &oldRadius, &speed, &x, &z, &portalBoundary, &warningTime, &warningBlocks); err != nil {
 		return fmt.Errorf("unable to read WorldBorder packet: %w", err)
 	}
-
-	// When we receive this packet, we know that the client has fully loaded the world.
-	c.World.SafeToAccess = true
 
 	return nil
 }
@@ -1117,6 +1098,9 @@ func EntityVelocity(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 
 	if e := c.World.GetEntity(int32(entityID)); e != nil {
 		e.SetMotion(float64(velocityX)/8000, float64(velocityY)/8000, float64(velocityZ)/8000)
+		/*if c.Player.EntityPlayer.ID == int32(entityID) {
+			c.Player.EntityPlayer.Motion.Y = 0.42
+		}*/
 	}
 
 	return nil

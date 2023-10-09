@@ -10,12 +10,12 @@ type UnaliveEntity struct {
 	Type          entity.TypeEntity
 	ID            int32
 	UUID          uuid.UUID
-	lastPosition  maths.Vec3d
 	Position      maths.Vec3d
-	EyePosition   maths.Vec3d
+	LastPosition  maths.Vec3d
 	Rotation      maths.Vec2d
+	LastRotation  maths.Vec2d
 	Motion        maths.Vec3d
-	BoundingBox   maths.AxisAlignedBB[float64]
+	BoundingBox   maths.AxisAlignedBB
 	Width, Height float64
 	Vehicle       Entity
 	Passengers    []Entity
@@ -29,9 +29,10 @@ type Entity interface {
 	GetID() int32
 	GetUUID() uuid.UUID
 	GetPosition() maths.Vec3d
+	GetEyePosition() maths.Vec3d
 	GetRotation() maths.Vec2d
 	GetMotion() maths.Vec3d
-	GetBoundingBox() maths.AxisAlignedBB[float64]
+	GetBoundingBox() maths.AxisAlignedBB
 	GetWidth() float64
 	GetHeight() float64
 	GetDataManager() map[int32]interface{}
@@ -71,6 +72,12 @@ func (e *UnaliveEntity) GetPosition() maths.Vec3d {
 	return e.Position
 }
 
+func (e *UnaliveEntity) GetEyePosition() maths.Vec3d {
+	c := e.Position
+	c.Y += e.Height * 0.85
+	return c
+}
+
 func (e *UnaliveEntity) GetRotation() maths.Vec2d {
 	return e.Rotation
 }
@@ -79,7 +86,7 @@ func (e *UnaliveEntity) GetMotion() maths.Vec3d {
 	return e.Motion
 }
 
-func (e *UnaliveEntity) GetBoundingBox() maths.AxisAlignedBB[float64] {
+func (e *UnaliveEntity) GetBoundingBox() maths.AxisAlignedBB {
 	return e.BoundingBox
 
 }
@@ -105,17 +112,25 @@ func (e *UnaliveEntity) IsPlayer() bool {
 }
 
 func (e *UnaliveEntity) SetPosition(x, y, z float64) {
-	e.lastPosition = e.Position
-	e.Position = maths.Vec3d{X: x, Y: y, Z: z}
-	e.EyePosition = maths.Vec3d{X: x, Y: y + e.Height*0.85, Z: z}
+	e.Position.Set(maths.Vec3d{X: x, Y: y, Z: z})
+	e.BoundingBox.Move(x-e.LastPosition.X, y-e.LastPosition.Y, z-e.LastPosition.Z)
+}
+
+func (e *UnaliveEntity) SetRelativePosition(x, y, z float64) {
+	e.SetPosition(e.Position.X+x, e.Position.Y+y, e.Position.Z+z)
 }
 
 func (e *UnaliveEntity) SetRotation(yaw, pitch float64) {
-	e.Rotation = maths.Vec2d{X: yaw, Y: pitch}
+	e.LastRotation.Set(e.Rotation)
+	e.Rotation.Set(maths.Vec2d{X: yaw, Y: pitch})
+}
+
+func (e *UnaliveEntity) SetRelativeRotation(yaw, pitch float64) {
+	e.SetRotation(e.Rotation.X+yaw, e.Rotation.Y+pitch)
 }
 
 func (e *UnaliveEntity) SetMotion(x, y, z float64) {
-	e.Motion = maths.Vec3d{X: x, Y: y, Z: z}
+	e.Motion.Set(maths.Vec3d{X: x, Y: y, Z: z})
 }
 
 func (e *UnaliveEntity) SetSize(width, height float64) {
@@ -126,7 +141,7 @@ func (e *UnaliveEntity) SetSize(width, height float64) {
 
 		if e.Width < f {
 			d0 := width / 2.0
-			e.BoundingBox = maths.AxisAlignedBB[float64]{
+			e.BoundingBox = maths.AxisAlignedBB{
 				MinX: e.Position.X - d0,
 				MinY: e.Position.Y,
 				MinZ: e.Position.Z - d0,
@@ -137,7 +152,7 @@ func (e *UnaliveEntity) SetSize(width, height float64) {
 		}
 
 		aabb := e.BoundingBox
-		e.BoundingBox = maths.AxisAlignedBB[float64]{
+		e.BoundingBox = maths.AxisAlignedBB{
 			MinX: aabb.MinX,
 			MinY: aabb.MinY,
 			MinZ: aabb.MinZ,

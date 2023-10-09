@@ -2,6 +2,7 @@ package block
 
 import (
 	"fmt"
+	"github.com/Edouard127/go-mc/level/block/states"
 	"testing"
 )
 
@@ -15,12 +16,12 @@ func TestBlockStateHolder(t *testing.T) {
 	fmt.Println("Default state id", block.Default())
 
 	// Initial print
-	fmt.Println(block.GetValue(HatchProperty), block.GetValue(EggsProperty), ToStateID[block])
+	fmt.Println(block.GetValue(states.HatchProperty), block.GetValue(states.EggsProperty), ToStateID[block])
 
 	// Simulate a block update
-	block.SetValue(HatchProperty, 2)
-	block.SetValue(EggsProperty, 4)
+	block.SetValue(states.HatchProperty, 2)
+	block.SetValue(states.EggsProperty, 4)
 
 	// Updated print
-	fmt.Println(block.GetValue(HatchProperty), block.GetValue(EggsProperty), ToStateID[block])
+	fmt.Println(block.GetValue(states.HatchProperty), block.GetValue(states.EggsProperty), ToStateID[block])
 }

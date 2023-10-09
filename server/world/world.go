@@ -112,10 +112,9 @@ func (w *World) loadChunk(pos maths.Vec2i) bool {
 			logger.Debug("Generate chunk")
 			// TODO: because there is no chunk generator，generate an empty chunk and mark it as generated
 			c = level.EmptyChunk(24)
-			stone := block.ToStateID[block.Stone]
 			for s := range c.Sections {
 				for i := 0; i < 16*16*16; i++ {
-					c.Sections[s].SetBlock(i, stone)
+					c.Sections[s].SetBlock(i, block.Stone.State())
 				}
 			}
 			c.Status = level.StatusFull

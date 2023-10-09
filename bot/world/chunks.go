@@ -38,8 +38,23 @@ func (w *World) GetBlock(pos maths.Vec3d) (*block.Block, error) {
 	return block.Air, nil // If we return an error, even if it's due to the world not being loaded, the bot will crash
 }
 
+func (w *World) GetBlockOnSide(pos maths.Vec3d, side maths.Facing) (*block.Block, error) {
+	x, y, z := pos.X, pos.Y, pos.Z
+	pos = maths.Vec3d{X: math.Floor(x), Y: math.Floor(y), Z: math.Floor(z)}
+	pos.Add(side.Vec())
+	return w.GetBlock(pos)
+}
+
 func (w *World) MustGetBlock(pos maths.Vec3d) *block.Block {
 	b, err := w.GetBlock(pos)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func (w *World) MustGetBlockOnSide(pos maths.Vec3d, side maths.Facing) *block.Block {
+	b, err := w.GetBlockOnSide(pos, side)
 	if err != nil {
 		panic(err)
 	}
@@ -99,7 +114,7 @@ func (w *World) RayTrace(start, end maths.Vec3d) (maths.RayTraceResult, error) {
 	return maths.RayTraceResult{}, fmt.Errorf("no block found")
 }
 
-func (w *World) GetBlockDensity(pos maths.Vec3d, bb maths.AxisAlignedBB[float64]) float64 {
+func (w *World) GetBlockDensity(pos maths.Vec3d, bb maths.AxisAlignedBB) float64 {
 	d0 := 1.0 / ((bb.MaxX-bb.MinX)*2.0 + 1.0)
 	d1 := 1.0 / ((bb.MaxY-bb.MinY)*2.0 + 1.0)
 	d2 := 1.0 / ((bb.MaxZ-bb.MinZ)*2.0 + 1.0)
@@ -130,33 +145,43 @@ func (w *World) GetBlockDensity(pos maths.Vec3d, bb maths.AxisAlignedBB[float64]
 	return 0
 }
 
-func (w *World) Collides(bb maths.AxisAlignedBB[float64]) bool {
+func (w *World) Collides(bb maths.AxisAlignedBB) bool {
 	return w.CollidesWithAnyBlock(bb) || w.CollidesWithAnyEntity(bb)
 }
 
-func (w *World) CollidesHorizontally(bb maths.AxisAlignedBB[float64]) bool {
+func (w *World) CollidesHorizontally(bb maths.AxisAlignedBB) (bool, bool, bool) {
+	var bl *block.Block
+	var x, z bool
 	return w.pointCheck(bb, func(p maths.Vec3d) bool {
-		return bb.CollidesHorizontal(p.ToAABB())
+		bl = w.MustGetBlock(p)
+		bottom := bb.Bottom()
+		x = x || bottom.X != p.X && !bl.IsSolid()
+		z = z || bottom.Z != p.Z && !bl.IsSolid()
+		return x || z
+	}), x, z
+}
+
+func (w *World) CollidesVertically(bb maths.AxisAlignedBB) bool {
+	var bl *block.Block
+	return w.pointCheck(bb, func(p maths.Vec3d) bool {
+		bl = w.MustGetBlock(p)
+		return bb.Bottom().Y != p.Y && !bl.IsSolid()
 	})
 }
 
-func (w *World) CollidesVertically(bb maths.AxisAlignedBB[float64]) bool {
+func (w *World) CollidesWithAnyBlock(bb maths.AxisAlignedBB) bool {
+	var bl *block.Block
 	return w.pointCheck(bb, func(p maths.Vec3d) bool {
-		return bb.CollidesVertical(p.ToAABB())
+		bl = w.MustGetBlock(p)
+		return bl.BoundingBox.IntersectsWith(bb) && !bl.IsSolid()
 	})
 }
 
-func (w *World) CollidesWithAnyBlock(bb maths.AxisAlignedBB[float64]) bool {
-	return w.pointCheck(bb, func(p maths.Vec3d) bool {
-		return !w.MustGetBlock(p).IsAir()
-	})
-}
-
-func (w *World) CollidesWithAnyEntity(bb maths.AxisAlignedBB[float64]) bool {
+func (w *World) CollidesWithAnyEntity(bb maths.AxisAlignedBB) bool {
 	return len(w.GetEntitiesInAABB(bb)) > 0
 }
 
-func (w *World) pointCheck(bb maths.AxisAlignedBB[float64], predicate func(p maths.Vec3d) bool) bool {
+func (w *World) pointCheck(bb maths.AxisAlignedBB, predicate func(p maths.Vec3d) bool) bool {
 	i := int32(math.Floor(bb.MinX))
 	j := int32(math.Floor(bb.MaxX))
 	k := int32(math.Floor(bb.MinY))
@@ -225,19 +250,19 @@ func (w *World) GetEntitiesInRange(pos maths.Vec3d, distance float64) []core.Ent
 	})
 }
 
-func (w *World) GetEntitiesInAABB(bb maths.AxisAlignedBB[float64]) []core.Entity {
+func (w *World) GetEntitiesInAABB(bb maths.AxisAlignedBB) []core.Entity {
 	return w.entitySearch(1, len(w.Entities), func(entity core.Entity) bool {
 		return bb.IntersectsWith(entity.GetBoundingBox())
 	})
 }
 
-func (w *World) GetEntitiesInAABBExcludingEntity(bb maths.AxisAlignedBB[float64], entity core.Entity) []core.Entity {
+func (w *World) GetEntitiesInAABBExcludingEntity(bb maths.AxisAlignedBB, entity core.Entity) []core.Entity {
 	return w.entitySearch(1, len(w.Entities), func(entityPredicate core.Entity) bool {
 		return bb.IntersectsWith(entity.GetBoundingBox()) && entityPredicate != entity
 	})
 }
 
-func (w *World) GetEntitiesNotInAABB(bb maths.AxisAlignedBB[float64]) []core.Entity {
+func (w *World) GetEntitiesNotInAABB(bb maths.AxisAlignedBB) []core.Entity {
 	return w.entitySearch(1, len(w.Entities), func(entity core.Entity) bool {
 		return !bb.IntersectsWith(entity.GetBoundingBox())
 	})

@@ -20,9 +20,11 @@ const (
 // Package shapes stores information about block collision shapes in Minecraft.
 package shapes
 
+import "github.com/Edouard127/go-mc/maths"
+
 // Shape describes information about a block collision shape.
 type Shape struct {
-	Shapes map[int][][6]float64
+	Shapes map[int]maths.AxisAlignedBB // Each state has a different shape.
 }
 
 var (

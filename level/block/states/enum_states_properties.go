@@ -1,28 +1,28 @@
 package states
 
 var (
-	HorizontalAxisPropertyProperty = NewPropertyEnum[Axis]("axis", map[string]Axis{
+	HorizontalAxisPropertyProperty = NewEnumProperty("axis", map[string]Axis{
 		"x": X,
 		"z": Z,
 	})
-	AxisProperty = NewPropertyEnum[Axis]("axis", map[string]Axis{
+	AxisProperty = NewEnumProperty("axis", map[string]Axis{
 		"x": X,
 		"y": Y,
 		"z": Z,
 	})
-	FacingProperty = NewPropertyEnum[Direction]("facing", map[string]Direction{
+	FacingProperty = NewEnumProperty("facing", map[string]Direction{
 		"north": DirectionNorth,
 		"east":  DirectionEast,
 		"south": DirectionSouth,
 		"west":  DirectionWest,
 	})
-	HorizontalFacingProperty = NewPropertyEnum[Direction]("facing", map[string]Direction{
+	HorizontalFacingProperty = NewEnumProperty("facing", map[string]Direction{
 		"north": DirectionNorth,
 		"east":  DirectionEast,
 		"south": DirectionSouth,
 		"west":  DirectionWest,
 	})
-	OrientationProperty = NewPropertyEnum[FrontAndTop]("orientation", map[string]FrontAndTop{
+	OrientationProperty = NewEnumProperty("orientation", map[string]FrontAndTop{
 		"down_east":  DownEast,
 		"down_north": DownNorth,
 		"down_south": DownSouth,
@@ -36,66 +36,66 @@ var (
 		"north_up":   NorthUp,
 		"south_up":   SouthUp,
 	})
-	AttachFaceProperty = NewPropertyEnum[AttachFace]("face", map[string]AttachFace{
+	AttachFaceProperty = NewEnumProperty("face", map[string]AttachFace{
 		"floor":   AttachFaceFloor,
 		"wall":    AttachFaceWall,
 		"ceiling": AttachFaceCeiling,
 	})
-	BellAttachmentProperty = NewPropertyEnum[BellAttachType]("attachment", map[string]BellAttachType{
+	BellAttachmentProperty = NewEnumProperty("attachment", map[string]BellAttachType{
 		"floor":       BellAttachTypeFloor,
 		"ceiling":     BellAttachTypeCeiling,
 		"single_wall": BellAttachTypeSingleWall,
 		"double_wall": BellAttachTypeDoubleWall,
 	})
-	EastWallProperty = NewPropertyEnum[WallSide]("east", map[string]WallSide{
+	EastWallProperty = NewEnumProperty("east", map[string]WallSide{
 		"none": WallSideNone,
 		"low":  WallSideLow,
 		"tall": WallSideTall,
 	})
-	NorthWallProperty = NewPropertyEnum[WallSide]("north", map[string]WallSide{
+	NorthWallProperty = NewEnumProperty("north", map[string]WallSide{
 		"none": WallSideNone,
 		"low":  WallSideLow,
 		"tall": WallSideTall,
 	})
-	SouthWallProperty = NewPropertyEnum[WallSide]("south", map[string]WallSide{
+	SouthWallProperty = NewEnumProperty("south", map[string]WallSide{
 		"none": WallSideNone,
 		"low":  WallSideLow,
 		"tall": WallSideTall,
 	})
-	WestWallProperty = NewPropertyEnum[WallSide]("west", map[string]WallSide{
+	WestWallProperty = NewEnumProperty("west", map[string]WallSide{
 		"none": WallSideNone,
 		"low":  WallSideLow,
 		"tall": WallSideTall,
 	})
-	EastRedstoneProperty = NewPropertyEnum[RedstoneSide]("east", map[string]RedstoneSide{
+	EastRedstoneProperty = NewEnumProperty("east", map[string]RedstoneSide{
 		"none": RedstoneSideNone,
 		"side": RedstoneSideSide,
 		"up":   RedstoneSideUp,
 	})
-	NorthRedstoneProperty = NewPropertyEnum[RedstoneSide]("north", map[string]RedstoneSide{
+	NorthRedstoneProperty = NewEnumProperty("north", map[string]RedstoneSide{
 		"none": RedstoneSideNone,
 		"side": RedstoneSideSide,
 		"up":   RedstoneSideUp,
 	})
-	SouthRedstoneProperty = NewPropertyEnum[RedstoneSide]("south", map[string]RedstoneSide{
+	SouthRedstoneProperty = NewEnumProperty("south", map[string]RedstoneSide{
 		"none": RedstoneSideNone,
 		"side": RedstoneSideSide,
 		"up":   RedstoneSideUp,
 	})
-	WestRedstoneProperty = NewPropertyEnum[RedstoneSide]("west", map[string]RedstoneSide{
+	WestRedstoneProperty = NewEnumProperty("west", map[string]RedstoneSide{
 		"none": RedstoneSideNone,
 		"side": RedstoneSideSide,
 		"up":   RedstoneSideUp,
 	})
-	DoubleBlockHalfProperty = NewPropertyEnum[DoubleBlockHalf]("half", map[string]DoubleBlockHalf{
+	DoubleBlockHalfProperty = NewEnumProperty("half", map[string]DoubleBlockHalf{
 		"lower": DoubleBlockHalfLower,
 		"upper": DoubleBlockHalfUpper,
 	})
-	HalfProperty = NewPropertyEnum[Half]("half", map[string]Half{
+	HalfProperty = NewEnumProperty("half", map[string]Half{
 		"top":    HalfTop,
 		"bottom": HalfBottom,
 	})
-	RailShapeProperty = NewPropertyEnum[RailShape]("shape", map[string]RailShape{
+	RailShapeProperty = NewEnumProperty("shape", map[string]RailShape{
 		"north_south":     RailShapeNorthSouth,
 		"east_west":       RailShapeEastWest,
 		"ascending_east":  RailShapeAscendingEast,
@@ -107,7 +107,7 @@ var (
 		"north_west":      RailShapeNorthWest,
 		"north_east":      RailShapeNorthEast,
 	})
-	RailShapeStraightProperty = NewPropertyEnum[RailShape]("shape", map[string]RailShape{
+	RailShapeStraightProperty = NewEnumProperty("shape", map[string]RailShape{
 		"north_south":     RailShapeNorthSouth,
 		"east_west":       RailShapeEastWest,
 		"ascending_east":  RailShapeAscendingEast,
@@ -115,33 +115,33 @@ var (
 		"ascending_north": RailShapeAscendingNorth,
 		"ascending_south": RailShapeAscendingSouth,
 	})
-	/*LevelCauldronProperty        = block.NewPropertyInteger("level", 1, 3)
-	LevelComposterProperty       = block.NewPropertyInteger("level", 0, 8)
-	LevelFlowingProperty         = block.NewPropertyInteger("level", 1, 8)
-	LevelHoneyProperty           = block.NewPropertyInteger("level", 0, 5)
-	RedstoneSignalProperty       = block.NewPropertyInteger("signal", 0, 15)
-	StagesProperty               = block.NewPropertyInteger("stage", 0, 1)
-	StabilityProperty            = block.NewPropertyInteger("distance", 0, 2)
-	RespawnAnchorChargesProperty = block.NewPropertyInteger("charges", 0, 4)
-	Rotation16Property           = block.NewPropertyInteger("rotation", 0, 15)*/
-	BedPartProperty = NewPropertyEnum[BedPart]("part", map[string]BedPart{
+	/*LevelCauldronProperty        = block.NewIntegerProperty("level", 1, 3)
+	LevelComposterProperty       = block.NewIntegerProperty("level", 0, 8)
+	LevelFlowingProperty         = block.NewIntegerProperty("level", 1, 8)
+	LevelHoneyProperty           = block.NewIntegerProperty("level", 0, 5)
+	RedstoneSignalProperty       = block.NewIntegerProperty("signal", 0, 15)
+	StagesProperty               = block.NewIntegerProperty("stage", 0, 1)
+	StabilityProperty            = block.NewIntegerProperty("distance", 0, 2)
+	RespawnAnchorChargesProperty = block.NewIntegerProperty("charges", 0, 4)
+	Rotation16Property           = block.NewIntegerProperty("rotation", 0, 15)*/
+	BedPartProperty = NewEnumProperty("part", map[string]BedPart{
 		"head": BedPartHead,
 		"foot": BedPartFoot,
 	})
-	ChestTypeProperty = NewPropertyEnum[ChestType]("type", map[string]ChestType{
+	ChestTypeProperty = NewEnumProperty("type", map[string]ChestType{
 		"single": ChestTypeSingle,
 		"left":   ChestTypeLeft,
 		"right":  ChestTypeRight,
 	})
-	ComparatorModeProperty = NewPropertyEnum[ComparatorMode]("mode", map[string]ComparatorMode{
+	ComparatorModeProperty = NewEnumProperty("mode", map[string]ComparatorMode{
 		"compare":  ComparatorModeCompare,
 		"subtract": ComparatorModeSubtract,
 	})
-	DoorHingeProperty = NewPropertyEnum[DoorHingeSide]("hinge", map[string]DoorHingeSide{
+	DoorHingeProperty = NewEnumProperty("hinge", map[string]DoorHingeSide{
 		"left":  DoorHingeSideLeft,
 		"right": DoorHingeSideRight,
 	})
-	InstrumentProperty = NewPropertyEnum[NoteBlockInstrument]("instrument", map[string]NoteBlockInstrument{
+	InstrumentProperty = NewEnumProperty("instrument", map[string]NoteBlockInstrument{
 		"harp":           NoteBlockInstrumentHarp,
 		"basedrum":       NoteBlockInstrumentBasedrum,
 		"snare":          NoteBlockInstrumentSnare,
@@ -159,51 +159,51 @@ var (
 		"banjo":          NoteBlockInstrumentBanjo,
 		"pling":          NoteBlockInstrumentPling,
 	})
-	PistonTypeProperty = NewPropertyEnum[PistonType]("type", map[string]PistonType{
+	PistonTypeProperty = NewEnumProperty("type", map[string]PistonType{
 		"normal": PistonTypeDefault,
 		"sticky": PistonTypeSticky,
 	})
-	SlabTypeProperty = NewPropertyEnum[SlabType]("type", map[string]SlabType{
+	SlabTypeProperty = NewEnumProperty("type", map[string]SlabType{
 		"bottom": SlabTypeBottom,
 		"top":    SlabTypeTop,
 		"double": SlabTypeDouble,
 	})
-	StairsShapeProperty = NewPropertyEnum[StairsShape]("shape", map[string]StairsShape{
+	StairsShapeProperty = NewEnumProperty("shape", map[string]StairsShape{
 		"straight":    StairsShapeStraight,
 		"inner_left":  StairsShapeInnerLeft,
 		"inner_right": StairsShapeInnerRight,
 		"outer_left":  StairsShapeOuterLeft,
 		"outer_right": StairsShapeOuterRight,
 	})
-	StructureModeProperty = NewPropertyEnum[StructureMode]("mode", map[string]StructureMode{
+	StructureModeProperty = NewEnumProperty("mode", map[string]StructureMode{
 		"save":   StructureModeSave,
 		"load":   StructureModeLoad,
 		"corner": StructureModeCorner,
 		"data":   StructureModeData,
 	})
-	BambooLeavesProperty = NewPropertyEnum[BambooLeaves]("leaves", map[string]BambooLeaves{
+	BambooLeavesProperty = NewEnumProperty("leaves", map[string]BambooLeaves{
 		"none":  BambooLeavesNone,
 		"small": BambooLeavesSmall,
 		"large": BambooLeavesLarge,
 	})
-	TiltProperty = NewPropertyEnum[Tilt]("tilt", map[string]Tilt{
+	TiltProperty = NewEnumProperty("tilt", map[string]Tilt{
 		"none":     TiltNone,
 		"unstable": TiltUnstable,
 		"partial":  TiltPartial,
 		"full":     TiltFull,
 	})
-	VerticalDirectionProperty = NewPropertyEnum[Direction]("direction", map[string]Direction{
+	VerticalDirectionProperty = NewEnumProperty("direction", map[string]Direction{
 		"up":   DirectionUp,
 		"down": DirectionDown,
 	})
-	DripstoneThicknessProperty = NewPropertyEnum[DripstoneThickness]("thickness", map[string]DripstoneThickness{
+	DripstoneThicknessProperty = NewEnumProperty("thickness", map[string]DripstoneThickness{
 		"tip_merge": DripstoneThicknessTipMerge,
 		"tip":       DripstoneThicknessTip,
 		"frustum":   DripstoneThicknessFrustum,
 		"middle":    DripstoneThicknessMiddle,
 		"base":      DripstoneThicknessBase,
 	})
-	SculkSensorPhaseProperty = NewPropertyEnum[SculkSensorPhase]("phase", map[string]SculkSensorPhase{
+	SculkSensorPhaseProperty = NewEnumProperty("phase", map[string]SculkSensorPhase{
 		"inactive": SculkSensorPhaseInactive,
 		"active":   SculkSensorPhaseActive,
 		"cooldown": SculkSensorPhaseCooldown,

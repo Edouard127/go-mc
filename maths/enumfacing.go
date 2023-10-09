@@ -1,41 +1,25 @@
 package maths
 
-type EnumFacing int8
+type Facing int
 
 const (
-	DOWN  EnumFacing = 0
-	UP    EnumFacing = 1
-	NORTH EnumFacing = 2
-	SOUTH EnumFacing = 3
-	WEST  EnumFacing = 4
-	EAST  EnumFacing = 5
+	Down  Facing = 0
+	Up    Facing = 1
+	North Facing = 2
+	South Facing = 3
+	West  Facing = 4
+	East  Facing = 5
 )
 
-var EnumFacingValues = []EnumFacing{DOWN, UP, NORTH, SOUTH, WEST, EAST}
-
-func (f EnumFacing) Vector() (v Vec3d) {
-	switch f {
-	case DOWN:
-		v = Vec3d{Y: -1}
-	case UP:
-		v = Vec3d{Y: 1}
-	case NORTH:
-		v = Vec3d{Z: -1}
-	case SOUTH:
-		v = Vec3d{Z: 1}
-	case WEST:
-		v = Vec3d{X: -1}
-	case EAST:
-		v = Vec3d{X: 1}
-	}
-	return
+func (f Facing) Vec() (v Vec3d) {
+	return [...]Vec3d{{Y: -1}, {Y: 1}, {Z: -1}, {Z: 1}, {X: -1}, {X: 1}}[f]
 }
 
-func GetClosestFacing(eyePos, blockPos Vec3d) EnumFacing {
-	var closest EnumFacing
+func GetClosestFacing(eyePos, blockPos Vec3d) Facing {
+	var closest Facing
 	var minDiff float64
 	for _, side := range GetVisibleSides(eyePos, blockPos) {
-		vector := side.Vector()
+		vector := side.Vec()
 		vector.AddScalar(0.5, 0.5, 0.5)
 		blockPos.Add(vector)
 		diff := eyePos.DistanceTo(blockPos)
@@ -47,33 +31,35 @@ func GetClosestFacing(eyePos, blockPos Vec3d) EnumFacing {
 	return closest
 }
 
-func GetVisibleSides(eyePos, blockPos Vec3d) []EnumFacing {
-	var sides []EnumFacing
+func GetVisibleSides(eyePos, blockPos Vec3d) []Facing {
+	var sides []Facing
 	blockPos.AddScalar(0.5, 0.5, 0.5)
-	axis := checkAxis(eyePos.X-blockPos.X, WEST)
+	axis := checkAxis(eyePos.X-blockPos.X, West)
 	if axis != -1 {
 		sides = append(sides, axis)
 	}
-	axis = checkAxis(eyePos.Y-blockPos.Y, DOWN)
+	axis = checkAxis(eyePos.Y-blockPos.Y, Down)
 	if axis != -1 {
 		sides = append(sides, axis)
 	}
-	axis = checkAxis(eyePos.Z-blockPos.Z, NORTH)
+	axis = checkAxis(eyePos.Z-blockPos.Z, North)
 	if axis != -1 {
 		sides = append(sides, axis)
 	}
 	return sides
 }
 
-func (f EnumFacing) GetOpposite() EnumFacing {
+var EnumFacingValues = []Facing{Down, Up, North, South, West, East}
+
+func (f Facing) Opposite() Facing {
 	return EnumFacingValues[(f+3)%6]
 }
 
-func checkAxis(diff float64, negativeSide EnumFacing) EnumFacing {
+func checkAxis(diff float64, negativeSide Facing) Facing {
 	if diff < -0.5 {
 		return negativeSide
 	} else if diff > 0.5 {
-		return negativeSide.GetOpposite()
+		return negativeSide.Opposite()
 	} else {
 		return -1
 	}

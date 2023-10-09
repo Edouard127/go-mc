@@ -6,14 +6,14 @@ import (
 )
 
 var (
-	chestType = NewPropertyEnum[ChestType]("type", map[string]ChestType{
+	chestType = NewEnumProperty[ChestType]("type", map[string]ChestType{
 		"single": ChestTypeSingle,
 		"left":   ChestTypeLeft,
 		"right":  ChestTypeRight,
 	})
-	moisture          = NewPropertyInteger("moisture", 0, 7)
-	stabilityDistance = NewPropertyInteger("distance", 0, 7)
-	stairsShape       = NewPropertyEnum[StairsShape]("shape", map[string]StairsShape{
+	moisture          = NewIntegerProperty("moisture", 0, 7)
+	stabilityDistance = NewIntegerProperty("distance", 0, 7)
+	stairsShape       = NewEnumProperty[StairsShape]("shape", map[string]StairsShape{
 		"straight":    StairsShapeStraight,
 		"inner_left":  StairsShapeInnerLeft,
 		"inner_right": StairsShapeInnerRight,
