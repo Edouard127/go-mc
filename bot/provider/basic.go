@@ -299,7 +299,8 @@ func (pl *Player) travel(position maths.Vec3d) {
 
 		fmt.Println(gravity*0.98, pl.EntityPlayer.Motion.Y)
 		if !pl.EntityPlayer.OnGround {
-			pl.EntityPlayer.Motion.Y -= gravity * 0.98
+			pl.EntityPlayer.Motion.Y -= gravity
+			pl.EntityPlayer.Motion.Y *= 0.98
 		}
 		//fmt.Println(pl.EntityPlayer.Motion.Y)
 	}
