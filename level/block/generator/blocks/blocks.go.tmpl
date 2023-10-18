@@ -5,7 +5,7 @@ import "github.com/Edouard127/go-mc/level/block/states"
 
 var (
 {{- range $i, $e := .}}
-    {{.Name | ToGoTypeName}} = NewBlock({{.Name | printf "%#v"}}, &{{.Properties | ToStructLiteral}}){{GetDefaultValues .Default}}
+    {{.Name | ToGoTypeName}} = NewBlock({{.Name | printf "%#v"}}, {{.Properties | ToStructLiteral}}){{GetDefaultValues .Default}}
 {{- end}}
 )
 

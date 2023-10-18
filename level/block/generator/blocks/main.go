@@ -130,9 +130,9 @@ func GetProperty(key string, value any) string {
 	}
 	switch value.(type) {
 	case int8:
-		return "NewPropertyBoolean(\"" + uncapitalize(key) + "\")"
+		return "NewBooleanProperty(\"" + uncapitalize(key) + "\")"
 	case int32:
-		return "NewPropertyInteger(\"" + uncapitalize(key) + "\", " + fmt.Sprint(separateIntOr(toInt(value))[0]) + ", " + fmt.Sprint(separateIntOr(toInt(value))[1]) + ")"
+		return "NewIntegerProperty(\"" + uncapitalize(key) + "\", " + fmt.Sprint(separateIntOr(toInt(value))[0]) + ", " + fmt.Sprint(separateIntOr(toInt(value))[1]) + ")"
 	default:
 		return ""
 	}

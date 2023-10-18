@@ -14,13 +14,13 @@ import (
 var counter atomic.Int32
 
 type Block struct {
-	*BlockProperty
+	BlockProperty
 	*StateHolder
 	Name        string
 	BoundingBox maths.AxisAlignedBB
 }
 
-func NewBlock(name string, property *BlockProperty) *Block {
+func NewBlock(name string, property BlockProperty) *Block {
 	return &Block{
 		BlockProperty: property,
 		StateHolder:   NewStateHolder(make(map[states.Property]int), StateID(counter.Add(1)-1)),
