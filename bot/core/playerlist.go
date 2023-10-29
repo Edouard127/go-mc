@@ -59,7 +59,7 @@ func (p *PlayerList) ReadFrom(r io.Reader) (int64, error) {
 			p.UpdatePing(uuid.UUID(uuids[i]), int32(ping[i]))
 		}
 	case 3:
-		displayName := make([]pk.Option[chat.Message, *chat.Message], len(uuids))
+		displayName := make([]pk.Optional[chat.Message, *chat.Message], len(uuids))
 		for i := range displayName {
 			n2, _ := displayName[i].ReadFrom(r)
 			n1 += n2
@@ -106,7 +106,7 @@ func (p *PlayerList) UpdatePing(uuid uuid.UUID, ping int32) {
 	p.Players[uuid] = entry
 }
 
-func (p *PlayerList) UpdateDisplayName(uuid uuid.UUID, displayName pk.Option[chat.Message, *chat.Message]) {
+func (p *PlayerList) UpdateDisplayName(uuid uuid.UUID, displayName pk.Optional[chat.Message, *chat.Message]) {
 	if _, ok := p.Players[uuid]; !ok {
 		return
 	}
@@ -121,7 +121,7 @@ type PlayerEntry struct {
 	Properties  []pk.Property
 	Gamemode    int32
 	Ping        int32
-	DisplayName pk.Option[chat.Message, *chat.Message]
+	DisplayName pk.Optional[chat.Message, *chat.Message]
 	//Timestamp   int64
 	/*PublicKey   []byte
 	Signature   []byte*/

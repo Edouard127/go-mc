@@ -392,15 +392,14 @@ func (c *Chunk) ReadFrom(r io.Reader) (int64, error) {
 	n, err := pk.Tuple{
 		pk.NBT(&c.HeightMaps),
 		&sectionData,
-		pk.Opt{
-			If: func() bool { return len(sectionData) > 0 },
-			Value: pk.Tuple{
-				pk.Array(&c.BlockEntity), //&c.Light,
-			},
-		},
 	}.ReadFrom(r)
 	if err != nil {
 		return n, err
+	}
+
+	if len(sectionData) > 0 {
+		n2, _ := pk.Array(&c.BlockEntity).ReadFrom(r)
+		n += n2
 	}
 
 	data := bytes.NewReader(sectionData)

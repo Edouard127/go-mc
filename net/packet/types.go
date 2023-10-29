@@ -405,19 +405,19 @@ func (d *Double) ReadFrom(r io.Reader) (n int64, err error) {
 }
 
 // NBT encode a value as Named Binary Tag
-func NBT(v interface{}, optionalTagName ...string) Field {
+func NBT(v any, optionalTagName ...string) NbtField {
 	if len(optionalTagName) > 0 {
-		return nbtField{V: v, FieldName: optionalTagName[0]}
+		return NbtField{V: v, FieldName: optionalTagName[0]}
 	}
-	return nbtField{V: v}
+	return NbtField{V: v}
 }
 
-type nbtField struct {
-	V         interface{}
+type NbtField struct {
+	V         any
 	FieldName string
 }
 
-func (n nbtField) WriteTo(w io.Writer) (int64, error) {
+func (n NbtField) WriteTo(w io.Writer) (int64, error) {
 	var buf bytes.Buffer
 	if n.V == nil {
 		buf.WriteByte(nbt.TagEnd)
@@ -427,7 +427,7 @@ func (n nbtField) WriteTo(w io.Writer) (int64, error) {
 	return buf.WriteTo(w)
 }
 
-func (n nbtField) ReadFrom(r io.Reader) (int64, error) {
+func (n NbtField) ReadFrom(r io.Reader) (int64, error) {
 	// LimitReader is used to count reader length
 	lr := &io.LimitedReader{R: r, N: math.MaxInt64}
 	_, err := nbt.NewDecoder(lr).Decode(n.V)

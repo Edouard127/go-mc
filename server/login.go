@@ -74,8 +74,8 @@ func (d *MojangLoginHandler) AcceptLogin(conn *net.Conn, protocol int32) (name s
 	var pubKey auth.PublicKey
 	err = p.Scan(
 		(*pk.String)(&name),
-		&hasPubKey, pk.Opt{
-			If:    &hasPubKey,
+		&hasPubKey, pk.Optional[pk.Boolean]{
+			Has:   &hasPubKey,
 			Value: &pubKey,
 		},
 	) //decode username as pk.String

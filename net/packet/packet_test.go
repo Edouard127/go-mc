@@ -156,11 +156,13 @@ func ExampleMarshal_setSlot() {
 			pk.Byte(pf.WindowID),
 			pk.Short(pf.Slot),
 			pk.Boolean(pf.Present),
-			pk.Opt{If: pf.Present, Value: pk.Tuple{
-				pk.VarInt(pf.ItemID),
-				pk.Byte(pf.ItemCount),
-				pf.NBT,
-			}},
+			pk.Optional[pk.Tuple, *pk.Tuple, *pk.Boolean]{
+				Has: (*pk.Boolean)(&pf.Present),
+				Value: pk.Tuple{
+					pk.VarInt(pf.ItemID),
+					pk.Byte(pf.ItemCount),
+					pf.NBT,
+				}},
 		)
 		fmt.Printf("%02X % 02X\n", p.ID, p.Data)
 	}

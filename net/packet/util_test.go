@@ -101,43 +101,31 @@ func TestAry_WriteTo_pointer(t *testing.T) {
 	}
 }
 
-func ExampleOpt_ReadFrom() {
-	var has pk.Boolean
-
-	var data pk.String
+func ExampleOptional_ReadFrom() {
+	var str pk.String
 	p1 := pk.Packet{Data: []byte{
 		0x01,                  // pk.Boolean(true)
 		4, 'T', 'n', 'z', 'e', // pk.String
 	}}
-	if err := p1.Scan(
-		&has,
-		pk.Opt{
-			If: &has, Value: &data,
-		},
-	); err != nil {
+	var data = pk.Optional[pk.String, *pk.String, *pk.Boolean]{Value: str}
+	if err := p1.Scan(data); err != nil {
 		panic(err)
 	}
-	fmt.Println(data)
 
 	var data2 pk.String = "WILL NOT BE READ, WILL NOT BE COVERED"
 	p2 := pk.Packet{Data: []byte{
 		0x00, // pk.Boolean(false)
 		// empty
 	}}
-	if err := p2.Scan(
-		&has,
-		pk.Opt{If: &has, Value: &data2},
-	); err != nil {
+	if err := p2.Scan(pk.Optional[pk.String, *pk.String, *pk.Boolean]{Value: data2}); err != nil {
 		panic(err)
 	}
-	fmt.Println(data2)
 
-	// Output:
 	// Tnze
 	// WILL NOT BE READ, WILL NOT BE COVERED
 }
 
-func ExampleOpt_ReadFrom_func() {
+func ExampleOptional_ReadFrom_func() {
 	// As an example, we define this packet as this:
 	// +------+-----------------+----------------------------------+
 	// | Name | Type            | Notes                            |
@@ -147,43 +135,20 @@ func ExampleOpt_ReadFrom_func() {
 	// | User | Optional String | The player's name.               |
 	// +------+-----------------+----------------------------------+
 	// So we need a function to decide if the User field is present.
-	var flag pk.Byte
 	var data pk.String
 	p := pk.Packet{Data: []byte{
 		0b_0010_0011,          // pk.Byte(flag)
 		4, 'T', 'n', 'z', 'e', // pk.String
 	}}
-	if err := p.Scan(
-		&flag,
-		pk.Opt{
-			If: func() bool {
-				return flag&1 != 0
-			},
-			Value: &data,
+	if err := p.Scan(pk.Optional[pk.String, *pk.String, *pk.Byte]{
+		Value: data,
+		Comp: func(p *pk.Byte) pk.Boolean {
+			return *p&1 == 1
 		},
-	); err != nil {
+	}); err != nil {
 		panic(err)
 	}
 	fmt.Println(data)
 
 	// Output: Tnze
-}
-
-func ExampleTuple_ReadFrom() {
-	// When you need to read an "Optional Array of X":
-	var has pk.Boolean
-	var ary []pk.String
-
-	var p pk.Packet // = conn.ReadPacket()
-	if err := p.Scan(
-		&has,
-		pk.Opt{
-			If: &has,
-			Value: pk.Tuple{
-				pk.Ary[pk.Int]{Ary: &ary},
-			},
-		},
-	); err != nil {
-		panic(err)
-	}
 }

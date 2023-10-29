@@ -30,20 +30,20 @@ func (n Node) WriteTo(w io.Writer) (int64, error) {
 	return pk.Tuple{
 		pk.Byte(flag),
 		pk.Array((*[]pk.VarInt)(unsafe.Pointer(&n.Children))),
-		pk.Opt{
-			If:    func() bool { return n.kind&hasRedirect != 0 },
+		pk.Optional[pk.Boolean]{
+			Has:   func() bool { return n.kind&hasRedirect != 0 },
 			Value: nil, // TODO: send redirect node
 		},
-		pk.Opt{
-			If:    func() bool { return n.kind == ArgumentNode || n.kind == LiteralNode },
+		pk.Optional[pk.Boolean]{
+			Has:   func() bool { return n.kind == ArgumentNode || n.kind == LiteralNode },
 			Value: pk.String(n.Name),
 		},
-		pk.Opt{
-			If:    func() bool { return n.kind == ArgumentNode },
+		pk.Optional[pk.Boolean]{
+			Has:   func() bool { return n.kind == ArgumentNode },
 			Value: n.Parser, // Parser identifier and Properties
 		},
-		pk.Opt{
-			If:    func() bool { return flag&hasSuggestionsType != 0 },
+		pk.Optional[pk.Boolean]{
+			Has:   func() bool { return flag&hasSuggestionsType != 0 },
 			Value: nil, // TODO: send Suggestions type
 		},
 	}.WriteTo(w)

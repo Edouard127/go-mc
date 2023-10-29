@@ -542,8 +542,8 @@ func JoinGame(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 		(*pk.Boolean)(&c.Player.WorldInfo.EnableRespawnScreen),
 		(*pk.Boolean)(&c.Player.WorldInfo.IsDebug),
 		(*pk.Boolean)(&c.Player.WorldInfo.IsFlat),
-		pk.Opt{
-			If: (*pk.Boolean)(&c.Player.WorldInfo.HasDeathLocation),
+		pk.Optional[pk.Tuple, *pk.Tuple]{
+			Has: &c.Player.WorldInfo.HasDeathLocation,
 			Value: pk.Tuple{
 				(*pk.Identifier)(&c.Player.WorldInfo.DimensionName),
 				(*pk.Position)(&c.Player.WorldInfo.DeathPosition),
@@ -755,29 +755,23 @@ func PlayerInfoUpdate(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	return nil
 }
 
-func LookAt(client *Client, packet pk.Packet, cancel context.CancelFunc) error {
+func LookAt(client *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
-		targetEnum   pk.VarInt
-		X, Y, Z      pk.Double
+		target       pk.VarInt
+		x, y, z      pk.Double
 		isEntity     pk.Boolean
-		entityID     pk.VarInt
+		id           pk.VarInt
 		entityTarget pk.VarInt
 	)
 
-	if err := packet.Scan(
-		pk.Tuple{
-			&targetEnum,
-			&X, &Y, &Z,
-			pk.Opt{
-				If: &isEntity,
-				Value: pk.Tuple{
-					&entityID,
-					&entityTarget,
-				},
+	if err := p.Scan(&target, &x, &y, &z, &isEntity,
+		pk.Optional[pk.Tuple, *pk.Tuple]{
+			Has: &isEntity,
+			Value: pk.Tuple{
+				&id, &entityTarget,
 			},
-		},
-	); err != nil {
-		return fmt.Errorf("unable to read LookAt packet: %w", err)
+		}); err != nil {
+		return fmt.Errorf("unable to read LookAt p: %w", err)
 	}
 
 	return nil
@@ -939,134 +933,6 @@ func DisplayScoreboard(c *Client, p pk.Packet, cancel context.CancelFunc) error 
 
 	if err := p.Scan(&position, &name); err != nil {
 		return fmt.Errorf("unable to read DisplayScoreboard packet: %w", err)
-	}
-
-	return nil
-}
-
-func EntityMetadata(c *Client, p pk.Packet, cancel context.CancelFunc) error {
-	var (
-		err      error
-		EntityID pk.VarInt
-		Metadata struct {
-			Index pk.UnsignedByte
-			Type  pk.VarInt
-			Value interface{}
-		}
-	)
-
-	if err := p.Scan(
-		&EntityID,
-		&Metadata.Index,
-		pk.Opt{
-			If: func() bool {
-				return Metadata.Index != 0xff
-			},
-			Value: &Metadata.Type,
-		},
-	); err != nil {
-		return fmt.Errorf("unable to read EntityMetadata packet: %w", err)
-	}
-	switch Metadata.Type {
-	case 0:
-		var Value pk.Byte
-		err = p.Scan(&Value)
-	case 1:
-		var Value pk.VarInt
-		err = p.Scan(&Value)
-	case 2:
-		var Value pk.Float
-		err = p.Scan(&Value)
-	case 3:
-		var Value pk.String
-		err = p.Scan(&Value)
-	case 4:
-		var Value chat.Message
-		err = p.Scan(&Value)
-	case 5:
-		var Value struct {
-			Present pk.Boolean
-			Value   chat.Message
-		}
-		err = p.Scan(
-			&Value.Present,
-			pk.Opt{
-				If:    Value.Present,
-				Value: &Value.Value,
-			},
-		)
-	case 6:
-		var Value Slot
-		err = p.Scan(&Value)
-	case 7:
-		var Value pk.Boolean
-		err = p.Scan(&Value)
-	case 8:
-		var Value pk.Position
-		err = p.Scan(&Value)
-	case 9:
-		var Value pk.Position
-		err = p.Scan(&Value)
-	case 10:
-		var Value struct {
-			Present pk.Boolean
-			Value   pk.Position
-		}
-		err = p.Scan(
-			&Value.Present,
-			pk.Opt{
-				If:    Value.Present,
-				Value: &Value.Value,
-			},
-		)
-	case 11:
-		var Value pk.VarInt
-		err = p.Scan(&Value)
-	case 12:
-		var Value struct {
-			Present pk.Boolean
-			Value   pk.UUID
-		}
-		err = p.Scan(
-			&Value.Present,
-			pk.Opt{
-				If:    Value.Present,
-				Value: &Value.Value,
-			},
-		)
-	case 13:
-		var Value pk.VarInt
-		err = p.Scan(&Value)
-	/*case 14:*/
-	case 15:
-		var Value struct {
-			ID   pk.VarInt
-			Data pk.VarInt // TODO: This is a particle data
-		}
-		err = p.Scan(&Value.ID, &Value.Data)
-	case 16:
-		var Value pk.ByteArray // TODO: 3 floats
-		err = p.Scan(&Value)
-	case 17:
-		var Value pk.VarInt
-		err = p.Scan(&Value)
-	case 18:
-		var Value pk.VarInt
-		err = p.Scan(&Value)
-	case 19:
-		var Value pk.VarInt
-		err = p.Scan(&Value)
-	case 20:
-		var Value pk.VarInt
-		err = p.Scan(&Value)
-	/*case 21:*/
-	case 22:
-		var Value pk.VarInt
-		err = p.Scan(&Value)
-	}
-
-	if err != nil {
-		return fmt.Errorf("unable to read EntityMetadata packet: %w", err)
 	}
 
 	return nil
@@ -1341,48 +1207,25 @@ func EntityProperties(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 
 func EntityEffect(c *Client, p pk.Packet, cancel context.CancelFunc) error {
 	var (
-		entityID   pk.VarInt
-		effectID   pk.VarInt
-		amplifier  pk.Byte
-		duration   pk.VarInt
-		flags      pk.Byte
-		factorData pk.Boolean
-		codec      struct {
-			PaddingDuration        int     `nbt:"padding_duration"`
-			FactorStart            float32 `nbt:"factor_start"`
-			FactorTarget           float32 `nbt:"factor_target"`
-			FactorCurrent          float32 `nbt:"factor_current"`
-			EffectChangedTimeStamp int     `nbt:"effect_changed_timestamp"`
-			FactorPreviousFrame    float32 `nbt:"factor_previous_frame"`
-			HadEffectLastTick      bool    `nbt:"had_effect_last_tick"`
-		}
+		entityID  pk.VarInt
+		effectID  pk.VarInt
+		amplifier pk.Byte
+		duration  pk.VarInt
+		flags     pk.Byte
 	)
 
-	if err := p.Scan(
-		pk.Tuple{
-			&entityID,
-			&effectID,
-			&amplifier,
-			&duration,
-			&flags,
-			pk.Opt{
-				If:    &factorData,
-				Value: pk.NBT(&codec),
-			},
-		},
-	); err != nil {
+	if err := p.Scan(&entityID, &effectID, &amplifier, &duration, &flags); err != nil {
 		return fmt.Errorf("unable to read EntityEffect packet: %w", err)
 	}
 
 	if _, ok := effects.ByID[int32(effectID)]; ok {
-		effectStatus := effects.EffectStatus{
+		c.Player.EntityPlayer.ActivePotionEffects[int32(effectID)] = effects.EffectStatus{
 			ID:            int32(effectID),
 			Amplifier:     byte(amplifier),
 			Duration:      int32(duration),
 			ShowParticles: flags&0x01 == 0x01,
 			ShowIcon:      flags&0x04 == 0x04,
 		}
-		c.Player.EntityPlayer.ActivePotionEffects[effectStatus.ID] = effectStatus
 	}
 	return nil
 }

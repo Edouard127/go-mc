@@ -79,14 +79,33 @@ func Array(ary any) Field {
 	return Ary[VarInt]{Ary: ary}
 }
 
-type Opt struct {
-	If    interface{} // Pointer of bool, or `func() bool`
-	Value interface{} // FieldEncoder, FieldDecoder or both (Field)
-	Else  interface{} // FieldEncoder, FieldDecoder or both (Field)
+// Optional means available to be chosen but not obligatory.
+// Option means possible but not compulsory or a thing that is or may be chosen.
+// The structure of Optional is similar to Option.
+// But the use cases are different.
+// While Option is used for code logic.
+
+// Optional is used to send or receive the packet field like "Optional X"
+// which has a bool must be known from the context.
+// It is only used for buffer writing/reader. Not for code logic.
+//
+// Typically, you must decode a boolean representing the existence of the field.
+// Then receive the corresponding amount of data according to the boolean.
+// In this case, the field Has should be a pointer of bool type so
+// the value can be updating when Packet.Scan() method is decoding the
+// previous field.
+// In some special cases, you might want to read an "Optional X" with a fix length.
+// So it's allowed to directly set a bool type Has, but not a pointer.
+//
+// Note that Optional DO read or write the Has. You aren't need to do so by your self.
+// But if you do, you might get undefined behavior.
+type Optional[T FieldEncoder, P fieldPointer[T]] struct {
+	Has   any // Pointer of bool, or `func() bool`
+	Value T
 }
 
-func (o Opt) has() bool {
-	v := reflect.ValueOf(o.If)
+func (o Optional[T, P]) has() bool {
+	v := reflect.ValueOf(o.Has)
 	for {
 		switch v.Kind() {
 		case reflect.Ptr:
@@ -101,22 +120,34 @@ func (o Opt) has() bool {
 	}
 }
 
-func (o Opt) WriteTo(w io.Writer) (int64, error) {
-	if o.has() {
-		return o.Value.(FieldEncoder).WriteTo(w)
-	} else if o.Else != nil {
-		return o.Else.(FieldEncoder).WriteTo(w)
+func (o Optional[T, P]) WriteTo(w io.Writer) (n int64, err error) {
+	has := o.has()
+	{
+		n, err = Boolean(has).WriteTo(w)
+		if err != nil {
+			return
+		}
+		if has {
+			n2, _ := o.Value.WriteTo(w)
+			n += n2
+		}
 	}
-	return 0, nil
+	return
 }
 
-func (o Opt) ReadFrom(r io.Reader) (int64, error) {
-	if o.has() {
-		return o.Value.(FieldDecoder).ReadFrom(r)
-	} else if o.Else != nil {
-		return o.Else.(FieldDecoder).ReadFrom(r)
+func (o Optional[T, P]) ReadFrom(r io.Reader) (n int64, err error) {
+	var has Boolean
+
+	n, err = has.ReadFrom(r)
+	if err != nil {
+		return
 	}
-	return 0, nil
+
+	if has {
+		n2, _ := P(&o.Value).ReadFrom(r)
+		n += n2
+	}
+	return
 }
 
 type fieldPointer[T any] interface {
@@ -124,94 +155,7 @@ type fieldPointer[T any] interface {
 	FieldDecoder
 }
 
-// Option is a helper type for encoding/decoding these kind of packet:
-//
-//	+-----------+------------+----------------------------------- +
-//	| Name      | Type       | Notes                              |
-//	+-----------+------------+------------------------------------+
-//	| Has Value | Boolean    | Whether the Value should be sent.  |
-//	+-----------+------------+------------------------------------+
-//	| Value     | Optional T | Only exist when Has Value is true. |
-//	+-----------+------------+------------------------------------+
-//
-// # Usage
-//
-// `Option[T]` implements [FieldEncoder] and `*Option[T]` implements [FieldDecoder].
-// That is, you can call `WriteTo()` and `ReadFrom()` methods on it.
-//
-//	var optStr Option[String]
-//	n, err := optStr.ReadFrom(r)
-//	if err != nil {
-//		// ...
-//	}
-//	if optStr.Has {
-//		fmt.Println(optStr.Val)
-//	}
-//
-// # Notes
-//
-// Currently we have to repeat T in the type arguments.
-//
-//	var opt Option[String, *String]
-//
-// Constraint type will inference makes it less awkward in the future.
-// See: https://github.com/golang/go/issues/54469
-type Option[T FieldEncoder, P fieldPointer[T]] struct {
-	Has Boolean
-	Val T
-}
-
-func (o Option[T, P]) WriteTo(w io.Writer) (n int64, err error) {
-	n1, err := o.Has.WriteTo(w)
-	if err != nil || !o.Has {
-		return n1, err
-	}
-	n2, err := o.Val.WriteTo(w)
-	return n1 + n2, err
-}
-
-func (o *Option[T, P]) ReadFrom(r io.Reader) (n int64, err error) {
-	n1, err := o.Has.ReadFrom(r)
-	if err != nil || !o.Has {
-		return n1, err
-	}
-	n2, err := P(&o.Val).ReadFrom(r)
-	return n1 + n2, err
-}
-
-// OptionDecoder is basically same with [Option], but support [FieldDecoder] only.
-// This allowed wrapping a [FieldDecoder] type (which isn't a [FieldEncoder]) to an Option.
-type OptionDecoder[T any, P fieldPointer[T]] struct {
-	Has Boolean
-	Val T
-}
-
-func (o *OptionDecoder[T, P]) ReadFrom(r io.Reader) (n int64, err error) {
-	n1, err := o.Has.ReadFrom(r)
-	if err != nil || !o.Has {
-		return n1, err
-	}
-	n2, err := P(&o.Val).ReadFrom(r)
-	return n1 + n2, err
-}
-
-// OptionEncoder is basically same with [Option], but support [FieldEncoder] only.
-// This allowed wrapping a [FieldEncoder] type (which isn't a [FieldDecoder]) to an Option.
-type OptionEncoder[T FieldEncoder] struct {
-	Has Boolean
-	Val T
-}
-
-func (o OptionEncoder[T]) WriteTo(w io.Writer) (n int64, err error) {
-	n1, err := o.Has.WriteTo(w)
-	if err != nil || !o.Has {
-		return n1, err
-	}
-	n2, err := o.Val.WriteTo(w)
-	return n1 + n2, err
-}
-
-type Tuple []interface{} // FieldEncoder, FieldDecoder or both (Field)
+type Tuple []any // FieldEncoder, FieldDecoder or both (Field)
 
 // WriteTo write Tuple to io.Writer, panic when any of filed don't implement FieldEncoder
 func (t Tuple) WriteTo(w io.Writer) (n int64, err error) {
@@ -245,20 +189,20 @@ func (p Property) WriteTo(w io.Writer) (n int64, err error) {
 	return Tuple{
 		String(p.Name),
 		String(p.Value),
-		Option[String, *String]{
-			Has: p.Signature != "",
-			Val: String(p.Signature),
+		Optional[String, *String]{
+			Has:   p.Signature != "",
+			Value: String(p.Signature),
 		},
 	}.WriteTo(w)
 }
 
 func (p *Property) ReadFrom(r io.Reader) (n int64, err error) {
-	var signature Option[String, *String]
+	var signature Optional[String, *String]
 	n, err = Tuple{
 		(*String)(&p.Name),
 		(*String)(&p.Value),
 		&signature,
 	}.ReadFrom(r)
-	p.Signature = string(signature.Val)
+	p.Signature = string(signature.Value)
 	return
 }

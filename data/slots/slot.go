@@ -22,23 +22,18 @@ func (s *Slot) GetIndex() int {
 }
 
 func (s *Slot) WriteTo(w io.Writer) (n int64, err error) {
-	var present pk.Boolean = s.ID != 0 && s.Count != 0
-	return pk.Tuple{
-		present, pk.Opt{
-			If:    present,
-			Value: pk.Tuple{&s.ID, &s.Count, pk.NBT(&s.NBT)},
-		},
+	return pk.Optional[pk.Tuple, *pk.Tuple]{
+		Has:   s.ID != 0 && s.Count != 0,
+		Value: pk.Tuple{&s.ID, &s.Count, pk.NBT(&s.NBT)},
 	}.WriteTo(w)
 }
 
 func (s *Slot) ReadFrom(r io.Reader) (n int64, err error) {
 	var present pk.Boolean
 	return pk.Tuple{
-		&present, pk.Opt{
-			If: &present,
-			Value: pk.Tuple{
-				(*pk.VarInt)(&s.ID), (*pk.Byte)(&s.Count), pk.NBT(&s.NBT),
-			},
+		pk.Optional[pk.Tuple, *pk.Tuple]{
+			Has:   &present,
+			Value: pk.Tuple{(*pk.VarInt)(&s.ID), (*pk.Byte)(&s.Count), pk.NBT(&s.NBT)},
 		},
 	}.ReadFrom(r)
 }

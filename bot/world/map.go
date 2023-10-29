@@ -46,8 +46,8 @@ func (m *Map) ReadFrom(r io.Reader) (int64, error) {
 	n1, err := (*pk.UnsignedByte)(&m.Columns).ReadFrom(r)
 	n += n1
 
-	n2, err := pk.Opt{
-		If: m.Columns > 0,
+	n2, err := pk.Optional[pk.Tuple, *pk.Tuple]{
+		Has: m.Columns > 0,
 		Value: pk.Tuple{
 			(*pk.UnsignedByte)(&m.Rows),
 			(*pk.Byte)(&m.X),
@@ -68,8 +68,7 @@ type MapIcon struct {
 	Type      int32
 	X, Z      int8
 	Direction int8
-	HasName   bool
-	Name      chat.Message
+	Name      pk.Optional[chat.Message, *chat.Message]
 }
 
 func (m *MapIcon) ReadFrom(r io.Reader) (n int64, err error) {
@@ -78,12 +77,6 @@ func (m *MapIcon) ReadFrom(r io.Reader) (n int64, err error) {
 		(*pk.Byte)(&m.X),
 		(*pk.Byte)(&m.Z),
 		(*pk.Byte)(&m.Direction),
-		(*pk.Boolean)(&m.HasName),
-		pk.Opt{
-			If: m.HasName,
-			Value: pk.Tuple{
-				&m.Name,
-			},
-		},
+		&m.Name,
 	}.ReadFrom(r)
 }
