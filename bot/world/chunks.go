@@ -173,7 +173,7 @@ func (w *World) CollidesWithAnyBlock(bb maths.AxisAlignedBB) bool {
 	var bl *block.Block
 	return w.pointCheck(bb, func(p maths.Vec3d) bool {
 		bl = w.MustGetBlock(p)
-		return bl.boundingbox.IntersectsWith(bb) && !bl.Solid()
+		return bl.Box.IntersectsWith(bb) && !bl.Solid()
 	})
 }
 

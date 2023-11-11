@@ -155,5 +155,6 @@ func init() {
 		ToStateID[&block] = StateID(len(StateList))
 		StateList = append(StateList, &block)
 	}
+	// TODO: Proper logging system
 	println("Block states loaded in", time.Since(now)/time.Millisecond, "ms")
 }
