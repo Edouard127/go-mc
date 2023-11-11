@@ -25,6 +25,22 @@ type Auth struct {
 	KeyPair
 }
 
+func Do(req *http.Request) (*http.Response, error) {
+	req.Header.Set("User-Agent", "Minecraft")
+	resp, err := http.DefaultClient.Do(req)
+	switch resp.StatusCode {
+	case 401:
+		err = fmt.Errorf("invalid access token")
+	case 403:
+		err = fmt.Errorf("name is unavailable")
+	case 429:
+		err = fmt.Errorf("too many requests")
+	case 500:
+		err = fmt.Errorf("internal server error")
+	}
+	return resp, err
+}
+
 func (a *Auth) createRequest(method, path string, body io.Reader) *http.Request {
 	req, err := http.NewRequest(method, MojangAPI+path, body)
 	if err != nil {
@@ -43,13 +59,9 @@ func (a *Auth) createRequest(method, path string, body io.Reader) *http.Request 
 }
 
 func (a *Auth) NameAvailable(name string) (bool, error) {
-	resp, err := http.DefaultClient.Do(a.createRequest("GET", "/minecraft/profile/name/"+name+"/available", nil))
+	resp, err := Do(a.createRequest("GET", "/minecraft/profile/name/"+name+"/available", nil))
 	if err != nil {
 		return false, err
-	}
-
-	if resp.StatusCode == 401 {
-		return false, fmt.Errorf("invalid access token")
 	}
 
 	var response struct {
@@ -62,75 +74,28 @@ func (a *Auth) NameAvailable(name string) (bool, error) {
 }
 
 func (a *Auth) ChangeName(name string) error {
-	resp, err := http.DefaultClient.Do(a.createRequest("PUT", "/minecraft/profile/name/"+name, nil))
-	if err != nil {
-		return err
-	}
-
-	switch resp.StatusCode {
-	case 401:
-		return fmt.Errorf("invalid access token")
-	case 403:
-		return fmt.Errorf("name is unavailable")
-	case 429:
-		return fmt.Errorf("too many requests")
-	case 500:
-		return fmt.Errorf("internal server error")
-	default:
-		return nil
-	}
+	_, err := Do(a.createRequest("PUT", "/minecraft/profile/name/"+name, nil))
+	return err
 }
 
 func (a *Auth) ChangeSkin(variant, skinURL string) error {
-	resp, err := http.DefaultClient.Do(a.createRequest("POST", "/minecraft/profile/skins", strings.NewReader(fmt.Sprintf(`{"variant": "%s"', "url":"%s"}`, variant, skinURL))))
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode == 401 {
-		return fmt.Errorf("invalid access token")
-	}
-
-	return nil
+	_, err := Do(a.createRequest("POST", "/minecraft/profile/skins", strings.NewReader(fmt.Sprintf(`{"variant": "%s"', "url":"%s"}`, variant, skinURL))))
+	return err
 }
 
 func (a *Auth) ResetSkin() error {
-	resp, err := http.DefaultClient.Do(a.createRequest("DELETE", "/minecraft/profile/skins/active", nil))
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode == 401 {
-		return fmt.Errorf("invalid access token")
-	}
-
-	return nil
+	_, err := Do(a.createRequest("DELETE", "/minecraft/profile/skins/active", nil))
+	return err
 }
 
 func (a *Auth) HideCape() error {
-	resp, err := http.DefaultClient.Do(a.createRequest("DELETE", "/minecraft/profile/capes/active", nil))
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode == 401 {
-		return fmt.Errorf("invalid access token")
-	}
-
-	return nil
+	_, err := Do(a.createRequest("DELETE", "/minecraft/profile/capes/active", nil))
+	return err
 }
 
 func (a *Auth) ShowCape(capeid string) error {
-	resp, err := http.DefaultClient.Do(a.createRequest("POST", "/minecraft/profile/capes", strings.NewReader(fmt.Sprintf(`{"capeId":"%s"}`, capeid))))
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode == 401 {
-		return fmt.Errorf("invalid access token")
-	}
-
-	return nil
+	_, err := http.DefaultClient.Do(a.createRequest("POST", "/minecraft/profile/capes", strings.NewReader(fmt.Sprintf(`{"capeId":"%s"}`, capeid))))
+	return err
 }
 
 func (a *Auth) SessionID() string {
