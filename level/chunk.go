@@ -244,7 +244,7 @@ func readStatesPalette(palette []save.BlockState, data []uint64) (paletteData *P
 				return nil, fmt.Errorf("unmarshal block properties fail: %v", err)
 			}
 		}
-		statePalette[i] = b.State()
+		statePalette[i] = block.ToStateID[b]
 	}
 	paletteData = NewStatesPaletteContainerWithData(16*16*16, data, statePalette)
 	return
@@ -263,7 +263,7 @@ func readBiomesPalette(palette []save.BiomeState, data []uint64) (*PaletteContai
 
 func countNoneAirBlocks(sec *Section) (blockCount int16) {
 	for i := 0; i < 16*16*16; i++ {
-		if sec.GetBlock(i) != block.Air.Default() {
+		if sec.GetBlock(i) != block.ToStateID[block.Air] {
 			blockCount++
 		}
 	}

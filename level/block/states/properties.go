@@ -1,5 +1,7 @@
 package states
 
+import "github.com/Edouard127/go-mc/level/block/states/properties"
+
 type Property interface {
 	GetName() string
 	Values() (int, int)
@@ -12,9 +14,9 @@ type IntegerProperty struct {
 
 type BooleanProperty = IntegerProperty
 
-type EnumProperty[OfType PropertiesEnum] struct {
+type EnumProperty[Type properties.PropertiesEnum] struct {
 	name   string
-	values map[string]OfType
+	values map[string]Type
 }
 
 func NewIntegerProperty(name string, min, max int) *IntegerProperty {
@@ -37,7 +39,7 @@ func NewBooleanProperty(name string) *BooleanProperty {
 	return &BooleanProperty{name: name, min: 0, max: 1}
 }
 
-func NewEnumProperty[Type PropertiesEnum](name string, values map[string]Type) *EnumProperty[Type] {
+func NewEnumProperty[Type properties.PropertiesEnum](name string, values map[string]Type) *EnumProperty[Type] {
 	return &EnumProperty[Type]{
 		name:   name,
 		values: values,

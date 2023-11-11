@@ -8,85 +8,89 @@ import (
 	"github.com/Edouard127/go-mc/maths"
 	"github.com/Edouard127/go-mc/nbt"
 	"math/bits"
-	"sync/atomic"
+	"time"
 )
 
-var counter atomic.Int32
-
+// Block is an unmutable block
 type Block struct {
 	BlockProperty
-	*StateHolder
-	Name        string
-	BoundingBox maths.AxisAlignedBB
+
+	Name       string
+	Box        maths.AxisAlignedBB
+	properties map[states.Property]byte
+	Default    StateID
 }
 
-func NewBlock(name string, property BlockProperty) *Block {
-	return &Block{
+func NewBlock(name string, property BlockProperty, properties map[states.Property]byte, state StateID) *Block {
+	b := &Block{
 		BlockProperty: property,
-		StateHolder:   NewStateHolder(make(map[states.Property]int), StateID(counter.Add(1)-1)),
 		Name:          name,
-		BoundingBox:   maths.AxisAlignedBB{MaxX: 1, MaxY: 1, MaxZ: 1}, // We will assume all blocks are full for now
+		Box:           maths.AxisAlignedBB{MaxX: 1, MaxY: 1, MaxZ: 1}, // We will assume all blocks are full for now
+		properties:    properties,
+		Default:       state,
 	}
-}
-
-func (b *Block) Register(properties ...states.Property) *Block {
-	if len(properties) > 0 {
-		for i := range properties {
-			property := properties[i]
-			mn, mx := property.Values()
-			for j := mn; j <= mx; j++ {
-				sub := make(map[states.Property]int)
-				for k := range properties {
-					sub[properties[k]] = j
-				}
-				b.PutNeighbors(StateID(counter.Add(1)-1), sub)
-			}
-			b.SetValue(properties[i], mn)
-		}
-	}
-
+	ToStateID[b] = state
+	StateList[state] = b
 	return b
 }
 
-func (b *Block) Is(other *Block) bool {
-	return b.State() == other.State()
+// Must not be used outside of this package, this will mess up the block states
+func (b *Block) set(property states.Property, value byte) *Block {
+	b.properties[property] = value
+	return b
 }
 
-func (b *Block) IsAir() bool {
+func (b *Block) GetDefault() *Block {
+	if b.Default < 0 || b.Default >= MaxStates {
+		return Air
+	}
+	return StateList[b.Default]
+}
+
+func (b *Block) Get(property states.Property) any {
+	return b.properties[property]
+}
+
+// Equals Golang when no operator overloading :troll:
+func (b *Block) Equals(other *Block) bool {
+	if b.Name != other.Name {
+		return false
+	}
+
+	for property, value := range b.properties {
+		if other.properties[property] != value {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (b *Block) Air() bool {
 	return b.BlockProperty.IsAir
 }
 
-func (b *Block) IsSolid() bool {
+func (b *Block) Solid() bool {
 	return b.BlockProperty.HasCollision
 }
-
-func (b *Block) IsLiquid() bool {
-	return b.Is(Water) || b.Is(Lava)
-}
-
-/*func (b *Block) GetCollisionBox() maths.AxisAlignedBB {
-	aabb := shapes.GetShape(b.Name, int(b.State()))
-	return maths.AxisAlignedBB{
-		MinX: aabb[0], MinY: aabb[1], MinZ: aabb[2],
-		MaxX: aabb[3], MaxY: aabb[4], MaxZ: aabb[5],
-	}
-}*/
 
 // This file stores all possible block states into a TAG_List with gzip compressed.
 //
 //go:embed block_states.nbt
 var blockStates []byte
 
-// This legacy code is still compatible with the current implementation of block states
-// Because it's not complete and NOT RELIABLE, please use ToStateID and StateList
+// MaxStates is the maximum number of states of all blocks together.
+// This constant is version dependent.
+const MaxStates = 24135
+
 var (
-	ToStateID map[*Block]StateID
-	StateList = make([]*Block, 0, 21448)
+	ToStateID = make(map[*Block]StateID, MaxStates)
+	StateList = make([]*Block, MaxStates+1)
 )
 
 // BitsPerBlock indicates how many bits are needed to represent all possible
 // block states. This value is used to determine the size of the global palette.
-var BitsPerBlock int
+var BitsPerBlock = bits.Len(MaxStates)
 
 type StateID int
 
@@ -94,34 +98,62 @@ func (s StateID) Block() *Block {
 	return StateList[s]
 }
 
-type State struct {
+type state struct {
 	Name       string
 	Properties nbt.RawMessage
 }
 
 func init() {
-	var states []State
-	// decompress
+	now := time.Now()
+	var s []state
 	z, err := gzip.NewReader(bytes.NewReader(blockStates))
 	if err != nil {
 		panic(err)
 	}
-	// decode all states
-	if _, err = nbt.NewDecoder(z).Decode(&states); err != nil {
+	_, err = nbt.NewDecoder(z).Decode(&s)
+	if err != nil {
 		panic(err)
 	}
-	ToStateID = make(map[*Block]StateID, len(states))
-	StateList = make([]*Block, 0, len(states))
-	for _, state := range states {
-		block := FromID[state.Name]
-		if state.Properties.Type != nbt.TagEnd {
-			err := state.Properties.Unmarshal(&block)
-			if err != nil {
-				panic(err)
-			}
+	for _, b := range s {
+		if StateList[len(StateList)-1] != nil {
+			// Default block registered
+			continue
 		}
-		ToStateID[block] = StateID(len(StateList))
-		StateList = append(StateList, block)
+		// We don't need to erase the properties, because a block cannot have different
+		// properties declaration for different states. That would break the fabric of reality.
+		block := *FromID[b.Name]
+		// todo: Box
+		if b.Properties.Type != nbt.TagEnd {
+			d := nbt.NewDecoder(bytes.NewReader(b.Properties.Data))
+			for {
+				tag, name, err := d.ReadTag()
+				if err != nil {
+					panic(err)
+				}
+				switch tag {
+				case nbt.TagEnd:
+					goto end
+				case nbt.TagByte:
+					value, err := d.ReadByte()
+					if err != nil {
+						panic(err)
+					}
+					block.properties[states.FromName[name]] = byte(value)
+				case nbt.TagInt:
+					value, err := d.ReadInt()
+					if err != nil {
+						panic(err)
+					}
+					block.properties[states.FromName[name]] = byte(value)
+				default:
+					panic("fabric of reality broken. (invalid block data)")
+				}
+			}
+		end:
+			// nop
+		}
+		ToStateID[&block] = StateID(len(StateList))
+		StateList = append(StateList, &block)
 	}
-	BitsPerBlock = bits.Len(uint(len(StateList)))
+	println("Block states loaded in", time.Since(now)/time.Millisecond, "ms")
 }

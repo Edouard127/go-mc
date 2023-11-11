@@ -155,8 +155,8 @@ func (w *World) CollidesHorizontally(bb maths.AxisAlignedBB) (bool, bool, bool) 
 	return w.pointCheck(bb, func(p maths.Vec3d) bool {
 		bl = w.MustGetBlock(p)
 		bottom := bb.Bottom()
-		x = x || bottom.X != p.X && !bl.IsSolid()
-		z = z || bottom.Z != p.Z && !bl.IsSolid()
+		x = x || bottom.X != p.X && !bl.Solid()
+		z = z || bottom.Z != p.Z && !bl.Solid()
 		return x || z
 	}), x, z
 }
@@ -165,7 +165,7 @@ func (w *World) CollidesVertically(bb maths.AxisAlignedBB) bool {
 	var bl *block.Block
 	return w.pointCheck(bb, func(p maths.Vec3d) bool {
 		bl = w.MustGetBlock(p)
-		return bb.Bottom().Y != p.Y && !bl.IsSolid()
+		return bb.Bottom().Y != p.Y && !bl.Solid()
 	})
 }
 
@@ -173,7 +173,7 @@ func (w *World) CollidesWithAnyBlock(bb maths.AxisAlignedBB) bool {
 	var bl *block.Block
 	return w.pointCheck(bb, func(p maths.Vec3d) bool {
 		bl = w.MustGetBlock(p)
-		return bl.BoundingBox.IntersectsWith(bb) && !bl.IsSolid()
+		return bl.boundingbox.IntersectsWith(bb) && !bl.Solid()
 	})
 }
 

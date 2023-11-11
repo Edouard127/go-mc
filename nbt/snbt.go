@@ -85,33 +85,33 @@ func (m *StringifiedMessage) encode(d *Decoder, sb *strings.Builder, tagType byt
 		sb.WriteString(strconv.FormatInt(int64(b), 10) + "B")
 		return err
 	case TagString:
-		str, err := d.readString()
+		str, err := d.ReadString()
 		writeEscapeStr(sb, str)
 		return err
 	case TagShort:
-		s, err := d.readShort()
+		s, err := d.ReadShort()
 		sb.WriteString(strconv.FormatInt(int64(s), 10) + "S")
 		return err
 	case TagInt:
-		i, err := d.readInt()
+		i, err := d.ReadInt()
 		sb.WriteString(strconv.FormatInt(int64(i), 10))
 		return err
 	case TagFloat:
-		i, err := d.readInt()
+		i, err := d.ReadInt()
 		f := float64(math.Float32frombits(uint32(i)))
 		sb.WriteString(strconv.FormatFloat(f, 'f', 10, 32) + "F")
 		return err
 	case TagLong:
-		i, err := d.readLong()
+		i, err := d.ReadLong()
 		sb.WriteString(strconv.FormatInt(i, 10) + "L")
 		return err
 	case TagDouble:
-		i, err := d.readLong()
+		i, err := d.ReadLong()
 		f := math.Float64frombits(uint64(i))
 		sb.WriteString(strconv.FormatFloat(f, 'f', 10, 64) + "D")
 		return err
 	case TagByteArray:
-		aryLen, err := d.readInt()
+		aryLen, err := d.ReadInt()
 		if err != nil {
 			return err
 		}
@@ -131,14 +131,14 @@ func (m *StringifiedMessage) encode(d *Decoder, sb *strings.Builder, tagType byt
 		}
 		sb.WriteString("]")
 	case TagIntArray:
-		aryLen, err := d.readInt()
+		aryLen, err := d.ReadInt()
 		if err != nil {
 			return err
 		}
 		sb.WriteString("[I;")
 		first := true
 		for i := 0; i < int(aryLen); i++ {
-			v, err := d.readInt()
+			v, err := d.ReadInt()
 			if err != nil {
 				return err
 			}
@@ -151,14 +151,14 @@ func (m *StringifiedMessage) encode(d *Decoder, sb *strings.Builder, tagType byt
 		}
 		sb.WriteString("]")
 	case TagLongArray:
-		aryLen, err := d.readInt()
+		aryLen, err := d.ReadInt()
 		if err != nil {
 			return err
 		}
 		first := true
 		sb.WriteString("[L;")
 		for i := 0; i < int(aryLen); i++ {
-			v, err := d.readLong()
+			v, err := d.ReadLong()
 			if err != nil {
 				return err
 			}
@@ -175,7 +175,7 @@ func (m *StringifiedMessage) encode(d *Decoder, sb *strings.Builder, tagType byt
 		if err != nil {
 			return err
 		}
-		listLen, err := d.readInt()
+		listLen, err := d.ReadInt()
 		if err != nil {
 			return err
 		}
@@ -195,7 +195,7 @@ func (m *StringifiedMessage) encode(d *Decoder, sb *strings.Builder, tagType byt
 	case TagCompound:
 		first := true
 		for {
-			tt, tn, err := d.readTag()
+			tt, tn, err := d.ReadTag()
 			if err != nil {
 				return err
 			}

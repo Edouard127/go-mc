@@ -1,9 +1,7 @@
 package block
 
 type BlockProperty struct {
-	//material Material
-	HasCollision bool `nbt:"HasCollision"`
-	//soundType SoundType
+	HasCollision               bool    `nbt:"HasCollision"`
 	ExplosionResistance        float64 `nbt:"ExplosionResistance"`
 	DestroyTime                float64 `nbt:"DestroyTime"`
 	RequiresCorrectToolForDrop bool    `nbt:"RequiresCorrectToolForDrop"`

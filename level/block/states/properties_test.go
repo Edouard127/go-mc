@@ -2,23 +2,24 @@ package states
 
 import (
 	"fmt"
+	"github.com/Edouard127/go-mc/level/block/states/properties"
 	"testing"
 )
 
 var (
-	chestType = NewEnumProperty[ChestType]("type", map[string]ChestType{
-		"single": ChestTypeSingle,
-		"left":   ChestTypeLeft,
-		"right":  ChestTypeRight,
+	chestType = NewEnumProperty("type", map[string]properties.ChestType{
+		"single": properties.ChestTypeSingle,
+		"left":   properties.ChestTypeLeft,
+		"right":  properties.ChestTypeRight,
 	})
 	moisture          = NewIntegerProperty("moisture", 0, 7)
 	stabilityDistance = NewIntegerProperty("distance", 0, 7)
-	stairsShape       = NewEnumProperty[StairsShape]("shape", map[string]StairsShape{
-		"straight":    StairsShapeStraight,
-		"inner_left":  StairsShapeInnerLeft,
-		"inner_right": StairsShapeInnerRight,
-		"outer_left":  StairsShapeOuterLeft,
-		"outer_right": StairsShapeOuterRight,
+	stairsShape       = NewEnumProperty("shape", map[string]properties.StairsShape{
+		"straight":    properties.StairsShapeStraight,
+		"inner_left":  properties.StairsShapeInnerLeft,
+		"inner_right": properties.StairsShapeInnerRight,
+		"outer_left":  properties.StairsShapeOuterLeft,
+		"outer_right": properties.StairsShapeOuterRight,
 	})
 )
 
