@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/google/uuid"
@@ -66,7 +65,6 @@ func (p *PlayerList) CheckPlayer(name string, uuid uuid.UUID, protocol int32) (o
 			return false, chat.TranslateMsg("multiplayer.disconnect.duplicate_login")
 		}
 	}
-	fmt.Println("PlayerList: ", name, "joined")
 	return true, chat.Message{}
 }
 

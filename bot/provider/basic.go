@@ -232,6 +232,8 @@ func Step(cl *Client, cancel context.CancelFunc) error {
 
 	if flag && flag2 {
 		err = cl.Conn.WritePacket(pk.Marshal(packetid.SPacketPlayerPositionRotation, pk.Double(cl.Player.EntityPlayer.Position.X), pk.Double(cl.Player.EntityPlayer.Position.Y), pk.Double(cl.Player.EntityPlayer.Position.Z), pk.Float(dYaw), pk.Float(dPitch), pk.Boolean(cl.Player.EntityPlayer.OnGround)))
+		cl.Player.EntityPlayer.LastPosition = cl.Player.EntityPlayer.Position
+		cl.Player.EntityPlayer.LastRotation = cl.Player.EntityPlayer.Rotation
 	}
 
 	if flag {
@@ -249,7 +251,7 @@ func Step(cl *Client, cancel context.CancelFunc) error {
 	return err
 }
 
-func (pl *Player) travel(position maths.Vec3d) {
+func (pl *Player) travel(control maths.Vec3d) {
 	isSprinting := pl.Controller.Sprint
 	feetBlock := pl.World.MustGetBlock(pl.EntityPlayer.Position)
 
@@ -274,17 +276,17 @@ func (pl *Player) travel(position maths.Vec3d) {
 			gravity = enums.WaterDolphinDrag
 		}
 
-		pl.EntityPlayer.Motion.Add(inputVector(speed, pl.EntityPlayer.Rotation.Y, position))
+		pl.EntityPlayer.Motion.Add(inputVector(speed, pl.EntityPlayer.Rotation.Y, control))
 		pl.move(enums.MoverTypeSelf, pl.EntityPlayer.Motion)
 		pl.EntityPlayer.Motion.MulScalar(1, 0.3, 1)
 	case block.Lava:
-		pl.EntityPlayer.Motion.Add(inputVector(0.02, pl.EntityPlayer.Rotation.Y, position))
+		pl.EntityPlayer.Motion.Add(inputVector(0.02, pl.EntityPlayer.Rotation.Y, control))
 		pl.move(enums.MoverTypeSelf, pl.EntityPlayer.Motion)
 		pl.EntityPlayer.Motion.MulScalar(0.5, 0.5, 0.5)
 	default: // When air
 		blockFriction := pl.World.MustGetBlockOnSide(pl.EntityPlayer.Position, maths.Down).Friction
 		inertia := min(0.91, blockFriction*0.91)
-		pl.EntityPlayer.Motion.Add(inputVector(pl.frictionInfluencedSpeed(inertia), pl.EntityPlayer.Rotation.Y, position))
+		pl.EntityPlayer.Motion.Add(inputVector(pl.frictionInfluencedSpeed(inertia), pl.EntityPlayer.Rotation.Y, control))
 		pl.move(enums.MoverTypeSelf, pl.EntityPlayer.Motion)
 		motion := pl.EntityPlayer.Motion
 		if pl.CollidedHorizontally || pl.Controller.Jump /*|| pl.EntityPlayer.IsOnLadder()*/ {
@@ -295,14 +297,10 @@ func (pl *Player) travel(position maths.Vec3d) {
 			gravity = (0.05*(float64(pl.EntityPlayer.GetPotionEffect(effects.Levitation).Amplifier)+1) - motion.Y) * 0.2
 		}
 
-		pl.EntityPlayer.Motion.MulScalar(inertia, 1, inertia)
-
-		fmt.Println(gravity*0.98, pl.EntityPlayer.Motion.Y)
 		if !pl.EntityPlayer.OnGround {
 			pl.EntityPlayer.Motion.Y -= gravity
 			pl.EntityPlayer.Motion.Y *= 0.98
 		}
-		//fmt.Println(pl.EntityPlayer.Motion.Y)
 	}
 }
 
@@ -326,22 +324,28 @@ func (pl *Player) move(mover enums.MoverType, motion maths.Vec3d) {
 
 	if pl.CollidedHorizontally {
 		pl.CollidedHorizontallyMinor = pl.isCollidedHorizontallyMinor(motion)
-		var x, z float64
-		if !xCollision {
-			x = motion.X
+		var x, z = motion.X, motion.Z
+		if xCollision {
+			x = 0
 		}
 
-		if !zCollision {
-			z = motion.Z
+		if zCollision {
+			z = 0
 		}
 		pl.EntityPlayer.Motion.SetScalar(x, motion.Y, z)
 	}
 
-	pl.EntityPlayer.Position.Add(motion)
+	if pl.CollidedVertically {
+		pl.EntityPlayer.Motion.MulScalar(1, 0, 1)
+	}
+
+	fmt.Println(pl.EntityPlayer.Motion)
+
+	pl.EntityPlayer.Position.Add(pl.EntityPlayer.Motion)
 }
 
 func (pl *Player) collide(motion maths.Vec3d) {
-	/*boundingBox := pl.EntityPlayer.BoundingBox
+	/*boundingBox := pl.EntityPlayer.boundingbox
 	boundingBox.Expand(motion.Spread())
 	entities := pl.World.GetEntitiesInAABB(boundingBox)
 	boundingBox.Unexpand(motion.Spread())*/
