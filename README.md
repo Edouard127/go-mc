@@ -2,7 +2,10 @@
 
 Check out the original [project here](https://github.com/Tnze/go-mc)
 
-Minecraft 1.19 for rodents
+## NOTE
+This project is not longer developed
+
+Minecraft 1.20.1 for rodents
 
 ## Badges
 ![Downloads](https://img.shields.io/github/downloads/Edouard127/go-mc/total)
